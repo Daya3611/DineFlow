@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Loader2, UploadCloud, Store, MapPin, Phone, Mail, Building2, QrCode } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 const formSchema = z.object({
   name: z.string().min(2, "Restaurant name is required"),
@@ -27,8 +28,7 @@ const formSchema = z.object({
 export default function RestaurantSettings() {
   const { user, userData, restaurant, setRestaurant, setUserData } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(restaurant?.logo || null);
+  const [logoUrl, setLogoUrl] = useState<string>(restaurant?.logo || "");
 
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,48 +42,13 @@ export default function RestaurantSettings() {
     }
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      setFile(selectedFile);
-      setPreview(URL.createObjectURL(selectedFile));
-    }
-  };
 
-  const uploadImageToCloudinary = async (): Promise<string | null> => {
-    if (!file) return null;
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", `restaurants/${user?.uid}`);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("Image upload failed");
-
-      const data = await response.json();
-      return data.secure_url;
-    } catch (error) {
-      toast.error("Failed to upload image");
-      return null;
-    }
-  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user || !userData) return;
     setLoading(true);
 
     try {
-      let logoUrl = restaurant?.logo || "";
-
-      if (file) {
-        const uploadedUrl = await uploadImageToCloudinary();
-        if (uploadedUrl) logoUrl = uploadedUrl;
-      }
-
       const restaurantId = restaurant?.id || `rest_${user.uid}`;
 
       const restaurantData = {
@@ -136,28 +101,23 @@ export default function RestaurantSettings() {
             <CardDescription>Upload a square logo for your digital menu.</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <div className="relative h-28 w-28 rounded-2xl border-2 border-dashed border-emerald-200 flex items-center justify-center overflow-hidden bg-emerald-50/50 shrink-0">
-                {preview ? (
-                   <img src={preview} alt="Logo preview" className="h-full w-full object-cover" />
-                ) : (
-                  <UploadCloud className="h-8 w-8 text-emerald-300" />
-                )}
+            <div className="flex flex-col gap-6">
+              <div className="space-y-4">
+                 <div>
+                   <Label className="text-sm font-semibold text-gray-700 block mb-2">Digital Menu Logo</Label>
+                   <ImageUpload 
+                     value={logoUrl} 
+                     onChange={setLogoUrl} 
+                     folder={`restaurants/${user?.uid}/logo`} 
+                     disabled={loading} 
+                   />
+                 </div>
               </div>
-              <div className="flex-1 w-full space-y-4">
-                <Input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleFileChange} 
-                  className="w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 border-gray-200 h-12 pt-2.5"
-                />
-                
-                <div className="space-y-1.5">
+              <div className="space-y-1.5">
                   <Label htmlFor="name" className="text-sm font-semibold text-gray-700">Business Name *</Label>
                   <Input id="name" placeholder="e.g. Royal Greens Restaurant" className="h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500" {...register("name")} />
                   {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
                 </div>
-              </div>
             </div>
           </CardContent>
         </Card>

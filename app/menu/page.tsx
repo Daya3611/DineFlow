@@ -151,8 +151,19 @@ function MenuContent() {
 
   if (orderPlaced) {
     const upiLink = restaurant.upiId 
-      ? `upi://pay?pa=${restaurant.upiId}&pn=${encodeURIComponent(restaurant.name)}&am=${placedOrderTotal}`
+      ? `upi://pay?pa=${restaurant.upiId}&pn=${encodeURIComponent(restaurant.name)}&am=${placedOrderTotal}&cu=INR&tn=${encodeURIComponent("Order " + orderPlaced.slice(-6).toUpperCase())}`
       : "";
+
+    const handleUpiDeepLink = () => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        window.location.href = upiLink;
+      } else {
+        toast.info("Please scan the QR code", {
+          description: "UPI apps can only be opened directly on a mobile phone."
+        });
+      }
+    };
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#ECFDF5] p-6 pt-12 pb-12">
@@ -217,22 +228,31 @@ function MenuContent() {
                    <div className="mb-4">
                        <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`} alt="UPI QR" className="w-36 h-36 rounded-xl border border-gray-100 shadow-sm p-2" />
                    </div>
-                   <div className="text-xs font-bold bg-gray-100 px-3 py-1.5 rounded-full text-gray-600 mb-5">{restaurant.upiId}</div>
+                   <div className="font-bold text-lg text-emerald-700 mb-1">₹{placedOrderTotal}</div>
+                   <div className="text-xs font-semibold bg-gray-100 px-3 py-1 rounded-full text-gray-500 mb-6">{restaurant.upiId}</div>
                    
-                   <a 
-                     href={upiLink} 
-                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-xl flex items-center justify-center mb-3 transition-colors shadow-sm"
-                   >
-                     Pay ₹{placedOrderTotal} via UPI App
-                   </a>
+                   <div className="w-full space-y-3">
+                     <Button 
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 rounded-xl shadow-md shadow-emerald-200 transition-all active:scale-[0.98]"
+                      onClick={handleUpiDeepLink}
+                     >
+                       <img src="https://cdn.iconscout.com/icon/free/png-256/upi-2085056-1747946.png" className="w-5 h-5 mr-2 brightness-0 invert" alt="UPI" onError={(e) => e.currentTarget.style.display = 'none'} />
+                       Pay via UPI App
+                     </Button>
 
-                   <Button 
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 rounded-xl"
-                    onClick={handleUpiPaid}
-                    disabled={updatingPayment}
-                   >
-                     {updatingPayment ? <Loader2 className="animate-spin h-5 w-5" /> : "I have paid"}
-                   </Button>
+                     <Button 
+                      variant="outline"
+                      className="w-full border-2 border-emerald-100 text-emerald-700 hover:bg-emerald-50 font-bold h-12 rounded-xl"
+                      onClick={handleUpiPaid}
+                      disabled={updatingPayment}
+                     >
+                       {updatingPayment ? <Loader2 className="animate-spin h-5 w-5" /> : "Confirm I have paid"}
+                     </Button>
+                   </div>
+                   
+                   <p className="text-[10px] text-gray-400 mt-4 leading-tight">
+                     Tapping "Pay via UPI App" opens your installed UPI app with the exact amount pre-filled.
+                   </p>
                 </div>
               )}
 

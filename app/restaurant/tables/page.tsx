@@ -144,9 +144,7 @@ export default function TablesPage() {
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger 
-            render={<Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-sm shadow-emerald-200" />}
-          >
+          <DialogTrigger render={<Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-sm shadow-emerald-200" />}>
             <Plus className="mr-2 h-4 w-4" /> Add Table
           </DialogTrigger>
           <DialogContent className="sm:max-w-[400px] rounded-2xl">
