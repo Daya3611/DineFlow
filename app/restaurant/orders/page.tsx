@@ -1,15 +1,17 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { db } from "@/firebase";
 import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { Order as OrderType } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Printer, CheckCircle, Clock, Utensils, UtensilsCrossed, Bell, Table } from "lucide-react";
+import { Loader2, Printer, CheckCircle, Clock, Utensils, UtensilsCrossed, Bell, Table, Search, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 
 const statusConfig: Record<string, {
@@ -33,6 +35,10 @@ export default function LiveOrdersPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const hasInteractedRef = useRef(false);
+
+  // New States for Completed Orders
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
 
   useEffect(() => {
     audioRef.current = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
@@ -160,7 +166,15 @@ export default function LiveOrdersPage() {
   if (!restaurant) return <div className="p-8 text-center text-gray-500">Please complete restaurant setup first.</div>;
 
   const activeOrders = orders.filter(o => o.status !== "paid");
-  const pastOrders   = orders.filter(o => o.status === "paid").slice(0, 10);
+  
+  // Completed Orders State & Filtering
+  const pastOrders = orders.filter(o => o.status === "paid");
+  const filteredPastOrders = pastOrders.filter((order) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const orderIdShort = order.id.slice(-6).toLowerCase();
+    return orderIdShort.includes(q) || order.tableNumber.toString().includes(q);
+  });
 
   const getPayStatusStyle = (status: string) => {
     switch(status) {
@@ -241,13 +255,13 @@ export default function LiveOrdersPage() {
                     <CardContent className="p-0 flex-1 flex flex-col">
                       <ul className="p-5 space-y-2.5 flex-1 min-h-[100px]">
                         {order.items.map((item, i) => (
-                          <li key={i} className="flex justify-between items-center text-sm">
-                            <span className="text-gray-700 flex items-center gap-2">
-                              <span className="inline-flex items-center justify-center h-5 w-5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-md">{item.quantity}</span>
-                              {item.name}
-                            </span>
-                            <span className="text-gray-500 font-medium">₹{item.price * item.quantity}</span>
-                          </li>
+                           <li key={i} className="flex justify-between items-center text-sm">
+                             <span className="text-gray-700 flex items-center gap-2">
+                               <span className="inline-flex items-center justify-center h-5 w-5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-md">{item.quantity}</span>
+                               {item.name}
+                             </span>
+                             <span className="text-gray-500 font-medium">₹{item.price * item.quantity}</span>
+                           </li>
                         ))}
                       </ul>
 
@@ -306,34 +320,148 @@ export default function LiveOrdersPage() {
         </AnimatePresence>
       )}
 
-      {/* Past Orders Table */}
+      {/* Completed Orders Section */}
       {pastOrders.length > 0 && (
-        <div className="mt-10 pt-8 border-t border-gray-200">
-          <h3 className="text-base font-bold text-gray-900 mb-4">Completed Orders</h3>
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 tracking-tight">Completed Orders</h3>
+              <p className="text-sm text-gray-500">History of all successfully paid orders.</p>
+            </div>
+            
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input 
+                placeholder="Search by Order ID or Table..." 
+                className="pl-9 bg-white border-gray-200 focus-visible:ring-emerald-500 rounded-xl"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
-                <tr>
-                  <th className="px-5 py-3 font-semibold">Table</th>
-                  <th className="px-5 py-3 font-semibold">Items</th>
-                  <th className="px-5 py-3 font-semibold">Total</th>
-                  <th className="px-5 py-3 font-semibold">Time</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {pastOrders.map((o) => (
-                  <tr key={o.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3 font-semibold text-gray-900">{o.tableNumber}</td>
-                    <td className="px-5 py-3 text-gray-500">{o.items.reduce((a, i) => a + i.quantity, 0)} items</td>
-                    <td className="px-5 py-3 font-bold text-emerald-600">₹{o.totalAmount}</td>
-                    <td className="px-5 py-3 text-gray-400">{new Date(o.createdAt).toLocaleTimeString()}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left whitespace-nowrap">
+                <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
+                  <tr>
+                    <th className="px-6 py-4 font-semibold rounded-tl-2xl">Order ID</th>
+                    <th className="px-6 py-4 font-semibold">Table</th>
+                    <th className="px-6 py-4 font-semibold">Items</th>
+                    <th className="px-6 py-4 font-semibold">Status</th>
+                    <th className="px-6 py-4 font-semibold">Total</th>
+                    <th className="px-6 py-4 font-semibold">Time</th>
+                    <th className="px-6 py-4 font-semibold text-right rounded-tr-2xl">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredPastOrders.length > 0 ? (
+                    filteredPastOrders.map((o) => (
+                      <tr 
+                         key={o.id} 
+                         className="hover:bg-emerald-50/50 transition-colors cursor-pointer group"
+                         onClick={() => setSelectedOrder(o)}
+                      >
+                        <td className="px-6 py-4 font-mono font-bold text-emerald-700">
+                          #ORD-{o.id.slice(-6).toUpperCase()}
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-gray-900">Table {o.tableNumber}</td>
+                        <td className="px-6 py-4 text-gray-500">{o.items.reduce((a, i) => a + i.quantity, 0)} items</td>
+                        <td className="px-6 py-4 text-gray-500">
+                           <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 pointer-events-none">Paid</Badge>
+                        </td>
+                        <td className="px-6 py-4 font-extrabold text-gray-900">₹{o.totalAmount}</td>
+                        <td className="px-6 py-4 text-gray-400">{new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                        <td className="px-6 py-4 text-right">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 group-hover:text-emerald-600 group-hover:bg-emerald-100 rounded-full transition-all">
+                             <Eye className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                        No orders found matching "{searchQuery}"
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Order Details Modal */}
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 gap-0 border-gray-100 shadow-xl">
+          {selectedOrder && (
+            <>
+              <div className="bg-emerald-600 p-6 text-white flex justify-between items-start">
+                 <div>
+                   <Badge className="bg-emerald-500/30 text-emerald-50 hover:bg-emerald-500/40 border-none mb-2 pointer-events-none">
+                     Completed Order
+                   </Badge>
+                   <h2 className="text-2xl font-black font-mono tracking-tight">#ORD-{selectedOrder.id.slice(-6).toUpperCase()}</h2>
+                   <div className="flex items-center gap-2 mt-1 text-emerald-100 text-sm font-medium">
+                     <Table className="h-4 w-4" /> Table {selectedOrder.tableNumber}
+                     <span className="px-1">•</span>
+                     <Clock className="h-4 w-4" /> {new Date(selectedOrder.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                   </div>
+                 </div>
+              </div>
+              
+              <div className="p-6 bg-white space-y-6">
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-gray-400 tracking-wider uppercase">Order Items</h4>
+                  <div className="space-y-2.5 max-h-48 overflow-y-auto pr-2 scrollbar-thin">
+                    {selectedOrder.items.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-start text-sm">
+                        <div className="flex gap-3">
+                          <span className="font-bold text-emerald-600 bg-emerald-50 px-2 rounded-md h-6 flex items-center justify-center min-w-[28px]">{item.quantity}x</span>
+                          <span className="font-medium text-gray-900">{item.name}</span>
+                        </div>
+                        <span className="text-gray-500 font-medium whitespace-nowrap border-b border-gray-100 pb-2">₹{item.price * item.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-dashed border-gray-200">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-gray-500 font-semibold">Total Amount</span>
+                    <span className="text-2xl font-black text-emerald-600">₹{selectedOrder.totalAmount}</span>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center border border-gray-100">
+                     <div className="space-y-1">
+                       <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Payment Method</span>
+                       <span className="font-semibold text-gray-900 capitalize">{selectedOrder.paymentMethod || "Counter"}</span>
+                     </div>
+                     <div className="text-right space-y-1">
+                       <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Status</span>
+                       <Badge className="bg-green-100 text-green-700 border-none shadow-none pointer-events-none">Paid</Badge>
+                     </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button variant="outline" className="rounded-xl border-gray-200 font-semibold text-gray-600 w-full hover:bg-gray-50" onClick={() => setSelectedOrder(null)}>
+                     Close
+                  </Button>
+                  <Button 
+                    className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full shadow-md shadow-emerald-200"
+                    onClick={() => { printBill(selectedOrder); setSelectedOrder(null); }}
+                  >
+                    <Printer className="h-4 w-4 mr-2" /> Print Bill
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

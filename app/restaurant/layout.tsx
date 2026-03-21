@@ -55,7 +55,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
   const pageLabel = pathname.split("/").filter(Boolean).pop() || "Dashboard";
 
   return (
-    <div className="min-h-screen flex bg-[#F0FDF4]">
+    <div className="h-screen overflow-hidden flex bg-[#F0FDF4]">
       {/* Mobile overlay */}
       <AnimatePresence>
         {sidebarOpen && (
