@@ -1,0 +1,339 @@
+"use client";
+
+import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect, useRef } from "react";
+import { db } from "@/firebase";
+import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { Order as OrderType } from "@/types";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { Loader2, Printer, CheckCircle, Clock, Utensils, UtensilsCrossed, Bell, Table } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+
+const statusConfig: Record<string, {
+  label: string;
+  color: string;
+  nextAction: string | null;
+  nextStatus: string | null;
+  icon: React.ReactNode;
+  borderColor: string;
+}> = {
+  pending:   { label: "New",       color: "bg-red-100 text-red-700 border-red-200",      nextAction: "Accept & Prepare",  nextStatus: "preparing", icon: <Clock className="w-3.5 h-3.5" />,          borderColor: "border-t-red-500" },
+  preparing: { label: "Preparing", color: "bg-amber-100 text-amber-700 border-amber-200", nextAction: "Mark as Served",    nextStatus: "served",    icon: <Utensils className="w-3.5 h-3.5" />,        borderColor: "border-t-amber-400" },
+  served:    { label: "Served",    color: "bg-sky-100 text-sky-700 border-sky-200",       nextAction: "Mark as Paid",      nextStatus: "paid",      icon: <UtensilsCrossed className="w-3.5 h-3.5" />, borderColor: "border-t-sky-400" },
+  paid:      { label: "Paid",      color: "bg-emerald-100 text-emerald-700 border-emerald-200", nextAction: null,          nextStatus: null,        icon: <CheckCircle className="w-3.5 h-3.5" />,     borderColor: "border-t-emerald-500" },
+};
+
+export default function LiveOrdersPage() {
+  const { restaurant } = useAuth();
+  const [orders, setOrders] = useState<OrderType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const hasInteractedRef = useRef(false);
+
+  useEffect(() => {
+    audioRef.current = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+    const handleInteraction = () => {
+      setHasInteracted(true);
+      hasInteractedRef.current = true;
+    };
+    window.addEventListener("click", handleInteraction, { once: true });
+    return () => window.removeEventListener("click", handleInteraction);
+  }, []);
+
+  useEffect(() => {
+    if (!restaurant) return;
+
+    setLoading(true);
+    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurant.id));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedOrders: OrderType[] = [];
+      let newIncoming = false;
+
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          const newOrder = change.doc.data() as OrderType;
+          if (newOrder.status === "pending" && Date.now() - newOrder.createdAt < 60000) {
+            newIncoming = true;
+          }
+        }
+      });
+
+      snapshot.forEach((d) => fetchedOrders.push(d.data() as OrderType));
+      fetchedOrders.sort((a, b) => b.createdAt - a.createdAt);
+
+      setOrders(fetchedOrders);
+      setLoading(false);
+
+      if (newIncoming && hasInteractedRef.current && audioRef.current) {
+        audioRef.current.play().catch(() => {});
+        toast.success("🔔 New order received!", { duration: 4000 });
+      }
+    }, () => {
+      toast.error("Error connecting to real-time orders");
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [restaurant]);
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+      toast.success(`Order marked as ${newStatus}`);
+    } catch (_) {
+      toast.error("Failed to update status");
+    }
+  };
+
+  const verifyPayment = async (orderId: string) => {
+    try {
+      await updateDoc(doc(db, "orders", orderId), { paymentStatus: "paid" });
+      toast.success("Payment verified successfully!");
+    } catch (_) {
+      toast.error("Failed to verify payment");
+    }
+  };
+
+  const printBill = (order: OrderType) => {
+    let printFrame = document.getElementById("receipt-print-frame") as HTMLIFrameElement;
+    if (!printFrame) {
+      printFrame = document.createElement("iframe");
+      printFrame.id = "receipt-print-frame";
+      Object.assign(printFrame.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
+      document.body.appendChild(printFrame);
+    }
+
+    const frameDoc = printFrame.contentWindow?.document;
+    if (!frameDoc) return toast.error("Printing not supported.");
+
+    const itemsHtml = order.items.map(item => `
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+        <span>${item.quantity}x ${item.name}</span>
+        <span>Rs.${item.price * item.quantity}</span>
+      </div>
+    `).join("");
+
+    const r = restaurant;
+
+    frameDoc.open();
+    frameDoc.write(`
+      <html><head><title>Bill - Table ${order.tableNumber}</title>
+      <style>
+        @page { margin: 0; }
+        body { font-family: 'Courier New', monospace; font-size: 14px; max-width: 350px; margin: 0 auto; padding: 20px; color: #000; }
+        h2 { text-align:center; margin:0 0 5px 0; font-size:22px; text-transform:uppercase; font-weight:900; }
+        .rest-meta { text-align:center; margin-bottom:15px; font-size:12px; line-height:1.4; border-bottom:1px dashed #000; padding-bottom:15px; }
+        .order-meta { margin-bottom:20px; font-size:12px; line-height:1.5; }
+        .items { border-bottom:1px dashed #000; padding-bottom:10px; margin-bottom:10px; }
+        .total { display:flex; justify-content:space-between; font-weight:bold; font-size:18px; margin-bottom:20px; }
+        .footer { text-align:center; font-size:12px; margin-top:20px; font-weight:bold; }
+      </style></head>
+      <body>
+        <h2>${r?.name}</h2>
+        <div class="rest-meta">
+          ${r?.address ? `${r.address.replace(/\n/g, ', ')}<br>` : ""}
+          ${r?.phoneNumber ? `Ph: ${r.phoneNumber}<br>` : ""}
+          ${r?.gstNumber ? `GST: ${r.gstNumber}<br>` : ""}
+        </div>
+        <div class="order-meta">
+          <b>Table: ${order.tableNumber}</b><br>
+          Order #${order.id.slice(-6).toUpperCase()}<br>
+          ${new Date(order.createdAt).toLocaleString()}
+        </div>
+        <div class="items">${itemsHtml}</div>
+        <div class="total"><span>Grand Total</span><span>Rs.${order.totalAmount}</span></div>
+        <div class="footer">
+          Paid via: <span style="text-transform:uppercase">${order.paymentMethod || "Counter"}</span><br><br>
+          Scan QR to Order &bull; Thank You!
+        </div>
+        <script>window.onload=()=>{setTimeout(()=>{window.print();},200);}<\/script>
+      </body></html>
+    `);
+    frameDoc.close();
+  };
+
+  if (!restaurant) return <div className="p-8 text-center text-gray-500">Please complete restaurant setup first.</div>;
+
+  const activeOrders = orders.filter(o => o.status !== "paid");
+  const pastOrders   = orders.filter(o => o.status === "paid").slice(0, 10);
+
+  const getPayStatusStyle = (status: string) => {
+    switch(status) {
+      case "paid": return "bg-green-100 text-green-700 border-green-200";
+      case "pending_verification": return "bg-amber-100 text-amber-700 border-amber-200 animate-pulse";
+      default: return "bg-gray-100 text-gray-600 border-gray-200";
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Live Orders</h1>
+          <p className="text-gray-500 mt-1 text-sm">
+            Real-time kitchen display.{" "}
+            {!hasInteracted && (
+              <button
+                className="text-amber-500 font-semibold hover:text-amber-600 inline-flex items-center gap-1"
+                onClick={() => { setHasInteracted(true); hasInteractedRef.current = true; }}
+              >
+                <Bell className="h-3.5 w-3.5" /> Enable sound alerts
+              </button>
+            )}
+            {hasInteracted && <span className="text-emerald-600 font-medium inline-flex items-center gap-1"><Bell className="h-3.5 w-3.5" /> Sound enabled</span>}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-3 py-1.5 rounded-full">
+          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          {activeOrders.length} active
+        </div>
+      </div>
+
+      {/* Orders Grid */}
+      {loading ? (
+        <div className="flex justify-center items-center p-20">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        </div>
+      ) : activeOrders.length === 0 ? (
+        <div className="bg-white border-2 border-dashed border-emerald-200 rounded-2xl py-20 text-center">
+          <div className="h-16 w-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+            <Utensils className="h-8 w-8 text-emerald-400" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 mb-1">No active orders</h3>
+          <p className="text-gray-500 max-w-xs mx-auto text-sm">New orders from your tables will appear here in real-time.</p>
+        </div>
+      ) : (
+        <AnimatePresence mode="popLayout">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+            {activeOrders.map((order) => {
+              const config = statusConfig[order.status] || statusConfig.pending;
+              const payStatus = order.paymentStatus || "unpaid";
+              return (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  layout
+                >
+                  <Card className={`overflow-hidden border-t-4 shadow-sm hover:shadow-md transition-shadow bg-white ${config.borderColor} flex flex-col h-full`}>
+                    <CardHeader className="pb-3 border-b bg-gray-50/80 flex flex-row items-center justify-between space-y-0 px-5 pt-4">
+                      <div>
+                        <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                          <Table className="h-4 w-4 text-gray-400" />
+                          Table {order.tableNumber}
+                        </CardTitle>
+                        <CardDescription className="text-xs mt-0.5">
+                          {order.customerName || "Guest"} · {new Date(order.createdAt).toLocaleTimeString()}
+                        </CardDescription>
+                      </div>
+                      <Badge variant="outline" className={`${config.color} px-2.5 py-1 font-semibold flex items-center gap-1.5 text-xs`}>
+                        {config.icon} {config.label}
+                      </Badge>
+                    </CardHeader>
+
+                    <CardContent className="p-0 flex-1 flex flex-col">
+                      <ul className="p-5 space-y-2.5 flex-1 min-h-[100px]">
+                        {order.items.map((item, i) => (
+                          <li key={i} className="flex justify-between items-center text-sm">
+                            <span className="text-gray-700 flex items-center gap-2">
+                              <span className="inline-flex items-center justify-center h-5 w-5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-md">{item.quantity}</span>
+                              {item.name}
+                            </span>
+                            <span className="text-gray-500 font-medium">₹{item.price * item.quantity}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="px-5 pb-5 pt-0 space-y-4 border-t border-dashed mt-0 pt-4">
+                        <div className="flex justify-between items-end">
+                           <div>
+                              <div className="text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Payment</div>
+                              <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${getPayStatusStyle(payStatus)} px-2`}>
+                                {(order.paymentMethod || "Counter").substring(0,3)} • {payStatus.replace("_", " ")}
+                              </Badge>
+                           </div>
+                           <div className="text-right">
+                             <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider block mb-0.5">Total</span>
+                             <span className="text-xl font-extrabold text-emerald-600 block leading-none">₹{order.totalAmount}</span>
+                           </div>
+                        </div>
+
+                        {payStatus === "pending_verification" && (
+                          <Button 
+                            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md shadow-amber-200"
+                            onClick={() => verifyPayment(order.id)}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" /> Verify UPI Payment
+                          </Button>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600 h-9"
+                            onClick={() => printBill(order)}
+                          >
+                            <Printer className="w-4 h-4 mr-1.5" /> Print Bill
+                          </Button>
+                          {config.nextAction && config.nextStatus && (
+                            <Button
+                              size="sm"
+                              className={`rounded-xl text-white font-semibold h-9 ${
+                                config.nextStatus === "paid" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-gray-900 hover:bg-gray-800"
+                              }`}
+                              onClick={() => updateOrderStatus(order.id, config.nextStatus!)}
+                              disabled={config.nextStatus === "paid" && payStatus === "pending_verification"}
+                            >
+                              {config.nextAction}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </AnimatePresence>
+      )}
+
+      {/* Past Orders Table */}
+      {pastOrders.length > 0 && (
+        <div className="mt-10 pt-8 border-t border-gray-200">
+          <h3 className="text-base font-bold text-gray-900 mb-4">Completed Orders</h3>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
+                <tr>
+                  <th className="px-5 py-3 font-semibold">Table</th>
+                  <th className="px-5 py-3 font-semibold">Items</th>
+                  <th className="px-5 py-3 font-semibold">Total</th>
+                  <th className="px-5 py-3 font-semibold">Time</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {pastOrders.map((o) => (
+                  <tr key={o.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-5 py-3 font-semibold text-gray-900">{o.tableNumber}</td>
+                    <td className="px-5 py-3 text-gray-500">{o.items.reduce((a, i) => a + i.quantity, 0)} items</td>
+                    <td className="px-5 py-3 font-bold text-emerald-600">₹{o.totalAmount}</td>
+                    <td className="px-5 py-3 text-gray-400">{new Date(o.createdAt).toLocaleTimeString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

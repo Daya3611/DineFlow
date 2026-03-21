@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'super_admin';
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isRestaurantOwner(restaurantId) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/restaurants/$(restaurantId)) &&
+        get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.get('ownerId', '') == request.auth.uid;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isSuperAdmin();
+      // Users can initially create their document during signup
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Restaurants collection
+    match /restaurants/{restaurantId} {
+      allow read: if true; // Publicly readable for menus, etc.
+      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isRestaurantOwner(restaurantId) || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Menus collection
+    match /menus/{menuId} {
+      allow read: if true; // Publicly readable for customers
+      // Only the specific restaurant owner or super admin can manage menus
+      allow create: if isSuperAdmin() || isRestaurantOwner(request.resource.data.restaurantId);
+      allow update: if isSuperAdmin() || (isRestaurantOwner(resource.data.restaurantId) && isRestaurantOwner(request.resource.data.restaurantId));
+      allow delete: if isSuperAdmin() || isRestaurantOwner(resource.data.restaurantId);
+    }
+
+    // Subscriptions collection
+    match /subscriptions/{subId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Tables collection
+    match /tables/{tableId} {
+      allow read: if true; // Publicly readable to get table info if needed
+      allow create, update, delete: if isSuperAdmin() || isRestaurantOwner(resource.data.restaurantId) || isRestaurantOwner(request.resource.data.restaurantId);
+    }
+
+    // Orders collection
+    match /orders/{orderId} {
+      allow read: if true; // Customers might need to read their order status based on order ID somehow, or restaurant owner polling
+      allow create: if true; // Anyone can place an order from table via QR
+      allow update, delete: if isSuperAdmin() || isRestaurantOwner(resource.data.restaurantId);
+    }
+  }
+}
