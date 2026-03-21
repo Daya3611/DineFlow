@@ -37,8 +37,8 @@ export default function RegisterPage() {
       const user = userCredential.user;
 
       // Secure Role Assignment
-      const assignedRole = values.email.toLowerCase() === "hi@dayanandgawade.in" 
-        ? "super_admin" 
+      const assignedRole = values.email.toLowerCase() === "hi@dayanandgawade.in"
+        ? "super_admin"
         : "restaurant_owner";
 
       await setDoc(doc(db, "users", user.uid), {
@@ -49,7 +49,7 @@ export default function RegisterPage() {
         createdAt: Date.now(),
       });
 
-      toast.success("Account created! Welcome to TableFlow 🎉");
+      toast.success("Account created! Welcome to DineFlow 🎉");
       if (assignedRole === "super_admin") router.push("/admin/dashboard");
       else router.push("/restaurant/dashboard");
     } catch (error: any) {
@@ -71,7 +71,7 @@ export default function RegisterPage() {
           <div className="h-10 w-10 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
             <ChefHat className="h-5 w-5 text-white" />
           </div>
-          <span className="text-white font-bold text-xl tracking-tight">TableFlow</span>
+          <span className="text-white font-bold text-xl tracking-tight">DineFlow</span>
         </div>
         <div className="relative z-10">
           <h2 className="text-4xl font-extrabold text-white mb-4 leading-tight">
@@ -103,7 +103,7 @@ export default function RegisterPage() {
             <div className="h-9 w-9 rounded-xl bg-emerald-500 flex items-center justify-center">
               <ChefHat className="h-4 w-4 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">TableFlow</span>
+            <span className="text-xl font-bold text-gray-900">DineFlow</span>
           </Link>
 
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Create account</h1>
