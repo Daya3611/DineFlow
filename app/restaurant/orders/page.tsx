@@ -32,23 +32,26 @@ export default function LiveOrdersPage() {
   const { restaurant } = useAuth();
   const [orders, setOrders] = useState<OrderType[]>([]);
   const [loading, setLoading] = useState(true);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [hasInteracted, setHasInteracted] = useState(false);
-  const hasInteractedRef = useRef(false);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(false);
+  const [newOrderTrigger, setNewOrderTrigger] = useState(0);
 
   // New States for Completed Orders
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
 
+  const playNewOrderSound = () => {
+    const audio = new Audio("/new-order.mp3");
+    audio.play().catch(() => {
+      console.log("User interaction required to play sound");
+    });
+  };
+
   useEffect(() => {
-    audioRef.current = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-    const handleInteraction = () => {
-      setHasInteracted(true);
-      hasInteractedRef.current = true;
-    };
-    window.addEventListener("click", handleInteraction, { once: true });
-    return () => window.removeEventListener("click", handleInteraction);
-  }, []);
+    if (newOrderTrigger > 0 && isSoundEnabled) {
+      playNewOrderSound();
+      toast.success("🔔 New order received!", { duration: 4000 });
+    }
+  }, [newOrderTrigger, isSoundEnabled]);
 
   useEffect(() => {
     if (!restaurant) return;
@@ -75,9 +78,8 @@ export default function LiveOrdersPage() {
       setOrders(fetchedOrders);
       setLoading(false);
 
-      if (newIncoming && hasInteractedRef.current && audioRef.current) {
-        audioRef.current.play().catch(() => {});
-        toast.success("🔔 New order received!", { duration: 4000 });
+      if (newIncoming) {
+        setNewOrderTrigger(prev => prev + 1);
       }
     }, () => {
       toast.error("Error connecting to real-time orders");
@@ -191,21 +193,31 @@ export default function LiveOrdersPage() {
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Live Orders</h1>
           <p className="text-gray-500 mt-1 text-sm">
-            Real-time kitchen display.{" "}
-            {!hasInteracted && (
-              <button
-                className="text-amber-500 font-semibold hover:text-amber-600 inline-flex items-center gap-1"
-                onClick={() => { setHasInteracted(true); hasInteractedRef.current = true; }}
-              >
-                <Bell className="h-3.5 w-3.5" /> Enable sound alerts
-              </button>
-            )}
-            {hasInteracted && <span className="text-emerald-600 font-medium inline-flex items-center gap-1"><Bell className="h-3.5 w-3.5" /> Sound enabled</span>}
+            Real-time kitchen display.
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-3 py-1.5 rounded-full">
-          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          {activeOrders.length} active
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              if (!isSoundEnabled) {
+                const audio = new Audio("/new-order.mp3");
+                audio.volume = 0;
+                audio.play().catch(()=>{});
+              }
+              setIsSoundEnabled(!isSoundEnabled);
+            }}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+              isSoundEnabled ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            <Bell className="h-4 w-4" />
+            {isSoundEnabled ? "Sound On" : "Sound Off"}
+          </button>
+          
+          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-3 py-1.5 rounded-full shrink-0">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            {activeOrders.length} active
+          </div>
         </div>
       </div>
 
