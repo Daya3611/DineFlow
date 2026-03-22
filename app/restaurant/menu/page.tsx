@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "@/firebase";
 import { collection, query, where, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Menu } from "@/types";
@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Edit2, UtensilsCrossed } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, UtensilsCrossed, ImageIcon, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImageUpload } from "@/components/ui/image-upload";
 
@@ -30,6 +30,8 @@ export default function MenuPage() {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>("");
+  const [editingItem, setEditingItem] = useState<Menu | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof menuItemSchema>>({
     resolver: zodResolver(menuItemSchema) as any,
@@ -57,7 +59,8 @@ export default function MenuPage() {
     }
   };
 
-  const onDelete = async (menuId: string) => {
+  const onDelete = async (menuId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (confirm("Are you sure you want to delete this menu item?")) {
       try {
         await deleteDoc(doc(db, "menus", menuId));
@@ -69,6 +72,27 @@ export default function MenuPage() {
     }
   };
 
+  const handleCloseModal = () => {
+    setOpen(false);
+    setTimeout(() => {
+      setEditingItem(null);
+      reset({ name: "", price: undefined, category: "" });
+      setImageUrl("");
+    }, 200);
+  };
+
+  const handleEditClick = (item: Menu, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingItem(item);
+    setImageUrl(item.image || "");
+    reset({
+      name: item.name,
+      price: item.price,
+      category: item.category,
+    });
+    setOpen(true);
+  };
+
   const onSubmit = async (values: z.infer<typeof menuItemSchema>) => {
     if (!restaurant) return;
     if (!imageUrl) {
@@ -78,59 +102,93 @@ export default function MenuPage() {
 
     setSubmitting(true);
     try {
-      const menuId = `menu_${Date.now()}`;
-      const newMenu: Menu = {
-        id: menuId,
-        restaurantId: restaurant.id,
-        name: values.name,
-        price: values.price,
-        category: values.category,
-        image: imageUrl,
-      };
+      if (editingItem) {
+        const updatedMenu: Menu = {
+          ...editingItem,
+          name: values.name,
+          price: values.price,
+          category: values.category,
+          image: imageUrl,
+        };
+        await setDoc(doc(db, "menus", editingItem.id), updatedMenu);
+        setMenus(menus.map(m => m.id === editingItem.id ? updatedMenu : m));
+        toast.success("Menu item updated successfully");
+      } else {
+        const menuId = `menu_${Date.now()}`;
+        const newMenu: Menu = {
+          id: menuId,
+          restaurantId: restaurant.id,
+          name: values.name,
+          price: values.price,
+          category: values.category,
+          image: imageUrl,
+        };
 
-      await setDoc(doc(db, "menus", menuId), newMenu);
-      setMenus([...menus, newMenu]);
-      
-      toast.success("Menu item added successfully");
-      setOpen(false);
-      reset();
-      setImageUrl("");
+        await setDoc(doc(db, "menus", menuId), newMenu);
+        setMenus([...menus, newMenu]);
+        toast.success("Menu item added successfully");
+      }
+
+      handleCloseModal();
     } catch (error: any) {
-      toast.error(error.message || "Failed to add menu item");
+      toast.error(error.message || "Failed to save menu item");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const filteredMenus = useMemo(() => {
+    if (!searchQuery.trim()) return menus;
+    const query = searchQuery.toLowerCase();
+    return menus.filter(
+      (m) => m.name.toLowerCase().includes(query) || (m.category && m.category.toLowerCase().includes(query))
+    );
+  }, [menus, searchQuery]);
+
+  const groupedMenus = useMemo(() => {
+    const groups: { [key: string]: Menu[] } = {};
+    filteredMenus.forEach((menu) => {
+      const cat = menu.category || "Uncategorized";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(menu);
+    });
+    // Optional: Sort categories alphabetically
+    const sortedGroups: { [key: string]: Menu[] } = {};
+    Object.keys(groups).sort().forEach(key => {
+      sortedGroups[key] = groups[key];
+    });
+    return sortedGroups;
+  }, [filteredMenus]);
+
   if (!restaurant) return <div className="p-8 text-center text-gray-500 font-medium pt-20">Please complete restaurant setup first.</div>;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-6 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-6 sm:space-y-8">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Menu Items</h1>
-          <p className="text-gray-500 mt-1 font-medium">Manage your digital menu catalog.</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">Menu Items</h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1 font-medium">Manage your digital menu catalog.</p>
         </div>
 
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(isOpen) => isOpen ? setOpen(true) : handleCloseModal()}>
           <DialogTrigger render={
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 px-5 rounded-xl shadow-sm shadow-emerald-200 transition-all hover:scale-[1.02]">
-              <Plus className="mr-2 h-5 w-5" /> Add Item
-            </Button>
-          } />
-          <DialogContent className="sm:max-w-[425px] rounded-2xl">
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 px-5 rounded-xl shadow-sm shadow-emerald-200 transition-all hover:scale-[1.02]" />
+          }>
+            <Plus className="mr-2 h-5 w-5" /> Add Item
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px] rounded-2xl w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="font-bold">Add New Menu Item</DialogTitle>
+              <DialogTitle className="font-bold text-xl">{editingItem ? "Edit Menu Item" : "Add New Menu Item"}</DialogTitle>
               <DialogDescription>
-                Create a new digital menu item with image and price.
+                {editingItem ? "Update details for this digital menu item." : "Create a new digital menu item with image and price."}
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2 sm:py-4">
               <div className="space-y-4">
                 <div className="flex flex-col gap-2">
                   <Label className="font-semibold text-gray-700">Item Image</Label>
-                  <ImageUpload 
+                  <ImageUpload
                     value={imageUrl}
                     onChange={setImageUrl}
                     folder={`restaurants/${restaurant.id}/menu`}
@@ -140,27 +198,38 @@ export default function MenuPage() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="name" className="font-semibold text-gray-700">Item Name</Label>
-                  <Input id="name" placeholder="Margherita Pizza" {...register("name")} className="h-11 rounded-xl border-gray-200" />
+                  <Input id="name" placeholder="Margherita Pizza" {...register("name")} className="h-11 rounded-xl border-gray-200 focus-visible:ring-emerald-500" />
                   {errors.name && <p className="text-xs font-semibold text-red-500">{errors.name.message}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="price" className="font-semibold text-gray-700">Price (₹)</Label>
-                    <Input id="price" type="number" placeholder="299" {...register("price")} className="h-11 rounded-xl border-gray-200" />
+                    <Input id="price" type="number" placeholder="299" {...register("price")} className="h-11 rounded-xl border-gray-200 focus-visible:ring-emerald-500" />
                     {errors.price && <p className="text-xs font-semibold text-red-500">{errors.price.message}</p>}
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="category" className="font-semibold text-gray-700">Category</Label>
-                    <Input id="category" placeholder="Italian" {...register("category")} className="h-11 rounded-xl border-gray-200" />
+                    <Input
+                      id="category"
+                      placeholder="Italian"
+                      list="category-options"
+                      {...register("category")}
+                      className="h-11 rounded-xl border-gray-200 focus-visible:ring-emerald-500"
+                    />
+                    <datalist id="category-options">
+                      {Array.from(new Set(menus.map(m => m.category))).filter(Boolean).map(cat => (
+                        <option key={cat} value={cat} />
+                      ))}
+                    </datalist>
                     {errors.category && <p className="text-xs font-semibold text-red-500">{errors.category.message}</p>}
                   </div>
                 </div>
               </div>
-              <DialogFooter className="pt-2">
-                <Button type="button" variant="outline" className="rounded-xl font-semibold border-gray-200 text-gray-600" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button type="submit" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold" disabled={submitting}>
-                  {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Item"}
+              <DialogFooter className="pt-4 sm:pt-2">
+                <Button type="button" variant="outline" className="rounded-xl font-semibold border-gray-200 text-gray-600 w-full sm:w-auto mb-2 sm:mb-0" onClick={handleCloseModal}>Cancel</Button>
+                <Button type="submit" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full sm:w-auto" disabled={submitting}>
+                  {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Changes"}
                 </Button>
               </DialogFooter>
             </form>
@@ -168,85 +237,135 @@ export default function MenuPage() {
         </Dialog>
       </div>
 
+      {/* Search Bar */}
+      {menus.length > 0 && (
+        <div className="relative max-w-xl">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <Input
+            placeholder="Search menu items or categories..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-11 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 w-full bg-white shadow-sm text-base"
+          />
+        </div>
+      )}
+
       {/* Main Content Area */}
       {loading ? (
-        <div className="flex flex-col justify-center items-center py-32 space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-          <p className="text-sm font-semibold text-emerald-600/80">Loading your menu...</p>
+        <div className="flex flex-col gap-3 py-4 w-full">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-white rounded-xl p-4 flex items-center gap-4 border border-gray-100 animate-pulse w-full">
+              <div className="w-[72px] h-[72px] sm:w-20 sm:h-20 bg-gray-100 rounded-xl shrink-0"></div>
+              <div className="flex-1 flex flex-col gap-2 min-w-0">
+                <div className="w-1/2 h-5 bg-gray-100 rounded-lg"></div>
+                <div className="w-1/4 h-4 bg-gray-100 rounded-lg"></div>
+                <div className="w-16 h-5 bg-gray-100 rounded-lg"></div>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <div className="w-9 h-9 rounded-full bg-gray-100"></div>
+                <div className="w-9 h-9 rounded-full bg-gray-100"></div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : menus.length === 0 ? (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }} 
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white border-2 border-dashed border-emerald-100 rounded-[2rem] py-24 px-6 text-center shadow-sm"
+          className="bg-white border-2 border-dashed border-emerald-100 rounded-[2rem] py-20 sm:py-24 px-4 sm:px-6 text-center shadow-sm"
         >
           <div className="h-20 w-20 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-5 shadow-inner">
-             <UtensilsCrossed className="h-10 w-10 text-emerald-400" />
+            <UtensilsCrossed className="h-10 w-10 text-emerald-400" />
           </div>
           <h3 className="text-xl font-extrabold text-gray-900 mb-2">No menu items yet</h3>
-          <p className="text-gray-500 mb-8 max-w-sm mx-auto font-medium">Get started by creating your first delicious item to display to your customers.</p>
+          <p className="text-gray-500 mb-8 max-w-sm mx-auto font-medium text-sm sm:text-base">Get started by creating your first delicious item to display to your customers.</p>
           <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 px-8 rounded-full shadow-md shadow-emerald-200 transition-all hover:scale-105 hover:-translate-y-0.5">
             <Plus className="mr-2 h-5 w-5" /> Add Your First Item
           </Button>
         </motion.div>
-      ) : (
-        <AnimatePresence mode="popLayout">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-            {menus.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2, delay: index * 0.05 }}
-                whileHover={{ scale: 1.02, y: -4 }}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 overflow-hidden group flex flex-col transition-all duration-300"
-              >
-                {/* Top Section: Image & Overlays */}
-                <div className="relative h-48 w-full bg-gray-50 shrink-0 overflow-hidden">
-                  <motion.img 
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.4 }}
-                    src={item.image} 
-                    alt={item.name} 
-                    className="h-full w-full object-cover" 
-                  />
-                  
-                  {/* Category Badge Overlay */}
-                  <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md text-gray-900 text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-sm">
-                    {item.category}
-                  </div>
-
-                  {/* Delete Action (visible on hover) */}
-                  <button 
-                    onClick={() => onDelete(item.id)}
-                    className="absolute top-3 right-3 p-2 bg-white/90 text-gray-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:text-red-500 hover:bg-red-50 hover:scale-110 shadow-sm"
-                    title="Delete item"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-
-                {/* Middle & Bottom Section: Details */}
-                <div className="p-5 flex flex-col flex-1 bg-white relative z-10">
-                  <h3 className="font-extrabold text-gray-900 text-lg line-clamp-1 mb-1" title={item.name}>{item.name}</h3>
-                  <p className="text-xs font-medium text-gray-400 mb-4">{item.category} Item</p>
-                  
-                  <div className="mt-auto flex items-center justify-between">
-                    <span className="font-extrabold text-emerald-600 text-[1.35rem]">₹{item.price}</span>
-                    <button 
-                      onClick={() => toast.info("Edit feature coming soon!")}
-                      className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                      title="Edit item"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+      ) : Object.keys(groupedMenus).length === 0 ? (
+        <div className="py-20 text-center bg-white border border-gray-100 rounded-[2rem] shadow-sm">
+          <div className="h-20 w-20 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-5">
+            <Search className="h-10 w-10 text-gray-400" />
           </div>
-        </AnimatePresence>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">No items found</h3>
+          <p className="text-gray-500 text-sm">We couldn't find anything matching "{searchQuery}"</p>
+          <Button variant="outline" className="mt-6 rounded-xl font-medium" onClick={() => setSearchQuery("")}>Clear Search</Button>
+        </div>
+      ) : (
+        <div className="space-y-12">
+          {Object.entries(groupedMenus).map(([category, items]) => (
+            <div key={category} className="space-y-3">
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2.5 min-w-0">
+
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 shadow-sm shadow-emerald-200" />
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight truncate capitalize">
+                    {category}
+                  </h2>
+                </div>
+                <span className="inline-flex items-center shrink-0 bg-emerald-50 text-emerald-700 border border-emerald-100 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
+                  {items.length} {items.length === 1 ? 'item' : 'items'}
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                <AnimatePresence mode="popLayout">
+                  {items.map((item, index) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10, scale: 0.97 }}
+                      transition={{ duration: 0.18, delay: index * 0.03 }}
+                      className="bg-white rounded-xl border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all duration-200 flex items-center gap-4 p-3.5 sm:p-4 group"
+                    >
+                      {/* Left: Image */}
+                      <div className="w-[72px] h-[72px] sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <ImageIcon className="h-8 w-8 text-gray-300" />
+                        )}
+                      </div>
+
+                      {/* Middle: Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-base sm:text-[17px] leading-snug line-clamp-1">
+                          {item.name}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-gray-400 font-medium mt-0.5 truncate">{item.category}</p>
+                        <div className="font-extrabold text-emerald-600 text-[15px] sm:text-base mt-1.5">₹{item.price}</div>
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={(e) => handleEditClick(item, e)}
+                          className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-150 border border-gray-100 shadow-sm hover:border-emerald-200 hover:scale-110"
+                          title="Edit item"
+                        >
+                          <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => onDelete(item.id, e)}
+                          className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all duration-150 border border-gray-100 shadow-sm hover:border-red-200 hover:scale-110"
+                          title="Delete item"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
