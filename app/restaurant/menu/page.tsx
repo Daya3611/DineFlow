@@ -173,7 +173,7 @@ export default function MenuPage() {
 
         <Dialog open={open} onOpenChange={(isOpen) => isOpen ? setOpen(true) : handleCloseModal()}>
           <DialogTrigger render={
-            <Button className="bg-gradient-to-br from-[#1abc9c] to-[#16e0bd] hover:brightness-105 text-white font-bold h-11 px-5 rounded-[10px] transition-all" />
+            <Button className="bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 font-bold h-11 px-5 rounded-full transition-all" />
           }>
             <Plus className="mr-2 h-5 w-5" /> Add Item
           </DialogTrigger>
@@ -228,7 +228,7 @@ export default function MenuPage() {
               </div>
               <DialogFooter className="pt-4 sm:pt-2">
                 <Button type="button" variant="outline" className="rounded-xl font-semibold border-gray-200 text-gray-600 w-full sm:w-auto mb-2 sm:mb-0" onClick={handleCloseModal}>Cancel</Button>
-                <Button type="submit" className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg w-full sm:w-auto" disabled={submitting}>
+                <Button type="submit" className="rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200 w-full sm:w-auto" disabled={submitting}>
                   {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Changes"}
                 </Button>
               </DialogFooter>
@@ -245,7 +245,7 @@ export default function MenuPage() {
             placeholder="Search menu items or categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-11 h-12 rounded-[10px] border-slate-200 focus-visible:ring-[#1abc9c] focus-visible:border-[#1abc9c] w-full bg-white text-base"
+            className="pl-11 h-12 rounded-[10px] border-slate-200 focus-visible:ring-[#1abc9c] focus-visible:border-[#0f9d6a] w-full bg-white text-base"
           />
         </div>
       )}
@@ -274,15 +274,15 @@ export default function MenuPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white border-2 border-dashed border-emerald-100 rounded-[2rem] py-20 sm:py-24 px-4 sm:px-6 text-center shadow-sm"
         >
-            <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-5">
-              <UtensilsCrossed className="h-10 w-10 text-slate-400" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No menu items yet</h3>
-            <p className="text-slate-500 mb-8 max-w-sm mx-auto text-sm sm:text-base">Get started by creating your first delicious item to display to your customers.</p>
-            <Button onClick={() => setOpen(true)} className="bg-gradient-to-br from-[#1abc9c] to-[#16e0bd] hover:brightness-105 text-white font-bold h-11 px-6 rounded-[10px] transition-all">
-              <Plus className="mr-2 h-5 w-5" /> Add Your First Item
-            </Button>
-          </motion.div>
+          <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-5">
+            <UtensilsCrossed className="h-10 w-10 text-slate-400" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">No menu items yet</h3>
+          <p className="text-slate-500 mb-8 max-w-sm mx-auto text-sm sm:text-base">Get started by creating your first delicious item to display to your customers.</p>
+          <Button onClick={() => setOpen(true)} className="bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 font-bold h-11 px-6 rounded-full transition-all">
+            <Plus className="mr-2 h-5 w-5" /> Add Your First Item
+          </Button>
+        </motion.div>
       ) : Object.keys(groupedMenus).length === 0 ? (
         <div className="py-20 text-center bg-white border border-gray-100 rounded-[2rem] shadow-sm">
           <div className="h-20 w-20 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-5">
@@ -345,7 +345,7 @@ export default function MenuPage() {
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           onClick={(e) => handleEditClick(item, e)}
-                          className="p-2 text-slate-400 hover:text-[#1abc9c] transition-colors"
+                          className="p-2 text-slate-400 hover:text-[#0f9d6a] transition-colors"
                           title="Edit item"
                         >
                           <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />

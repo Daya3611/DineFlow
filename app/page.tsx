@@ -27,7 +27,7 @@ const features = [
   {
     title: "QR Ordering",
     icon: QrCode,
-    color: "bg-emerald-100 text-emerald-600",
+    color: "bg-emerald-100 text-[#0f9d6a]",
     desc: "Customers scan & instantly browse your digital menu. Zero app required.",
   },
   {
@@ -96,7 +96,7 @@ const testimonials = [
     title: "Owner, Spice Garden",
     body: "Dineflow.pro completely transformed how we handle orders. Our staff is faster and customers love scanning QR codes.",
     avatar: "RM",
-    color: "bg-emerald-600",
+    color: "bg-[#0f9d6a]",
   },
   {
     name: "Priya Shah",
@@ -167,26 +167,23 @@ export default function Home() {
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-md">
         <div className="container mx-auto px-6 max-w-7xl h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <Image src="/logo.png" alt="Dineflow.pro Logo" width={32} height={32} className="h-8 w-8 object-contain" priority />
-            <span className="font-extrabold text-lg text-gray-900 tracking-tight">
-              Dineflow<span className="text-amber-500 font-extrabold hover:text-amber-400 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] transition-all duration-300">.pro</span>
-            </span>
+            <Image src="/logo.png" alt="Dineflow.pro Logo" width={140} height={36} className="h-8 md:h-9 w-auto object-contain" priority />
           </Link>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
-            <Link href="#features" className="hover:text-emerald-600 transition-colors">Features</Link>
-            <Link href="#how-it-works" className="hover:text-emerald-600 transition-colors">How it works</Link>
-            <Link href="#pricing" className="hover:text-emerald-600 transition-colors">Pricing</Link>
+            <Link href="#features" className="hover:text-[#0f9d6a] transition-colors">Features</Link>
+            <Link href="#how-it-works" className="hover:text-[#0f9d6a] transition-colors">How it works</Link>
+            <Link href="#pricing" className="hover:text-[#0f9d6a] transition-colors">Pricing</Link>
           </nav>
 
           <div className="flex items-center gap-3">
             <Link href="/login">
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-emerald-600 font-semibold hidden sm:flex">
+              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-[#0f9d6a] font-semibold hidden sm:flex">
                 Log in
               </Button>
             </Link>
             <Link href="/register">
-              <Button size="sm" className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium px-5 transition duration-200 hover:brightness-110 hover:shadow-lg">
+              <Button size="sm" className="rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200 px-5">
                 Start Free Trial
               </Button>
             </Link>
@@ -252,12 +249,12 @@ export default function Home() {
               className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
             >
               <Link href="/register">
-                <Button size="lg" className="h-14 px-10 text-base rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-semibold transition duration-200 hover:brightness-110 hover:shadow-xl focus:ring-2 focus:ring-[#1abc9c]/40">
+                <Button size="lg" className="h-14 px-10 text-base rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200 shadow-[0_4px_14px_rgba(15,157,106,0.25)]">
                   Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link href="#how-it-works">
-                <Button size="lg" variant="outline" className="h-14 px-10 text-base border-gray-200 text-gray-700 rounded-2xl hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50 font-semibold transition-all">
+                <Button size="lg" variant="outline" className="h-14 px-10 text-base rounded-2xl bg-white border border-[#e5e7eb] text-[#0f172a] hover:bg-[#f1f5f9] font-semibold transition-all">
                   See How It Works
                 </Button>
               </Link>
@@ -371,9 +368,9 @@ export default function Home() {
                   <motion.div key={i} {...fadeUp(i * 0.1)} className="text-center relative">
                     <div className="relative inline-flex items-center justify-center mb-6 pt-3 pr-3">
                       <div className="h-20 w-20 rounded-full bg-white border-2 border-emerald-100 shadow-lg shadow-emerald-100/40 flex items-center justify-center z-10 relative">
-                        <Icon className="h-8 w-8 text-emerald-600" />
+                        <Icon className="h-8 w-8 text-[#0f9d6a]" />
                       </div>
-                      <span className="absolute top-0 right-0 text-[10px] font-black bg-emerald-600 text-white rounded-full h-6 w-6 flex items-center justify-center shadow-md z-20">
+                      <span className="absolute top-0 right-0 text-[10px] font-black bg-[#0f9d6a] text-white rounded-full h-6 w-6 flex items-center justify-center shadow-md z-20">
                         {s.step}
                       </span>
                     </div>
@@ -407,7 +404,7 @@ export default function Home() {
                   key={i}
                   {...fadeUp(i * 0.1)}
                   className={`relative rounded-2xl p-8 flex flex-col border-2 transition-all ${plan.highlighted
-                    ? "border-emerald-500 bg-emerald-600 text-white shadow-2xl shadow-emerald-200 scale-[1.02]"
+                    ? "border-emerald-500 bg-[#0f9d6a] text-white shadow-2xl shadow-[0_4px_14px_rgba(15,157,106,0.2)] scale-[1.02]"
                     : "border-gray-100 bg-white shadow-sm hover:shadow-lg hover:border-gray-200"
                     }`}
                 >
@@ -438,9 +435,9 @@ export default function Home() {
                   <Link href="/register">
                     <Button
                       size="lg"
-                      className={`w-full font-medium rounded-full h-12 transition duration-200 hover:brightness-110 hover:shadow-lg ${plan.highlighted
-                        ? "bg-white text-[#16a085] hover:bg-slate-50"
-                        : "bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white"
+                      className={`w-full font-medium rounded-full h-12 transition duration-200 ${plan.highlighted
+                        ? "bg-white text-[#0f9d6a] hover:bg-slate-50"
+                        : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30"
                         }`}
                     >
                       {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
@@ -494,7 +491,7 @@ export default function Home() {
         </section>
 
         {/* ── Final CTA Banner ── */}
-        <section className="py-24 bg-gradient-to-br from-emerald-600 to-teal-700 relative overflow-hidden">
+        <section className="py-24 bg-[#0f172a] relative overflow-hidden">
           <div className="absolute inset-0 opacity-[0.08]">
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white rounded-full translate-x-1/3 -translate-y-1/3 blur-3xl" />
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-white rounded-full -translate-x-1/3 translate-y-1/3 blur-3xl" />
@@ -527,10 +524,7 @@ export default function Home() {
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <Link href="/" className="flex items-center gap-2.5 mb-4">
-                <Image src="/logo.png" alt="Dineflow.pro Logo" width={32} height={32} className="h-8 w-8 object-contain" priority />
-                <span className="font-extrabold text-lg text-gray-900 tracking-tight">
-                  Dineflow<span className="text-amber-500 font-extrabold hover:text-amber-400 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] transition-all duration-300">.pro</span>
-                </span>
+                <Image src="/logo.png" alt="Dineflow.pro Logo" width={140} height={36} className="h-8 md:h-9 w-auto object-contain" priority />
               </Link>
               <p className="text-sm text-gray-500 leading-relaxed max-w-[220px]">
                 The all-in-one restaurant management platform built for modern India.
@@ -541,9 +535,9 @@ export default function Home() {
             <div>
               <h4 className="text-gray-900 font-bold text-sm mb-4">Product</h4>
               <ul className="space-y-2.5 text-sm">
-                <li><Link href="#features" className="hover:text-emerald-600 transition-colors">Features</Link></li>
-                <li><Link href="#pricing" className="hover:text-emerald-600 transition-colors">Pricing</Link></li>
-                <li><Link href="#how-it-works" className="hover:text-emerald-600 transition-colors">How It Works</Link></li>
+                <li><Link href="#features" className="hover:text-[#0f9d6a] transition-colors">Features</Link></li>
+                <li><Link href="#pricing" className="hover:text-[#0f9d6a] transition-colors">Pricing</Link></li>
+                <li><Link href="#how-it-works" className="hover:text-[#0f9d6a] transition-colors">How It Works</Link></li>
               </ul>
             </div>
 
@@ -551,9 +545,9 @@ export default function Home() {
             <div>
               <h4 className="text-gray-900 font-bold text-sm mb-4">Company</h4>
               <ul className="space-y-2.5 text-sm">
-                <li><Link href="#" className="hover:text-emerald-600 transition-colors">About</Link></li>
-                <li><Link href="#" className="hover:text-emerald-600 transition-colors">Blog</Link></li>
-                <li><Link href="#" className="hover:text-emerald-600 transition-colors">Contact</Link></li>
+                <li><Link href="#" className="hover:text-[#0f9d6a] transition-colors">About</Link></li>
+                <li><Link href="#" className="hover:text-[#0f9d6a] transition-colors">Blog</Link></li>
+                <li><Link href="#" className="hover:text-[#0f9d6a] transition-colors">Contact</Link></li>
               </ul>
             </div>
 
@@ -566,7 +560,7 @@ export default function Home() {
                   { Icon: Instagram, href: "#" },
                   { Icon: Linkedin, href: "#" },
                 ].map(({ Icon, href }, i) => (
-                  <Link key={i} href={href} className="h-9 w-9 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-emerald-100 hover:text-emerald-600 transition-all">
+                  <Link key={i} href={href} className="h-9 w-9 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-emerald-100 hover:text-[#0f9d6a] transition-all">
                     <Icon className="h-4 w-4" />
                   </Link>
                 ))}

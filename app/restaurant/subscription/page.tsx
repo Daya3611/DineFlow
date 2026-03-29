@@ -172,10 +172,10 @@ export default function SubscriptionPage() {
                 </CardContent>
                 <CardFooter className="pt-6">
                   <Button 
-                    className={`w-full rounded-full font-medium h-12 transition duration-200 hover:brightness-110 hover:shadow-lg ${
+                    className={`w-full rounded-full font-medium h-12 transition duration-200 ${
                       isCurrentPlan 
-                        ? "border border-slate-200 bg-white text-slate-400 cursor-default" 
-                        : "bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white hover:shadow-[#1abc9c]/30"
+                        ? "bg-white border border-slate-200 text-slate-400 cursor-default" 
+                        : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30"
                     }`}
                     size="lg"
                     disabled={isCurrentPlan || loadingPlan !== null}

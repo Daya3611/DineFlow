@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="flex flex-col items-center gap-3">
           <Image src="/logo.png" alt="Dineflow Logo" width={48} height={48} className="h-12 w-12 object-contain" priority />
-          <Loader2 className="h-6 w-6 animate-spin text-[#1abc9c]" />
+          <Loader2 className="h-6 w-6 animate-spin text-[#0f9d6a]" />
         </div>
       </div>
     );
@@ -140,8 +140,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
           <div className="font-bold text-slate-900 capitalize text-lg">{pageLabel}</div>
           <div className="ml-auto">
-            <div className="flex items-center gap-2 bg-[#1abc9c]/10 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-slate-200">
-              <div className="h-1.5 w-1.5 rounded-full bg-[#1abc9c] animate-pulse" />
+            <div className="flex items-center gap-2 bg-[#0f9d6a]/10 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-slate-200">
+              <div className="h-1.5 w-1.5 rounded-full bg-[#0f9d6a] animate-pulse" />
               Live
             </div>
           </div>

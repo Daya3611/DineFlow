@@ -81,7 +81,7 @@ export default function AdminPaymentsPage() {
                     <TableCell className="text-slate-600 text-sm max-w-[120px] truncate" title={payment.userId}>
                       {payment.userId}
                     </TableCell>
-                    <TableCell className="font-semibold text-emerald-600">
+                    <TableCell className="font-semibold text-[#0f9d6a]">
                       {getAmountForPlan(payment.plan)}
                     </TableCell>
                     <TableCell className="text-slate-500">

@@ -71,7 +71,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-emerald-600">
+        <div className="flex flex-col items-center gap-3 text-[#0f9d6a]">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span className="font-semibold text-sm tracking-widest uppercase">Fetching Live Data ...</span>
         </div>
@@ -80,7 +80,7 @@ export default function AdminDashboardPage() {
   }
 
   const statCards = [
-    { title: "Total Restaurants", value: stats.restaurants, icon: <Store className="h-5 w-5" />, color: "bg-emerald-50 text-emerald-600 border-emerald-100" },
+    { title: "Total Restaurants", value: stats.restaurants, icon: <Store className="h-5 w-5" />, color: "bg-emerald-50 text-[#0f9d6a] border-emerald-100" },
     { title: "Active Users", value: stats.users, icon: <Users className="h-5 w-5" />, color: "bg-teal-50 text-teal-600 border-teal-100" },
     { title: "Active Subscriptions", value: stats.activeSubs, icon: <Activity className="h-5 w-5" />, color: "bg-cyan-50 text-cyan-600 border-cyan-100" },
     { title: "Monthly Revenue", value: `₹${stats.monthlyRevenue.toLocaleString()}`, icon: <CreditCard className="h-5 w-5" />, color: "bg-green-50 text-green-600 border-green-100" },
@@ -176,7 +176,7 @@ export default function AdminDashboardPage() {
                         {rest.logo ? (
                            <img src={rest.logo} alt="logo" className="w-10 h-10 rounded-lg object-cover bg-gray-100 shrink-0" />
                         ) : (
-                           <div className="w-10 h-10 rounded-lg shrink-0 bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                           <div className="w-10 h-10 rounded-lg shrink-0 bg-emerald-100 text-[#0f9d6a] flex items-center justify-center font-bold">
                              {rest.name?.charAt(0)}
                            </div>
                         )}

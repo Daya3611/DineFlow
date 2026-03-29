@@ -40,7 +40,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="flex flex-col items-center gap-3">
           <Image src="/logo.png" alt="Dineflow Logo" width={60} height={60} className="h-12 w-12 object-contain" priority />
-          <Loader2 className="h-6 w-6 animate-spin text-[#1abc9c]" />
+          <Loader2 className="h-6 w-6 animate-spin text-[#0f9d6a]" />
         </div>
       </div>
     );

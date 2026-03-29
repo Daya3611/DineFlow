@@ -86,7 +86,7 @@ export default function RestaurantSettings() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-          <Store className="h-5 w-5 text-emerald-600" />
+          <Store className="h-5 w-5 text-[#0f9d6a]" />
         </div>
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Business Profile</h1>
@@ -125,7 +125,7 @@ export default function RestaurantSettings() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="border-gray-100 shadow-sm shadow-gray-100 rounded-2xl">
             <CardHeader className="bg-gray-50/50 border-b border-gray-100">
-              <CardTitle className="text-lg flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-600"/> Contact Info</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2"><MapPin className="h-4 w-4 text-[#0f9d6a]"/> Contact Info</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="space-y-1.5">
@@ -156,7 +156,7 @@ export default function RestaurantSettings() {
 
           <Card className="border-emerald-100 shadow-sm shadow-emerald-50 rounded-2xl ring-1 ring-emerald-50">
             <CardHeader className="bg-emerald-50/50 border-b border-emerald-100">
-              <CardTitle className="text-lg flex items-center gap-2 text-emerald-900"><QrCode className="h-4 w-4 text-emerald-600"/> Billing & Payments</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2 text-emerald-900"><QrCode className="h-4 w-4 text-[#0f9d6a]"/> Billing & Payments</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-xl mb-4">
@@ -185,7 +185,7 @@ export default function RestaurantSettings() {
         </div>
 
         <div className="flex justify-end pt-4">
-          <Button type="submit" size="lg" className="h-12 px-8 rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg focus:ring-2 focus:ring-[#1abc9c]/40" disabled={loading}>
+          <Button type="submit" size="lg" className="h-12 px-8 rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200" disabled={loading}>
             {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Save Profile Configuration"}
           </Button>
         </div>

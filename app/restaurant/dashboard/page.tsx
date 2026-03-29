@@ -119,7 +119,7 @@ export default function RestaurantDashboard() {
       return (
         <div className="bg-white border border-gray-100 shadow-xl rounded-xl p-3">
           <p className="text-gray-500 font-medium text-xs mb-1">{label}</p>
-          <p className="text-emerald-600 font-extrabold text-base">
+          <p className="text-[#0f9d6a] font-extrabold text-base">
             ₹{payload[0].value.toLocaleString()}
           </p>
         </div>
@@ -137,7 +137,7 @@ export default function RestaurantDashboard() {
         </div>
         {!hasRestaurant && (
           <Link href="/restaurant/settings">
-            <Button className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg">
+            <Button className="rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200">
               Complete Setup <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
@@ -158,7 +158,7 @@ export default function RestaurantDashboard() {
             </CardHeader>
             <CardContent>
               <Link href="/restaurant/settings">
-                <Button className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg">Create Profile</Button>
+                <Button className="rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200">Create Profile</Button>
               </Link>
             </CardContent>
           </Card>
@@ -206,7 +206,7 @@ export default function RestaurantDashboard() {
               {restaurant.plan === "none" && (
                 <CardFooter className="pb-4 pt-0 mt-2 text-xs">
                   <Link href="/restaurant/subscription" className="w-full">
-                     <Button variant="outline" className="w-full border-emerald-200 text-emerald-600 hover:bg-emerald-50 rounded-xl font-semibold">View Plans</Button>
+                     <Button variant="outline" className="w-full bg-white border-[#e5e7eb] text-[#0f172a] hover:bg-[#f1f5f9] rounded-xl font-semibold">View Plans</Button>
                   </Link>
                 </CardFooter>
               )}

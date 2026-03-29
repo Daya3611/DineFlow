@@ -207,7 +207,7 @@ export default function LiveOrdersPage() {
               setIsSoundEnabled(!isSoundEnabled);
             }}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-              isSoundEnabled ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              isSoundEnabled ? "bg-[#0f9d6a]/10 text-[#0f9d6a] hover:bg-[#0f9d6a]/20" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             <Bell className="h-4 w-4" />
@@ -224,7 +224,7 @@ export default function LiveOrdersPage() {
       {/* Orders Grid */}
       {loading ? (
         <div className="flex justify-center items-center p-20">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#0f9d6a]" />
         </div>
       ) : activeOrders.length === 0 ? (
         <div className="bg-white border-2 border-dashed border-emerald-200 rounded-2xl py-20 text-center">
@@ -287,7 +287,7 @@ export default function LiveOrdersPage() {
                            </div>
                            <div className="text-right">
                              <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider block mb-0.5">Total</span>
-                             <span className="text-xl font-extrabold text-emerald-600 block leading-none">₹{order.totalAmount}</span>
+                             <span className="text-xl font-extrabold text-[#0f9d6a] block leading-none">₹{order.totalAmount}</span>
                            </div>
                         </div>
 
@@ -304,7 +304,7 @@ export default function LiveOrdersPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="rounded-xl border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600 h-9"
+                            className="rounded-xl bg-white border-[#e5e7eb] text-[#64748b] hover:text-[#0f9d6a] hover:bg-[#f1f5f9] h-9"
                             onClick={() => printBill(order)}
                           >
                             <Printer className="w-4 h-4 mr-1.5" /> Print Bill
@@ -313,7 +313,7 @@ export default function LiveOrdersPage() {
                             <Button
                               size="sm"
                               className={`rounded-xl text-white font-semibold h-9 ${
-                              config.nextStatus === "paid" ? "rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg" : "bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-full transition duration-200"
+                              config.nextStatus === "paid" ? "bg-[#0f9d6a] hover:bg-[#0c7f56] rounded-full" : "bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-full"
                               }`}
                               onClick={() => updateOrderStatus(order.id, config.nextStatus!)}
                               disabled={config.nextStatus === "paid" && payStatus === "pending_verification"}
@@ -380,12 +380,12 @@ export default function LiveOrdersPage() {
                         <td className="px-6 py-4 font-semibold text-gray-900">Table {o.tableNumber}</td>
                         <td className="px-6 py-4 text-gray-500">{o.items.reduce((a, i) => a + i.quantity, 0)} items</td>
                         <td className="px-6 py-4 text-gray-500">
-                           <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 pointer-events-none">Paid</Badge>
+                           <Badge variant="outline" className="bg-emerald-50 text-[#0f9d6a] border-emerald-200 pointer-events-none">Paid</Badge>
                         </td>
                         <td className="px-6 py-4 font-extrabold text-gray-900">₹{o.totalAmount}</td>
                         <td className="px-6 py-4 text-gray-400">{new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                         <td className="px-6 py-4 text-right">
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 group-hover:text-emerald-600 group-hover:bg-emerald-100 rounded-full transition-all">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 group-hover:text-[#0f9d6a] group-hover:bg-emerald-100 rounded-full transition-all">
                              <Eye className="h-4 w-4" />
                           </Button>
                         </td>
@@ -410,7 +410,7 @@ export default function LiveOrdersPage() {
         <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 gap-0 border-gray-100 shadow-xl">
           {selectedOrder && (
             <>
-              <div className="bg-gradient-to-br from-[#1abc9c] to-[#16a085] p-6 text-white flex justify-between items-start">
+              <div className="bg-[#0f172a] p-6 text-white flex justify-between items-start">
                  <div>
                    <Badge className="bg-emerald-500/30 text-emerald-50 hover:bg-emerald-500/40 border-none mb-2 pointer-events-none">
                      Completed Order
@@ -431,7 +431,7 @@ export default function LiveOrdersPage() {
                     {selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-start text-sm">
                         <div className="flex gap-3">
-                          <span className="font-bold text-emerald-600 bg-emerald-50 px-2 rounded-md h-6 flex items-center justify-center min-w-[28px]">{item.quantity}x</span>
+                          <span className="font-bold text-[#0f9d6a] bg-emerald-50 px-2 rounded-md h-6 flex items-center justify-center min-w-[28px]">{item.quantity}x</span>
                           <span className="font-medium text-gray-900">{item.name}</span>
                         </div>
                         <span className="text-gray-500 font-medium whitespace-nowrap border-b border-gray-100 pb-2">₹{item.price * item.quantity}</span>
@@ -443,7 +443,7 @@ export default function LiveOrdersPage() {
                 <div className="pt-4 border-t border-dashed border-gray-200">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-gray-500 font-semibold">Total Amount</span>
-                    <span className="text-2xl font-black text-emerald-600">₹{selectedOrder.totalAmount}</span>
+                    <span className="text-2xl font-black text-[#0f9d6a]">₹{selectedOrder.totalAmount}</span>
                   </div>
 
                   <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center border border-gray-100">
@@ -463,7 +463,7 @@ export default function LiveOrdersPage() {
                      Close
                   </Button>
                   <Button 
-                    className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium w-full transition duration-200 hover:brightness-110 hover:shadow-lg"
+                    className="rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200 w-full"
                     onClick={() => { printBill(selectedOrder); setSelectedOrder(null); }}
                   >
                     <Printer className="h-4 w-4 mr-2" /> Print Bill

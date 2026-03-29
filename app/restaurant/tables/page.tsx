@@ -144,7 +144,7 @@ export default function TablesPage() {
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger render={<Button className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg" />}>
+          <DialogTrigger render={<Button className="rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200" />}>
             <Plus className="mr-2 h-4 w-4" /> Add Table
           </DialogTrigger>
           <DialogContent className="sm:max-w-[400px] rounded-2xl">
@@ -166,7 +166,7 @@ export default function TablesPage() {
               </div>
               <DialogFooter className="pt-2">
                 <Button type="button" variant="outline" className="rounded-xl" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button type="submit" className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg" disabled={submitting}>
+                <Button type="submit" className="rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200" disabled={submitting}>
                   {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Table"}
                 </Button>
               </DialogFooter>
@@ -178,7 +178,7 @@ export default function TablesPage() {
       {/* Tables Grid */}
       {loading ? (
         <div className="flex justify-center p-20">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#0f9d6a]" />
         </div>
       ) : tables.length === 0 ? (
         <div className="bg-white border-2 border-dashed border-emerald-200 rounded-2xl py-20 text-center">
@@ -187,7 +187,7 @@ export default function TablesPage() {
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">No tables yet</h3>
           <p className="text-gray-500 mb-6 max-w-xs mx-auto text-sm">Add your first table to generate a scannable QR code for customers.</p>
-          <Button onClick={() => setOpen(true)} className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg">
+          <Button onClick={() => setOpen(true)} className="rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200">
             <Plus className="mr-2 h-4 w-4" /> Add your first table
           </Button>
         </div>
@@ -212,7 +212,7 @@ export default function TablesPage() {
                     <Trash2 className="h-4 w-4" />
                   </button>
 
-                  <div className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-4 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                  <div className="text-xs font-bold text-[#0f9d6a] uppercase tracking-widest mb-4 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
                     Table {table.tableNumber}
                   </div>
 

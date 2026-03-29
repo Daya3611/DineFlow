@@ -55,7 +55,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex bg-[#f8fafc]">
       {/* Left decorative panel (desktop only) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 to-teal-700 p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#0f172a] p-12 flex-col justify-between relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 right-20 w-80 h-80 rounded-full border-2 border-white" />
           <div className="absolute bottom-32 left-16 w-56 h-56 rounded-full border-2 border-white" />
@@ -63,10 +63,7 @@ export default function LoginPage() {
         </div>
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <Image src="/logo.png" alt="Dineflow.pro Logo" width={40} height={40} className="h-10 w-10 rounded-2xl object-cover shadow-sm bg-white/20 backdrop-blur p-1" priority />
-            <span className="text-white font-bold text-xl tracking-tight">
-              Dineflow<span className="text-amber-400 font-extrabold hover:text-amber-300 hover:drop-shadow-[0_0_8px_rgba(251,191,36,0.6)] transition-all duration-300">.pro</span>
-            </span>
+            <Image src="/logo.png" alt="Dineflow.pro Logo" width={140} height={36} className="h-10 w-auto object-contain shadow-sm bg-white/20 backdrop-blur p-1 rounded-sm" priority />
           </div>
         </div>
         <div className="relative z-10">
@@ -97,16 +94,13 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <Link href="/" className="lg:hidden flex items-center gap-2.5 mb-10">
-            <Image src="/logo.png" alt="Dineflow.pro Logo" width={36} height={36} className="h-9 w-9 object-contain" priority />
-            <span className="text-xl font-bold text-gray-900 tracking-tight">
-              Dineflow<span className="text-amber-500 font-extrabold hover:text-amber-400 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] transition-all duration-300">.pro</span>
-            </span>
+            <Image src="/logo.png" alt="Dineflow.pro Logo" width={140} height={36} className="h-9 w-auto object-contain" priority />
           </Link>
 
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Sign in</h1>
           <p className="text-gray-500 mb-8">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-emerald-600 font-semibold hover:underline">
+            <Link href="/register" className="text-[#0f9d6a] font-semibold hover:underline">
               Create one free
             </Link>
           </p>
@@ -120,7 +114,7 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="name@example.com"
-                  className="pl-10 h-12 rounded-xl border-gray-200 focus:border-emerald-400 focus:ring-emerald-400 bg-white"
+                  className="pl-10 h-12 rounded-xl border-gray-200 focus:border-emerald-400 focus:ring-[#0f9d6a]/30 bg-white"
                   {...register("email")}
                 />
               </div>
@@ -135,7 +129,7 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10 h-12 rounded-xl border-gray-200 focus:border-emerald-400 focus:ring-emerald-400 bg-white"
+                  className="pl-10 h-12 rounded-xl border-gray-200 focus:border-emerald-400 focus:ring-[#0f9d6a]/30 bg-white"
                   {...register("password")}
                 />
               </div>
@@ -144,7 +138,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg focus:ring-2 focus:ring-[#1abc9c]/40"
+              className="w-full h-12 rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200"
               disabled={loading}
             >
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sign in to dashboard"}

@@ -253,14 +253,14 @@ function MenuContent() {
     return (
       <div className="menu-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#ffffff] to-[#f8fafc] w-full h-full">
         <div className="flex flex-col items-center justify-center -translate-y-[20%]">
-          <div className="h-[64px] w-[64px] rounded-[16px] bg-[#16a34a] flex items-center justify-center shadow-[0_8px_16px_rgba(22,163,74,0.15)] mb-5 shrink-0">
+          <div className="h-[64px] w-[64px] rounded-[16px] bg-[#0f9d6a] flex items-center justify-center shadow-[0_8px_16px_rgba(22,163,74,0.15)] mb-5 shrink-0">
             <UtensilsCrossed className="h-8 w-8 text-white" />
           </div>
           <div className="flex gap-[6px] items-center mb-0">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="h-1.5 w-1.5 rounded-full bg-[#16a34a] animate-bounce"
+                className="h-1.5 w-1.5 rounded-full bg-[#0f9d6a] animate-bounce"
                 style={{ animationDelay: `${i * 0.15}s` }}
               />
             ))}
@@ -316,7 +316,7 @@ function MenuContent() {
           initial={{ scale: 0.4, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", damping: 14 }}
-          className="w-20 h-20 bg-[#16a34a] rounded-full flex items-center justify-center mb-5 shadow-lg shadow-green-200"
+          className="w-20 h-20 bg-[#0f9d6a] rounded-full flex items-center justify-center mb-5 shadow-lg shadow-[0_4px_14px_rgba(15,157,106,0.2)]"
         >
           <CheckCircle className="h-10 w-10 text-white" />
         </motion.div>
@@ -341,12 +341,12 @@ function MenuContent() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
                   Order ID
                 </p>
-                <p className="text-lg font-bold font-mono text-[#16a34a]">
+                <p className="text-lg font-bold font-mono text-[#0f9d6a]">
                   #{orderPlaced.slice(-6).toUpperCase()}
                 </p>
               </div>
               <div className="flex items-center gap-1.5 bg-white border border-gray-100 text-gray-600 text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-sm">
-                <div className="h-1.5 w-1.5 rounded-full bg-[#16a34a] animate-pulse" />
+                <div className="h-1.5 w-1.5 rounded-full bg-[#0f9d6a] animate-pulse" />
                 Table {table}
               </div>
             </div>
@@ -362,7 +362,7 @@ function MenuContent() {
                   onClick={() => setPaymentOption("counter")}
                   className={`py-3 px-2 rounded-[16px] text-sm font-semibold border-2 transition-all duration-200 ${
                     paymentOption === "counter"
-                      ? "border-[#16a34a] bg-[#f0fdf4] text-[#16a34a]"
+                      ? "border-[#0f9d6a] bg-[#f0fdf4] text-[#0f9d6a]"
                       : "border-gray-100 text-gray-400 hover:border-gray-200"
                   }`}
                 >
@@ -373,7 +373,7 @@ function MenuContent() {
                     onClick={() => setPaymentOption("upi")}
                     className={`py-3 px-2 rounded-[16px] text-sm font-semibold border-2 transition-all duration-200 ${
                       paymentOption === "upi"
-                        ? "border-[#16a34a] bg-[#f0fdf4] text-[#16a34a]"
+                        ? "border-[#0f9d6a] bg-[#f0fdf4] text-[#0f9d6a]"
                         : "border-gray-100 text-gray-400 hover:border-gray-200"
                     }`}
                   >
@@ -404,7 +404,7 @@ function MenuContent() {
                     alt="UPI QR"
                     className="w-36 h-36 rounded-[16px] border border-gray-100 p-2 mb-4"
                   />
-                  <p className="text-xl font-extrabold text-[#16a34a] mb-1">
+                  <p className="text-xl font-extrabold text-[#0f9d6a] mb-1">
                     ₹{placedOrderTotal}
                   </p>
                   <p className="text-xs bg-gray-100 text-gray-500 font-semibold px-3 py-1 rounded-full mb-5">
@@ -412,14 +412,14 @@ function MenuContent() {
                   </p>
                   <div className="w-full space-y-3">
                     <Button
-                      className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold h-12 rounded-full shadow-sm shadow-green-100 transition-all active:scale-[0.98]"
+                      className="w-full bg-[#0f9d6a] hover:bg-[#0c7f56] text-white font-bold h-12 rounded-full shadow-sm shadow-[0_4px_14px_rgba(15,157,106,0.2)] transition-all active:scale-[0.98]"
                       onClick={handleUpiDeepLink}
                     >
                       Pay via UPI App
                     </Button>
                     <Button
                       variant="outline"
-                      className="w-full border-2 border-gray-200 text-[#16a34a] hover:bg-[#f0fdf4] font-bold h-12 rounded-full transition-all active:scale-[0.98]"
+                      className="w-full bg-white border-2 border-[#e5e7eb] text-[#0f172a] hover:bg-[#f1f5f9] font-bold h-12 rounded-full transition-all active:scale-[0.98]"
                       onClick={handleUpiPaid}
                       disabled={updatingPayment}
                     >
@@ -439,8 +439,8 @@ function MenuContent() {
 
               {paymentOption === "upi" && paymentVerified && (
                 <div className="bg-[#f0fdf4] rounded-[16px] p-5 text-center border border-green-100">
-                  <CheckCircle className="h-8 w-8 text-[#16a34a] mx-auto mb-2" />
-                  <p className="text-[#16a34a] font-bold text-sm">
+                  <CheckCircle className="h-8 w-8 text-[#0f9d6a] mx-auto mb-2" />
+                  <p className="text-[#0f9d6a] font-bold text-sm">
                     Payment Verification Pending
                   </p>
                   <p className="text-green-600 text-[11px] mt-1">
@@ -453,8 +453,8 @@ function MenuContent() {
 
           <div className="text-center">
             <Button
-              variant="ghost"
-              className="text-[#16a34a] hover:bg-[#f0fdf4] font-semibold text-sm rounded-full"
+              variant="outline"
+              className="bg-white border-[#e5e7eb] border text-[#0f172a] hover:bg-[#f1f5f9] font-semibold text-sm rounded-full"
               onClick={() => {
                 setOrderPlaced(null);
                 setPaymentOption("counter");
@@ -477,7 +477,7 @@ function MenuContent() {
         {/* Row 1: location + avatar */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <MapPin className="h-[18px] w-[18px] text-[#16a34a]" />
+            <MapPin className="h-[18px] w-[18px] text-[#0f9d6a]" />
             <div className="flex flex-col">
               <span className="text-[11px] text-gray-400 font-medium leading-tight mb-[2px]">
                 Dining at
@@ -486,8 +486,8 @@ function MenuContent() {
                 <span className="text-[15px] font-bold text-gray-900 leading-none truncate max-w-[150px]">
                   {restaurant.name}
                 </span>
-                <span className="flex items-center gap-1 bg-[#f0fdf4] text-[#16a34a] text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100 leading-none">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#16a34a] animate-pulse" />
+                <span className="flex items-center gap-1 bg-[#f0fdf4] text-[#0f9d6a] text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100 leading-none">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0f9d6a] animate-pulse" />
                   Table {table}
                 </span>
               </div>
@@ -501,7 +501,7 @@ function MenuContent() {
               className="h-10 w-10 rounded-full object-cover border border-gray-100 shadow-sm"
             />
           ) : (
-            <div className="h-10 w-10 rounded-full bg-[#16a34a] flex items-center justify-center text-white font-extrabold text-[15px] shadow-sm">
+            <div className="h-10 w-10 rounded-full bg-[#0f9d6a] flex items-center justify-center text-white font-extrabold text-[15px] shadow-sm">
               {restaurant.name.charAt(0).toUpperCase()}
             </div>
           )}
@@ -516,7 +516,7 @@ function MenuContent() {
             placeholder="Search dishes…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-[44px] pl-[38px] pr-4 rounded-[12px] bg-[#f1f5f9] text-[14px] text-gray-800 placeholder:text-gray-400 outline-none border border-transparent focus:border-[#16a34a] focus:bg-white focus:shadow-[0_0_0_2px_rgba(22,163,74,0.1)] transition-all duration-200"
+            className="w-full h-[44px] pl-[38px] pr-4 rounded-[12px] bg-[#f1f5f9] text-[14px] text-gray-800 placeholder:text-gray-400 outline-none border border-transparent focus:border-[#0f9d6a] focus:bg-white focus:shadow-[0_0_0_2px_rgba(22,163,74,0.1)] transition-all duration-200"
           />
         </div>
       </header>
@@ -535,7 +535,7 @@ function MenuContent() {
                     onClick={() => setActiveCategory(cat)}
                     className={`shrink-0 flex items-center gap-[6px] px-4 h-[40px] rounded-full transition-all duration-200 active:scale-95 border ${
                       isActive
-                        ? "bg-[#16a34a] border-[#16a34a] text-white"
+                        ? "bg-[#0f9d6a] border-[#0f9d6a] text-white"
                         : "bg-[#f1f5f9] border-transparent text-gray-700 hover:bg-gray-100"
                     }`}
                   >
@@ -628,7 +628,7 @@ function MenuContent() {
                                 exit={{ scale: 0.9, opacity: 0 }}
                                 transition={{ duration: 0.15 }}
                                 onClick={() => handleAddToCart(item)}
-                                className="h-[36px] px-[16px] rounded-full bg-[#f0fdf4] text-[#16a34a] border border-[#16a34a] text-[13px] font-medium shadow-none transition-all duration-200 active:bg-[#16a34a] active:text-white"
+                                className="h-[36px] px-[16px] rounded-full bg-[#f0fdf4] text-[#0f9d6a] border border-[#0f9d6a] text-[13px] font-medium shadow-none transition-all duration-200 active:bg-[#0f9d6a] active:text-white"
                               >
                                 Add
                               </motion.button>
@@ -639,7 +639,7 @@ function MenuContent() {
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.9, opacity: 0 }}
                                 transition={{ duration: 0.15 }}
-                                className="flex items-center gap-1 border border-[#16a34a] rounded-full h-[36px] px-1 bg-[#16a34a]"
+                                className="flex items-center gap-1 border border-[#0f9d6a] rounded-full h-[36px] px-1 bg-[#0f9d6a]"
                               >
                                 <button
                                   className="h-[28px] w-[28px] rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
@@ -683,7 +683,7 @@ function MenuContent() {
             <div className="max-w-[448px] mx-auto pointer-events-auto">
               <button
                 onClick={() => setOpenCheckout(true)}
-                className="w-full h-[56px] rounded-[16px] bg-[#16a34a] hover:bg-[#15803d] active:scale-[0.98] text-white flex items-center justify-between px-4 shadow-[0_8px_16px_rgba(22,163,74,0.25)] transition-all duration-200"
+                className="w-full h-[56px] rounded-[16px] bg-[#0f9d6a] hover:bg-[#0c7f56] active:scale-[0.98] text-white flex items-center justify-between px-4 shadow-[0_8px_16px_rgba(22,163,74,0.25)] transition-all duration-200"
               >
                 <div className="flex items-center gap-3">
                   <div className="bg-white/20 h-9 w-9 rounded-full flex items-center justify-center font-bold text-[14px]">
@@ -725,13 +725,13 @@ function MenuContent() {
             >
               <Icon
                 className={`h-[22px] w-[22px] transition-colors duration-200 ${
-                  isActive ? "text-[#16a34a]" : "text-gray-400"
+                  isActive ? "text-[#0f9d6a]" : "text-gray-400"
                 }`}
                 strokeWidth={isActive ? 2.5 : 2}
               />
               <span
                 className={`text-[10px] font-medium transition-colors duration-200 ${
-                  isActive ? "text-[#16a34a]" : "text-gray-500"
+                  isActive ? "text-[#0f9d6a]" : "text-gray-500"
                 }`}
               >
                 {label}
@@ -746,7 +746,7 @@ function MenuContent() {
         <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden rounded-[24px] border-0">
           <DialogHeader className="px-5 pt-6 pb-4 border-b border-gray-50">
             <DialogTitle className="text-[18px] font-semibold text-gray-900 flex items-center gap-2">
-              <ShoppingBag className="h-5 w-5 text-[#16a34a]" />
+              <ShoppingBag className="h-5 w-5 text-[#0f9d6a]" />
               Confirm Order
             </DialogTitle>
             <DialogDescription className="text-gray-500 text-[13px] mt-1.5">
@@ -762,7 +762,7 @@ function MenuContent() {
                   className="flex items-center justify-between text-[14px] pb-3 border-b border-dashed border-gray-100 last:border-0 last:pb-0"
                 >
                   <div className="flex items-center gap-3 flex-1">
-                    <span className="h-[24px] w-[24px] rounded-[6px] bg-[#f0fdf4] text-[#16a34a] font-semibold text-[12px] flex items-center justify-center shrink-0">
+                    <span className="h-[24px] w-[24px] rounded-[6px] bg-[#f0fdf4] text-[#0f9d6a] font-semibold text-[12px] flex items-center justify-center shrink-0">
                       {item.quantity}
                     </span>
                     <span className="font-medium text-gray-800 line-clamp-1">
@@ -778,7 +778,7 @@ function MenuContent() {
 
             <div className="mt-6 flex items-center justify-between bg-[#f8fafc] rounded-[16px] px-4 py-[14px] border border-gray-100">
               <span className="font-semibold text-gray-900 text-[14px]">Total Amount</span>
-              <span className="text-[18px] font-bold text-[#16a34a]">
+              <span className="text-[18px] font-bold text-[#0f9d6a]">
                 ₹{cartTotal}
               </span>
             </div>
@@ -792,7 +792,7 @@ function MenuContent() {
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="e.g. John Doe"
-                className="w-full h-[48px] px-4 rounded-[12px] bg-[#f8fafc] text-[14px] text-gray-900 placeholder:text-gray-400 outline-none border border-gray-200 focus:border-[#16a34a] focus:bg-white focus:shadow-[0_0_0_2px_rgba(22,163,74,0.1)] transition-all duration-200"
+                className="w-full h-[48px] px-4 rounded-[12px] bg-[#f8fafc] text-[14px] text-gray-900 placeholder:text-gray-400 outline-none border border-gray-200 focus:border-[#0f9d6a] focus:bg-white focus:shadow-[0_0_0_2px_rgba(22,163,74,0.1)] transition-all duration-200"
               />
             </div>
           </div>
@@ -801,7 +801,7 @@ function MenuContent() {
             <button
               disabled={submitting}
               onClick={placeOrder}
-              className="w-full h-[52px] rounded-full bg-[#16a34a] hover:bg-[#15803d] text-white font-medium text-[15px] transition-all duration-200 active:scale-[0.98] shadow-[0_4px_12px_rgba(22,163,74,0.2)] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-2"
+              className="w-full h-[52px] rounded-full bg-[#0f9d6a] hover:bg-[#0c7f56] text-white font-medium text-[15px] transition-all duration-200 active:scale-[0.98] shadow-[0_4px_12px_rgba(22,163,74,0.2)] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -834,7 +834,7 @@ export default function MenuPage() {
     <Suspense
       fallback={
         <div className="h-screen w-full flex items-center justify-center bg-gradient-to-b from-[#ffffff] to-[#f8fafc]">
-          <Loader2 className="animate-spin text-[#16a34a] h-10 w-10" />
+          <Loader2 className="animate-spin text-[#0f9d6a] h-10 w-10" />
         </div>
       }
     >
