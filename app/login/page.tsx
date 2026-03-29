@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import Link from "next/link";
+import Image from "next/image";
 import { ChefHat, Loader2, Mail, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -52,7 +53,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#F0FDF4]">
+    <div className="min-h-screen flex bg-[#f8fafc]">
       {/* Left decorative panel (desktop only) */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 to-teal-700 p-12 flex-col justify-between relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -62,10 +63,10 @@ export default function LoginPage() {
         </div>
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
-              <ChefHat className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-white font-bold text-xl tracking-tight">DineFlow</span>
+            <Image src="/logo.png" alt="Dineflow.pro Logo" width={40} height={40} className="h-10 w-10 rounded-2xl object-cover shadow-sm bg-white/20 backdrop-blur p-1" priority />
+            <span className="text-white font-bold text-xl tracking-tight">
+              Dineflow<span className="text-amber-400 font-extrabold hover:text-amber-300 hover:drop-shadow-[0_0_8px_rgba(251,191,36,0.6)] transition-all duration-300">.pro</span>
+            </span>
           </div>
         </div>
         <div className="relative z-10">
@@ -96,10 +97,10 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <Link href="/" className="lg:hidden flex items-center gap-2.5 mb-10">
-            <div className="h-9 w-9 rounded-xl bg-emerald-500 flex items-center justify-center">
-              <ChefHat className="h-4.5 w-4.5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">DineFlow</span>
+            <Image src="/logo.png" alt="Dineflow.pro Logo" width={36} height={36} className="h-9 w-9 object-contain" priority />
+            <span className="text-xl font-bold text-gray-900 tracking-tight">
+              Dineflow<span className="text-amber-500 font-extrabold hover:text-amber-400 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] transition-all duration-300">.pro</span>
+            </span>
           </Link>
 
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Sign in</h1>
@@ -143,7 +144,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-lg shadow-emerald-200 transition-all hover:scale-[1.01]"
+              className="w-full h-12 rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg focus:ring-2 focus:ring-[#1abc9c]/40"
               disabled={loading}
             >
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sign in to dashboard"}

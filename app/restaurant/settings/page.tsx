@@ -185,7 +185,7 @@ export default function RestaurantSettings() {
         </div>
 
         <div className="flex justify-end pt-4">
-          <Button type="submit" size="lg" className="h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg shadow-xl shadow-emerald-200 transition-all hover:-translate-y-1" disabled={loading}>
+          <Button type="submit" size="lg" className="h-12 px-8 rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg focus:ring-2 focus:ring-[#1abc9c]/40" disabled={loading}>
             {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Save Profile Configuration"}
           </Button>
         </div>

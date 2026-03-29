@@ -137,7 +137,7 @@ export default function RestaurantDashboard() {
         </div>
         {!hasRestaurant && (
           <Link href="/restaurant/settings">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200">
+            <Button className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg">
               Complete Setup <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
@@ -158,7 +158,7 @@ export default function RestaurantDashboard() {
             </CardHeader>
             <CardContent>
               <Link href="/restaurant/settings">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">Create Profile</Button>
+                <Button className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg">Create Profile</Button>
               </Link>
             </CardContent>
           </Card>

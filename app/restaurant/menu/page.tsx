@@ -163,17 +163,17 @@ export default function MenuPage() {
   if (!restaurant) return <div className="p-8 text-center text-gray-500 font-medium pt-20">Please complete restaurant setup first.</div>;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-6 sm:space-y-8">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">Menu Items</h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-1 font-medium">Manage your digital menu catalog.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Menu Items</h1>
+          <p className="text-sm sm:text-base text-slate-500 mt-1">Manage your digital menu catalog.</p>
         </div>
 
         <Dialog open={open} onOpenChange={(isOpen) => isOpen ? setOpen(true) : handleCloseModal()}>
           <DialogTrigger render={
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 px-5 rounded-xl shadow-sm shadow-emerald-200 transition-all hover:scale-[1.02]" />
+            <Button className="bg-gradient-to-br from-[#1abc9c] to-[#16e0bd] hover:brightness-105 text-white font-bold h-11 px-5 rounded-[10px] transition-all" />
           }>
             <Plus className="mr-2 h-5 w-5" /> Add Item
           </DialogTrigger>
@@ -228,7 +228,7 @@ export default function MenuPage() {
               </div>
               <DialogFooter className="pt-4 sm:pt-2">
                 <Button type="button" variant="outline" className="rounded-xl font-semibold border-gray-200 text-gray-600 w-full sm:w-auto mb-2 sm:mb-0" onClick={handleCloseModal}>Cancel</Button>
-                <Button type="submit" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full sm:w-auto" disabled={submitting}>
+                <Button type="submit" className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg w-full sm:w-auto" disabled={submitting}>
                   {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Changes"}
                 </Button>
               </DialogFooter>
@@ -240,12 +240,12 @@ export default function MenuPage() {
       {/* Search Bar */}
       {menus.length > 0 && (
         <div className="relative max-w-xl">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
           <Input
             placeholder="Search menu items or categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-11 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 w-full bg-white shadow-sm text-base"
+            className="pl-11 h-12 rounded-[10px] border-slate-200 focus-visible:ring-[#1abc9c] focus-visible:border-[#1abc9c] w-full bg-white text-base"
           />
         </div>
       )}
@@ -274,15 +274,15 @@ export default function MenuPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white border-2 border-dashed border-emerald-100 rounded-[2rem] py-20 sm:py-24 px-4 sm:px-6 text-center shadow-sm"
         >
-          <div className="h-20 w-20 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-5 shadow-inner">
-            <UtensilsCrossed className="h-10 w-10 text-emerald-400" />
-          </div>
-          <h3 className="text-xl font-extrabold text-gray-900 mb-2">No menu items yet</h3>
-          <p className="text-gray-500 mb-8 max-w-sm mx-auto font-medium text-sm sm:text-base">Get started by creating your first delicious item to display to your customers.</p>
-          <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 px-8 rounded-full shadow-md shadow-emerald-200 transition-all hover:scale-105 hover:-translate-y-0.5">
-            <Plus className="mr-2 h-5 w-5" /> Add Your First Item
-          </Button>
-        </motion.div>
+            <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-5">
+              <UtensilsCrossed className="h-10 w-10 text-slate-400" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">No menu items yet</h3>
+            <p className="text-slate-500 mb-8 max-w-sm mx-auto text-sm sm:text-base">Get started by creating your first delicious item to display to your customers.</p>
+            <Button onClick={() => setOpen(true)} className="bg-gradient-to-br from-[#1abc9c] to-[#16e0bd] hover:brightness-105 text-white font-bold h-11 px-6 rounded-[10px] transition-all">
+              <Plus className="mr-2 h-5 w-5" /> Add Your First Item
+            </Button>
+          </motion.div>
       ) : Object.keys(groupedMenus).length === 0 ? (
         <div className="py-20 text-center bg-white border border-gray-100 rounded-[2rem] shadow-sm">
           <div className="h-20 w-20 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-5">
@@ -293,23 +293,22 @@ export default function MenuPage() {
           <Button variant="outline" className="mt-6 rounded-xl font-medium" onClick={() => setSearchQuery("")}>Clear Search</Button>
         </div>
       ) : (
-        <div className="space-y-12">
+        <div className="space-y-10">
           {Object.entries(groupedMenus).map(([category, items]) => (
-            <div key={category} className="space-y-3">
-              <div className="flex items-center justify-between gap-3 pb-3 border-b border-gray-100">
+            <div key={category} className="space-y-4">
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-200 mt-2">
                 <div className="flex items-center gap-2.5 min-w-0">
-
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 shadow-sm shadow-emerald-200" />
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight truncate capitalize">
+                  <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0" />
+                  <h2 className="text-lg sm:text-xl font-medium text-slate-900 tracking-tight capitalize">
                     {category}
                   </h2>
                 </div>
-                <span className="inline-flex items-center shrink-0 bg-emerald-50 text-emerald-700 border border-emerald-100 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
+                <span className="inline-flex items-center shrink-0 text-slate-500 text-xs sm:text-sm font-medium px-2 py-1">
                   {items.length} {items.length === 1 ? 'item' : 'items'}
                 </span>
               </div>
 
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-4">
                 <AnimatePresence mode="popLayout">
                   {items.map((item, index) => (
                     <motion.div
@@ -318,10 +317,10 @@ export default function MenuPage() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 10, scale: 0.97 }}
                       transition={{ duration: 0.18, delay: index * 0.03 }}
-                      className="bg-white rounded-xl border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all duration-200 flex items-center gap-4 p-3.5 sm:p-4 group"
+                      className="bg-white rounded-[12px] border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4 p-4 sm:p-5 group"
                     >
                       {/* Left: Image */}
-                      <div className="w-[72px] h-[72px] sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
+                      <div className="w-[72px] h-[72px] sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
                         {item.image ? (
                           <img
                             src={item.image}
@@ -329,34 +328,34 @@ export default function MenuPage() {
                             className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
-                          <ImageIcon className="h-8 w-8 text-gray-300" />
+                          <ImageIcon className="h-8 w-8 text-slate-300" />
                         )}
                       </div>
 
                       {/* Middle: Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-900 text-base sm:text-[17px] leading-snug line-clamp-1">
+                        <h3 className="font-semibold text-slate-900 text-base sm:text-lg leading-snug line-clamp-1">
                           {item.name}
                         </h3>
-                        <p className="text-xs sm:text-sm text-gray-400 font-medium mt-0.5 truncate">{item.category}</p>
-                        <div className="font-extrabold text-emerald-600 text-[15px] sm:text-base mt-1.5">₹{item.price}</div>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-0.5 truncate">{item.category}</p>
+                        <div className="font-semibold text-[#059669] text-[15px] sm:text-base mt-1.5">₹{item.price}</div>
                       </div>
 
                       {/* Right: Actions */}
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           onClick={(e) => handleEditClick(item, e)}
-                          className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-150 border border-gray-100 shadow-sm hover:border-emerald-200 hover:scale-110"
+                          className="p-2 text-slate-400 hover:text-[#1abc9c] transition-colors"
                           title="Edit item"
                         >
-                          <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                         <button
                           onClick={(e) => onDelete(item.id, e)}
-                          className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all duration-150 border border-gray-100 shadow-sm hover:border-red-200 hover:scale-110"
+                          className="p-2 text-slate-400 hover:text-red-500 transition-colors"
                           title="Delete item"
                         >
-                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                       </div>
                     </motion.div>

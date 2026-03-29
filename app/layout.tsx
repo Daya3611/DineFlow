@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "DineFlow – Restaurant QR & Management Platform",
+  title: "Dineflow.pro – Restaurant QR & Management Platform",
   description: "The modern SaaS platform for restaurant digital menus, QR ordering, and business management.",
 };
 
@@ -21,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-[#F9FAFB] text-gray-900">
+    <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning data-scroll-behavior="smooth">
+      <body className="min-h-full flex flex-col bg-[#F9FAFB] text-gray-900" suppressHydrationWarning>
         <AuthProvider>
           {children}
           <Toaster position="top-right" richColors />

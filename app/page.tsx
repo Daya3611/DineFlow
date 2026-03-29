@@ -94,7 +94,7 @@ const testimonials = [
   {
     name: "Rahul Mehra",
     title: "Owner, Spice Garden",
-    body: "DineFlow completely transformed how we handle orders. Our staff is faster and customers love scanning QR codes.",
+    body: "Dineflow.pro completely transformed how we handle orders. Our staff is faster and customers love scanning QR codes.",
     avatar: "RM",
     color: "bg-emerald-600",
   },
@@ -134,7 +134,7 @@ const plans = [
     name: "Pro",
     price: "₹499",
     period: "/month",
-    desc: "For growing restaurants that need the full DineFlow experience.",
+    desc: "For growing restaurants that need the full Dineflow.pro experience.",
     features: [
       "Unlimited menu items",
       "QR codes for unlimited tables",
@@ -167,10 +167,10 @@ export default function Home() {
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-md">
         <div className="container mx-auto px-6 max-w-7xl h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="h-8 w-8 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-200">
-              <ChefHat className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-extrabold text-lg text-gray-900 tracking-tight">DineFlow</span>
+            <Image src="/logo.png" alt="Dineflow.pro Logo" width={32} height={32} className="h-8 w-8 object-contain" priority />
+            <span className="font-extrabold text-lg text-gray-900 tracking-tight">
+              Dineflow<span className="text-amber-500 font-extrabold hover:text-amber-400 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] transition-all duration-300">.pro</span>
+            </span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
@@ -186,7 +186,7 @@ export default function Home() {
               </Button>
             </Link>
             <Link href="/register">
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm shadow-emerald-200 rounded-xl px-5 transition-all hover:scale-[1.03]">
+              <Button size="sm" className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium px-5 transition duration-200 hover:brightness-110 hover:shadow-lg">
                 Start Free Trial
               </Button>
             </Link>
@@ -252,7 +252,7 @@ export default function Home() {
               className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
             >
               <Link href="/register">
-                <Button size="lg" className="h-14 px-10 text-base bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xl shadow-emerald-200/70 rounded-2xl transition-all hover:scale-105 hover:-translate-y-0.5">
+                <Button size="lg" className="h-14 px-10 text-base rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-semibold transition duration-200 hover:brightness-110 hover:shadow-xl focus:ring-2 focus:ring-[#1abc9c]/40">
                   Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -283,7 +283,7 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20 pointer-events-none z-10 rounded-2xl" />
                 <Image
                   src="/hero.png"
-                  alt="DineFlow dashboard preview"
+                  alt="Dineflow.pro dashboard preview"
                   width={1280}
                   height={720}
                   className="w-full h-auto object-cover"
@@ -407,8 +407,8 @@ export default function Home() {
                   key={i}
                   {...fadeUp(i * 0.1)}
                   className={`relative rounded-2xl p-8 flex flex-col border-2 transition-all ${plan.highlighted
-                      ? "border-emerald-500 bg-emerald-600 text-white shadow-2xl shadow-emerald-200 scale-[1.02]"
-                      : "border-gray-100 bg-white shadow-sm hover:shadow-lg hover:border-gray-200"
+                    ? "border-emerald-500 bg-emerald-600 text-white shadow-2xl shadow-emerald-200 scale-[1.02]"
+                    : "border-gray-100 bg-white shadow-sm hover:shadow-lg hover:border-gray-200"
                     }`}
                 >
                   {plan.highlighted && (
@@ -438,9 +438,9 @@ export default function Home() {
                   <Link href="/register">
                     <Button
                       size="lg"
-                      className={`w-full font-bold rounded-xl h-12 transition-all hover:scale-[1.02] ${plan.highlighted
-                          ? "bg-white text-emerald-700 hover:bg-emerald-50 shadow-lg"
-                          : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-100"
+                      className={`w-full font-medium rounded-full h-12 transition duration-200 hover:brightness-110 hover:shadow-lg ${plan.highlighted
+                        ? "bg-white text-[#16a085] hover:bg-slate-50"
+                        : "bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white"
                         }`}
                     >
                       {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
@@ -504,7 +504,7 @@ export default function Home() {
               Ready to modernize your restaurant?
             </motion.h2>
             <motion.p {...fadeUp(0.08)} className="text-emerald-100 text-lg mb-10 max-w-xl mx-auto">
-              Join 500+ restaurants using DineFlow to serve customers faster, smarter, and without paper menus.
+              Join 500+ restaurants using Dineflow.pro to serve customers faster, smarter, and without paper menus.
             </motion.p>
             <motion.div {...fadeUp(0.14)} className="flex flex-col sm:flex-row justify-center gap-4">
               <Link href="/register">
@@ -527,10 +527,10 @@ export default function Home() {
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <Link href="/" className="flex items-center gap-2.5 mb-4">
-                <div className="h-8 w-8 rounded-xl bg-emerald-500 flex items-center justify-center shadow-sm shadow-emerald-200">
-                  <ChefHat className="h-4 w-4 text-white" />
-                </div>
-                <span className="font-extrabold text-lg text-gray-900 tracking-tight">DineFlow</span>
+                <Image src="/logo.png" alt="Dineflow.pro Logo" width={32} height={32} className="h-8 w-8 object-contain" priority />
+                <span className="font-extrabold text-lg text-gray-900 tracking-tight">
+                  Dineflow<span className="text-amber-500 font-extrabold hover:text-amber-400 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] transition-all duration-300">.pro</span>
+                </span>
               </Link>
               <p className="text-sm text-gray-500 leading-relaxed max-w-[220px]">
                 The all-in-one restaurant management platform built for modern India.
@@ -575,7 +575,7 @@ export default function Home() {
           </div>
 
           <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-            <p>© {new Date().getFullYear()} DineFlow. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Dineflow.pro. All rights reserved.</p>
             <div className="flex gap-6">
               <Link href="#" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
               <Link href="#" className="hover:text-gray-600 transition-colors">Terms of Service</Link>

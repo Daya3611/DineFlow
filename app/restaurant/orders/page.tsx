@@ -313,7 +313,7 @@ export default function LiveOrdersPage() {
                             <Button
                               size="sm"
                               className={`rounded-xl text-white font-semibold h-9 ${
-                                config.nextStatus === "paid" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-gray-900 hover:bg-gray-800"
+                              config.nextStatus === "paid" ? "rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg" : "bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-full transition duration-200"
                               }`}
                               onClick={() => updateOrderStatus(order.id, config.nextStatus!)}
                               disabled={config.nextStatus === "paid" && payStatus === "pending_verification"}
@@ -410,7 +410,7 @@ export default function LiveOrdersPage() {
         <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 gap-0 border-gray-100 shadow-xl">
           {selectedOrder && (
             <>
-              <div className="bg-emerald-600 p-6 text-white flex justify-between items-start">
+              <div className="bg-gradient-to-br from-[#1abc9c] to-[#16a085] p-6 text-white flex justify-between items-start">
                  <div>
                    <Badge className="bg-emerald-500/30 text-emerald-50 hover:bg-emerald-500/40 border-none mb-2 pointer-events-none">
                      Completed Order
@@ -463,7 +463,7 @@ export default function LiveOrdersPage() {
                      Close
                   </Button>
                   <Button 
-                    className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full shadow-md shadow-emerald-200"
+                    className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium w-full transition duration-200 hover:brightness-110 hover:shadow-lg"
                     onClick={() => { printBill(selectedOrder); setSelectedOrder(null); }}
                   >
                     <Printer className="h-4 w-4 mr-2" /> Print Bill

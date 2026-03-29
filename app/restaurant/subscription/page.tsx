@@ -172,8 +172,11 @@ export default function SubscriptionPage() {
                 </CardContent>
                 <CardFooter className="pt-6">
                   <Button 
-                    variant={plan.id === "pro" ? "default" : "outline"}
-                    className={`w-full ${plan.id === "pro" ? "bg-indigo-600 hover:bg-indigo-700" : "hover:bg-slate-50"}`}
+                    className={`w-full rounded-full font-medium h-12 transition duration-200 hover:brightness-110 hover:shadow-lg ${
+                      isCurrentPlan 
+                        ? "border border-slate-200 bg-white text-slate-400 cursor-default" 
+                        : "bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white hover:shadow-[#1abc9c]/30"
+                    }`}
                     size="lg"
                     disabled={isCurrentPlan || loadingPlan !== null}
                     onClick={() => handleSubscribe(plan.id, plan.price)}

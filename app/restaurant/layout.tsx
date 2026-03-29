@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   LayoutDashboard, Menu as MenuIcon, Settings, CreditCard,
   LogOut, Loader2, Utensils, QrCode, ClipboardList, ChefHat, X
@@ -36,12 +37,10 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
 
   if (loading || !userData || userData.role !== "restaurant_owner") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#ECFDF5]">
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-12 w-12 rounded-2xl bg-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-200">
-            <ChefHat className="h-6 w-6 text-white" />
-          </div>
-          <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+          <Image src="/logo.png" alt="Dineflow Logo" width={60} height={60} className="h-12 w-12 object-contain" priority />
+          <Loader2 className="h-6 w-6 animate-spin text-[#1abc9c]" />
         </div>
       </div>
     );
@@ -55,7 +54,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
   const pageLabel = pathname.split("/").filter(Boolean).pop() || "Dashboard";
 
   return (
-    <div className="h-screen overflow-hidden flex bg-[#F0FDF4]">
+    <div className="h-screen overflow-hidden flex bg-[#f8fafc]">
       {/* Mobile overlay */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -70,25 +69,22 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
       {/* Sidebar */}
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64 flex flex-col
-        bg-[#052e16] border-r border-emerald-900/60
+        bg-[#f8fafc] border-r border-slate-200
         transition-transform duration-300 ease-in-out
         md:translate-x-0 md:static
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         {/* Logo */}
-        <div className="h-16 flex items-center px-5 border-b border-emerald-900/60 gap-3 shrink-0">
-          <div className="h-8 w-8 rounded-xl bg-emerald-500 flex items-center justify-center shadow">
-            <ChefHat className="h-4 w-4 text-white" />
-          </div>
-          <span className="font-bold text-lg text-white tracking-tight">DineFlow</span>
-          <button className="md:hidden text-emerald-400 ml-auto" onClick={() => setSidebarOpen(false)}>
+        <div className="flex items-center md:justify-center justify-between p-1 border-b border-slate-200 shrink-0">
+          <Image src="/logo.png" alt="Dineflow Logo" width={140} height={36} className="h-10 md:h-15 w-auto object-contain mb-1 brightness-0 opacity-80" priority />
+          <button className="md:hidden text-slate-400 hover:text-slate-600 transition-colors" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 py-5 px-3 space-y-1 overflow-y-auto">
-          <div className="text-[10px] font-semibold text-emerald-700 uppercase tracking-widest px-3 mb-3">Restaurant</div>
+        <nav className="flex-1 py-5 px-4 space-y-1.5 overflow-y-auto">
+          <div className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wide px-2 mb-3">Restaurant</div>
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             const Icon = item.icon;
@@ -97,12 +93,12 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group ${isActive
-                  ? "bg-emerald-500 text-white shadow-sm shadow-emerald-900/50"
-                  : "text-emerald-300 hover:bg-emerald-900/60 hover:text-white"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group ${isActive
+                  ? "bg-[#e2e8f0] text-[#0f172a]"
+                  : "text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0f172a]"
                   }`}
               >
-                <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-white" : "text-emerald-500 group-hover:text-white"}`} />
+                <Icon className={`h-4 w-4 shrink-0 transition-colors ${isActive ? "text-[#0f172a]" : "text-[#64748b] group-hover:text-[#0f172a]"}`} />
                 {item.label}
                 {item.label === "Live Orders" && (
                   <span className="ml-auto flex h-2 w-2 rounded-full bg-red-400 animate-pulse" />
@@ -113,19 +109,19 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         </nav>
 
         {/* User footer */}
-        <div className="p-4 border-t border-emerald-900/60 shrink-0">
+        <div className="p-4 border-t border-slate-200 shrink-0 bg-[#f8fafc]">
           <div className="flex items-center gap-3 mb-3 px-1">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow">
+            <div className="h-9 w-9 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-600 font-bold text-sm">
               {userData.name.charAt(0).toUpperCase()}
             </div>
             <div className="overflow-hidden flex-1">
-              <p className="text-sm font-semibold text-white truncate">{userData.name}</p>
-              <p className="text-xs text-emerald-500 truncate">{userData.email}</p>
+              <p className="text-sm font-semibold text-slate-700 truncate">{userData.name}</p>
+              <p className="text-[11px] font-medium text-slate-400 truncate">{userData.email}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-emerald-400 hover:bg-emerald-900/60 hover:text-white transition-all"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#64748b] hover:bg-red-100 hover:text-red-600 transition-all"
           >
             <LogOut className="h-4 w-4" />
             Sign out
@@ -135,26 +131,26 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-16 flex items-center px-4 md:px-6 bg-white border-b border-gray-100 sticky top-0 z-30 shadow-sm">
+        {/* Mobile Header */}
+        <header className="md:hidden h-16 flex items-center px-4 bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
           <button
-            className="md:hidden mr-3 p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors"
+            className="mr-3 p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
             onClick={() => setSidebarOpen(true)}
           >
             <MenuIcon className="h-5 w-5" />
           </button>
-          <div>
-            <div className="font-bold text-gray-900 capitalize text-lg">{pageLabel}</div>
-            <div className="text-xs text-gray-400 hidden sm:block">{userData.name}</div>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-emerald-100">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Online
+          <div className="font-bold text-slate-900 capitalize text-lg">{pageLabel}</div>
+        </header>
+
+        {/* Centered Desktop Layout + Inner White Box */}
+        <main className="flex-1 overflow-y-auto w-full md:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl h-full flex flex-col">
+            <div className="bg-white md:rounded-[20px] md:border border-slate-200 flex-1 flex flex-col overflow-hidden md:shadow-sm min-h-screen md:min-h-0">
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+                {children}
+              </div>
             </div>
           </div>
-        </header>
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
-          {children}
         </main>
       </div>
     </div>

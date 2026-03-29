@@ -144,7 +144,7 @@ export default function TablesPage() {
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger render={<Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-sm shadow-emerald-200" />}>
+          <DialogTrigger render={<Button className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg" />}>
             <Plus className="mr-2 h-4 w-4" /> Add Table
           </DialogTrigger>
           <DialogContent className="sm:max-w-[400px] rounded-2xl">
@@ -166,7 +166,7 @@ export default function TablesPage() {
               </div>
               <DialogFooter className="pt-2">
                 <Button type="button" variant="outline" className="rounded-xl" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button type="submit" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white" disabled={submitting}>
+                <Button type="submit" className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg" disabled={submitting}>
                   {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Table"}
                 </Button>
               </DialogFooter>
@@ -187,7 +187,7 @@ export default function TablesPage() {
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">No tables yet</h3>
           <p className="text-gray-500 mb-6 max-w-xs mx-auto text-sm">Add your first table to generate a scannable QR code for customers.</p>
-          <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold">
+          <Button onClick={() => setOpen(true)} className="rounded-full bg-gradient-to-b from-[#1abc9c] to-[#16a085] text-white font-medium transition duration-200 hover:brightness-110 hover:shadow-lg">
             <Plus className="mr-2 h-4 w-4" /> Add your first table
           </Button>
         </div>
@@ -226,7 +226,7 @@ export default function TablesPage() {
 
                   <Button
                     variant="outline"
-                    className="w-full rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 font-semibold text-sm"
+                    className="w-full rounded-full border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-sm transition duration-200"
                     onClick={() => printQrCode(table.tableNumber, table.id)}
                   >
                     <Printer className="w-4 h-4 mr-2" /> Print QR
