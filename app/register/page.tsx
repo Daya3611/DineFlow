@@ -61,90 +61,106 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#f8fafc]">
+    <div className="min-h-screen flex bg-white">
       {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#0f172a] p-12 flex-col justify-between relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 right-20 w-80 h-80 rounded-full border-2 border-white" />
-          <div className="absolute bottom-32 left-16 w-56 h-56 rounded-full border-2 border-white" />
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0c7f56] via-[#0f9d6a] to-[#20b885] p-12 flex-col justify-between relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="absolute top-[-10%] right-[-5%] w-96 h-96 rounded-full bg-white/20 blur-3xl" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[30rem] h-[30rem] rounded-full bg-emerald-900/30 blur-3xl" />
         </div>
-        <div className="relative z-10 flex items-center gap-3">
-          <Image src="/logo.png" alt="Dineflow.pro Logo" width={140} height={36} className="h-10 w-auto object-contain shadow-sm bg-white/20 backdrop-blur p-1 rounded-sm" priority />
+
+        <div className="relative z-10 flex items-start">
+          <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20 shadow-xl inline-flex items-center gap-3">
+            <Image src="/logo.png" alt="Dineflow Icon" width={48} height={48} className="h-10 w-auto object-contain brightness-0 invert" priority />
+            <span className="text-3xl font-extrabold tracking-tight text-white flex items-center">
+              Dineflow<span className="text-green-300">.pro</span>
+            </span>
+          </div>
         </div>
-        <div className="relative z-10">
-          <h2 className="text-4xl font-extrabold text-white mb-4 leading-tight">
+
+        <div className="relative z-10 max-w-lg mt-auto mb-16">
+          <h2 className="text-5xl font-extrabold text-white mb-6 leading-tight tracking-tight">
             Your restaurant, fully digital.
           </h2>
-          <p className="text-emerald-100 text-lg leading-relaxed">
-            Create your account and start accepting QR-based table orders in minutes.
+          <p className="text-green-50 text-xl leading-relaxed opacity-90">
+            Create your account and start accepting QR-based table orders in minutes. Setup is seamless and fast.
           </p>
         </div>
-        <div className="relative z-10 flex gap-6">
+
+        <div className="relative z-10 flex gap-10 border-t border-white/20 pt-8">
           {[["Free", "No credit card"], ["2 min", "Setup time"], ["∞", "Menu items"]].map(([val, label]) => (
             <div key={label}>
-              <div className="text-2xl font-extrabold text-white">{val}</div>
-              <div className="text-emerald-200 text-sm">{label}</div>
+              <div className="text-3xl font-extrabold text-white mb-1">{val}</div>
+              <div className="text-green-100 font-medium">{label}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Right form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-gradient-to-br from-green-50/50 to-white relative">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="w-full max-w-md"
+          initial={{ opacity: 0, scale: 0.98, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-green-900/5 p-8 border border-green-100/50"
         >
-          <Link href="/" className="lg:hidden flex items-center gap-2.5 mb-10">
-            <Image src="/logo.png" alt="Dineflow.pro Logo" width={140} height={36} className="h-9 w-auto object-contain" priority />
+          {/* Mobile logo */}
+          <Link href="/" className="lg:hidden flex items-center justify-center mb-8 group">
+            <div className="bg-green-50 px-5 py-2.5 rounded-2xl inline-flex items-center gap-2 transition-transform group-hover:scale-105">
+              <Image src="/logo.png" alt="Dineflow Icon" width={40} height={40} className="h-8 w-auto object-contain" priority />
+              <span className="text-[22px] font-extrabold tracking-tight text-gray-900 flex items-center">
+                Dineflow<span className="text-[#0f9d6a]">.pro</span>
+              </span>
+            </div>
           </Link>
 
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Create account</h1>
-          <p className="text-gray-500 mb-8">
-            Already have an account?{" "}
-            <Link href="/login" className="text-[#0f9d6a] font-semibold hover:underline">Sign in</Link>
-          </p>
+          <div className="text-center lg:text-left mb-8">
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Create account</h1>
+            <p className="text-gray-500 font-medium">
+              Already have an account?{" "}
+              <Link href="/login" className="text-[#0f9d6a] font-semibold hover:underline decoration-2 underline-offset-4 transition-all">Sign in here</Link>
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-sm font-medium text-gray-700">Full Name</Label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input id="name" placeholder="John Doe" className="pl-10 h-12 rounded-xl border-gray-200 bg-white" {...register("name")} />
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-sm font-bold text-gray-700">Full Name</Label>
+              <div className="relative group">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#0f9d6a] transition-colors pointer-events-none" />
+                <Input id="name" placeholder="John Doe" className="pl-11 h-12 rounded-xl border-gray-200 focus:border-[#0f9d6a] focus:ring-4 focus:ring-[#0f9d6a]/10 bg-gray-50/50 focus:bg-white transition-all text-base" {...register("name")} />
               </div>
-              {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+              {errors.name && <p className="text-sm text-red-500 font-medium animate-in fade-in slide-in-from-top-1">{errors.name.message}</p>}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input id="email" type="email" placeholder="name@example.com" className="pl-10 h-12 rounded-xl border-gray-200 bg-white" {...register("email")} />
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-bold text-gray-700">Email address</Label>
+              <div className="relative group">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#0f9d6a] transition-colors pointer-events-none" />
+                <Input id="email" type="email" placeholder="name@example.com" className="pl-11 h-12 rounded-xl border-gray-200 focus:border-[#0f9d6a] focus:ring-4 focus:ring-[#0f9d6a]/10 bg-gray-50/50 focus:bg-white transition-all text-base" {...register("email")} />
               </div>
-              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+              {errors.email && <p className="text-sm text-red-500 font-medium animate-in fade-in slide-in-from-top-1">{errors.email.message}</p>}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input id="password" type="password" placeholder="Min. 6 characters" className="pl-10 h-12 rounded-xl border-gray-200 bg-white" {...register("password")} />
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-bold text-gray-700">Password</Label>
+              <div className="relative group">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#0f9d6a] transition-colors pointer-events-none" />
+                <Input id="password" type="password" placeholder="Min. 6 characters" className="pl-11 h-12 rounded-xl border-gray-200 focus:border-[#0f9d6a] focus:ring-4 focus:ring-[#0f9d6a]/10 bg-gray-50/50 focus:bg-white transition-all text-base" {...register("password")} />
               </div>
-              {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+              {errors.password && <p className="text-sm text-red-500 font-medium animate-in fade-in slide-in-from-top-1">{errors.password.message}</p>}
             </div>
 
             <Button
               type="submit"
-              className="w-full h-12 mt-4 rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200"
+              className="w-full h-12 mt-6 font-bold text-[15px] rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#0f9d6a]/20 transition-all duration-200"
               disabled={loading}
             >
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create free account"}
+              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Create free account"}
             </Button>
 
-            <p className="text-xs text-center text-gray-400 pt-2">
-              By signing up, you agree to our Terms of Service and Privacy Policy.
+            <p className="text-xs text-center text-gray-400 pt-4 font-medium">
+              By signing up, you agree to our <Link href="#" className="text-gray-500 hover:text-[#0f9d6a] underline">Terms of Service</Link> and <Link href="#" className="text-gray-500 hover:text-[#0f9d6a] underline">Privacy Policy</Link>.
             </p>
           </form>
         </motion.div>

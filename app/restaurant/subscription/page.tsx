@@ -180,14 +180,14 @@ export default function SubscriptionPage() {
             return (
               <Card
                 key={plan.id}
-                className={`relative flex flex-col bg-white rounded-2xl transition-all duration-300 ${
+                className={`relative flex flex-col bg-white rounded-2xl transition-all duration-300 overflow-visible ${
                   isPro 
-                    ? "border-[3px] border-[#0f9d6a] shadow-2xl shadow-[#0f9d6a]/20 z-10 lg:scale-105" 
+                    ? "border-[3px] border-[#0f9d6a] shadow-[0_0_25px_rgba(15,157,106,0.25)] z-10 lg:scale-105" 
                     : "border border-slate-200 shadow-sm hover:shadow-md"
                 }`}
               >
                 {isPro && (
-                  <div className="absolute -top-4 left-0 right-0 mx-auto w-max px-4 py-1 bg-[#0f9d6a] text-white text-xs font-bold uppercase tracking-wider rounded-full flex items-center gap-1 shadow-sm">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-4 py-1.5 bg-[#0f9d6a] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-full flex items-center gap-1 shadow-md">
                     <Zap className="h-3.5 w-3.5 fill-current" /> Most Popular
                   </div>
                 )}
