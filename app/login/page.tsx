@@ -61,13 +61,10 @@ export default function LoginPage() {
           <div className="absolute bottom-[-10%] left-[-10%] w-[30rem] h-[30rem] rounded-full bg-emerald-900/30 blur-3xl" />
         </div>
 
-        <div className="relative z-10 flex items-start">
-          <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20 shadow-xl inline-flex items-center gap-3">
-            <Image src="/logo.png" alt="Dineflow Icon" width={48} height={48} className="h-10 w-auto object-contain brightness-0 invert" priority />
-            <span className="text-3xl font-extrabold tracking-tight text-white flex items-center">
-              Dineflow<span className="text-green-300">.pro</span>
-            </span>
-          </div>
+        <div className="absolute top-6 left-6 z-20">
+          <Link href="/">
+            <Image src="/logo.png" alt="Dineflow Icon" width={48} height={48} className="h-10 w-auto object-contain brightness-0 invert opacity-90 hover:scale-105 transition-all duration-200 drop-shadow-sm" priority />
+          </Link>
         </div>
 
         <div className="relative z-10 max-w-lg mt-auto mb-16">
@@ -91,21 +88,19 @@ export default function LoginPage() {
 
       {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-gradient-to-br from-green-50/50 to-white relative">
+        {/* Mobile logo */}
+        <div className="lg:hidden absolute top-6 left-6 z-20">
+          <Link href="/">
+            <Image src="/logo.png" alt="Dineflow Icon" width={40} height={40} className="h-8 w-auto object-contain opacity-90 hover:scale-105 transition-all duration-200 drop-shadow-sm" priority />
+          </Link>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, scale: 0.98, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-green-900/5 p-8 border border-green-100/50"
         >
-          {/* Mobile logo */}
-          <Link href="/" className="lg:hidden flex items-center justify-center mb-8 group">
-            <div className="bg-green-50 px-5 py-2.5 rounded-2xl inline-flex items-center gap-2 transition-transform group-hover:scale-105">
-              <Image src="/logo.png" alt="Dineflow Icon" width={40} height={40} className="h-8 w-auto object-contain" priority />
-              <span className="text-[22px] font-extrabold tracking-tight text-gray-900 flex items-center">
-                Dineflow<span className="text-[#0f9d6a]">.pro</span>
-              </span>
-            </div>
-          </Link>
 
           <div className="text-center lg:text-left mb-8">
             <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Welcome back</h1>
