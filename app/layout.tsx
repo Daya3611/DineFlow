@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
-import { Toaster } from "@/components/ui/sonner";
+import { FramerToaster } from "@/components/ui/framer-toaster";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,7 +25,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#F9FAFB] text-gray-900" suppressHydrationWarning>
         <AuthProvider>
           {children}
-          <Toaster position="top-right" richColors />
+          <FramerToaster />
         </AuthProvider>
       </body>
     </html>

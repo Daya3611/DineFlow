@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { UploadCloud, X, Loader2, ImagePlus } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 interface ImageUploadProps {

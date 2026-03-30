@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Loader2, Plus, Trash2, Edit2, UtensilsCrossed, ImageIcon, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImageUpload } from "@/components/ui/image-upload";

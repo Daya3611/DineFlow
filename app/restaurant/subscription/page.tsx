@@ -4,8 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Check, Loader2, Sparkles, Zap, ShieldCheck, Play } from "lucide-react";
+import { toast } from "@/lib/toast";
 import { db } from "@/firebase";
 import { doc, updateDoc, setDoc } from "firebase/firestore";
 import Script from "next/script";
@@ -14,14 +14,20 @@ const plans = [
   {
     id: "basic",
     name: "Basic Plan",
-    price: 199,
-    features: ["Up to 50 Menu Items", "Basic Analytics", "Standard Support", "QR Code Generation"],
+    price: 299,
+    features: ["Up to 10 Tables", "Up to 50 Menu Items", "Basic Analytics", "QR Code Generation", "Standard Support"],
   },
   {
     id: "pro",
     name: "Pro Plan",
     price: 499,
-    features: ["Unlimited Menu Items", "Advanced Analytics", "Priority Support", "Custom Branding", "Multiple Outlets"],
+    features: ["Up to 25 Tables", "Unlimited Menu Items", "Advanced Analytics", "Priority Support", "Custom Branding"],
+  },
+  {
+    id: "premium",
+    name: "DineFlow Premium",
+    price: 999,
+    features: ["Up to 100 Tables", "Unlimited Menu Items", "Full Analytics Dashboard", "Multi Outlet Support", "Custom Branding", "Dedicated Support"],
   }
 ];
 
@@ -38,7 +44,6 @@ export default function SubscriptionPage() {
     setLoadingPlan(planId);
 
     try {
-      // Create Razorpay order
       const response = await fetch("/api/razorpay/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -53,12 +58,11 @@ export default function SubscriptionPage() {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
-        name: "DineFlow.pro",
+        name: "Dineflow.pro",
         description: `Subscription for ${planId} plan`,
         order_id: order.id,
         handler: async function (response: Record<string, string>) {
           try {
-            // Verify signature
             const verifyRes = await fetch("/api/razorpay/verify", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -71,8 +75,11 @@ export default function SubscriptionPage() {
 
             if (!verifyRes.ok) throw new Error("Payment verification failed");
 
-            // Update user subscription in firestore
-            const expiryDate = Date.now() + 30 * 24 * 60 * 60 * 1000; // +30 days
+            // Logic for calculating expiry based on plan
+            const isTrial = planId === "trial";
+            const days = isTrial ? 1 : 30;
+            const expiryDate = Date.now() + days * 24 * 60 * 60 * 1000;
+            const startDate = Date.now();
 
             const subscriptionId = `sub_${response.razorpay_payment_id}`;
             await setDoc(doc(db, "subscriptions", subscriptionId), {
@@ -81,11 +88,11 @@ export default function SubscriptionPage() {
               plan: planId,
               status: "active",
               razorpayPaymentId: response.razorpay_payment_id,
+              startDate,
               expiryDate,
               createdAt: Date.now(),
             });
 
-            // Update User & Restaurant references
             await updateDoc(doc(db, "users", user.uid), { subscriptionId });
             await updateDoc(doc(db, "restaurants", restaurant.id), {
               subscriptionStatus: "active",
@@ -96,6 +103,7 @@ export default function SubscriptionPage() {
             setRestaurant({ ...restaurant, plan: planId, subscriptionStatus: "active" });
 
             toast.success("Subscription activated successfully!");
+            window.location.href = "/restaurant/dashboard"; // Force reload to re-run layout checks
           } catch (error) {
             toast.error("Error confirming payment.");
           }
@@ -105,7 +113,7 @@ export default function SubscriptionPage() {
           email: user?.email,
         },
         theme: {
-          color: "#4f46e5",
+          color: "#0f9d6a",
         },
       };
 
@@ -129,62 +137,101 @@ export default function SubscriptionPage() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Choose the perfect plan</h1>
-          <p className="mt-4 text-lg text-slate-500">
-            Current Plan: <span className="font-semibold text-indigo-600 capitalize">{restaurant?.plan || "None"}</span>
+      <div className="max-w-6xl mx-auto space-y-8 pb-10">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-4">Pricing that scales with you</h1>
+          <p className="text-xl text-slate-500 max-w-2xl mx-auto">
+            Current Plan: <span className="font-semibold text-[#0f9d6a] capitalize">{restaurant?.plan || "None"}</span>
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        {/* Trial Banner */}
+        {restaurant?.plan !== "trial" && restaurant?.plan !== "pro" && restaurant?.plan !== "premium" && restaurant?.plan !== "basic" && (
+          <div className="bg-gradient-to-r from-teal-500 to-[#0f9d6a] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between shadow-lg text-white mb-10">
+            <div className="mb-4 md:mb-0">
+              <h2 className="text-2xl font-bold flex items-center gap-2 mb-2">
+                <Sparkles className="h-6 w-6 text-yellow-300" />
+                Try everything for ₹1
+              </h2>
+              <p className="text-teal-50 opacity-90 max-w-lg">
+                Get full access to all features for 24 hours. See how Dineflow.pro can transform your restaurant.
+              </p>
+            </div>
+            <Button
+              size="lg"
+              className="bg-white text-[#0f9d6a] hover:bg-slate-100 font-bold whitespace-nowrap rounded-xl shadow-sm px-8"
+              onClick={() => handleSubscribe("trial", 1)}
+              disabled={loadingPlan !== null}
+            >
+              {loadingPlan === "trial" ? (
+                <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#0f9d6a]" />
+              ) : (
+                <>Start ₹1 Trial <Play className="ml-2 h-4 w-4 fill-current" /></>
+              )}
+            </Button>
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-start pt-6 lg:pt-8">
           {plans.map((plan) => {
             const isCurrentPlan = restaurant?.plan === plan.id;
+            const isPro = plan.id === "pro";
 
             return (
               <Card
                 key={plan.id}
-                className={`relative flex flex-col border-2 ${plan.id === "pro" ? "border-indigo-600 shadow-xl shadow-indigo-100" : "border-slate-200"
-                  }`}
+                className={`relative flex flex-col bg-white rounded-2xl transition-all duration-300 ${
+                  isPro 
+                    ? "border-[3px] border-[#0f9d6a] shadow-2xl shadow-[#0f9d6a]/20 z-10 lg:scale-105" 
+                    : "border border-slate-200 shadow-sm hover:shadow-md"
+                }`}
               >
-                {plan.id === "pro" && (
-                  <div className="absolute -top-4 left-0 right-0 mx-auto w-max px-3 py-1 bg-indigo-600 text-white text-xs font-semibold rounded-full">
-                    Most Popular
+                {isPro && (
+                  <div className="absolute -top-4 left-0 right-0 mx-auto w-max px-4 py-1 bg-[#0f9d6a] text-white text-xs font-bold uppercase tracking-wider rounded-full flex items-center gap-1 shadow-sm">
+                    <Zap className="h-3.5 w-3.5 fill-current" /> Most Popular
                   </div>
                 )}
-                <CardHeader className="text-center pb-2">
-                  <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-                  <CardDescription className="text-slate-500 mt-2">
-                    <span className="text-4xl font-extrabold text-slate-900">₹{plan.price}</span>
-                    <span className="text-base"> /month</span>
+                
+                <CardHeader className={`text-center pb-6 pt-8 ${isPro ? "px-6" : "px-6"}`}>
+                  <CardTitle className="text-2xl font-bold text-slate-900">{plan.name}</CardTitle>
+                  <CardDescription className="mt-4 flex flex-col items-center">
+                    <div className="flex items-baseline text-slate-900">
+                      <span className={`text-5xl font-extrabold ${isPro ? "text-[#0f9d6a]" : ""}`}>₹{plan.price}</span>
+                      <span className="text-lg text-slate-500 font-medium ml-1">/month</span>
+                    </div>
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 mt-6">
+
+                <CardContent className="flex-1 px-6">
+                  <div className="h-px w-full bg-slate-100 mb-6" />
                   <ul className="space-y-4">
                     {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-center text-slate-700">
-                        <Check className="h-5 w-5 text-indigo-500 mr-3 shrink-0" />
-                        {feature}
+                      <li key={i} className="flex text-slate-700">
+                        <Check className={`h-5 w-5 mr-3 shrink-0 ${isPro ? "text-[#0f9d6a]" : "text-emerald-500"}`} />
+                        <span className="font-medium text-[15px]">{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </CardContent>
-                <CardFooter className="pt-6">
+
+                <CardFooter className="pt-6 pb-8 px-6">
                   <Button
-                    className={`w-full rounded-full font-medium h-12 transition duration-200 ${isCurrentPlan
-                      ? "bg-white border border-slate-200 text-slate-400 cursor-default"
-                      : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30"
-                      }`}
-                    size="lg"
+                    className={`w-full rounded-xl font-bold text-base h-14 transition-all duration-200 ${
+                      isCurrentPlan
+                        ? "bg-slate-100 border border-slate-200 text-slate-500 cursor-not-allowed hover:bg-slate-100"
+                        : isPro
+                        ? "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-md hover:shadow-lg shadow-[#0f9d6a]/30"
+                        : "bg-slate-900 text-white hover:bg-slate-800 shadow-md"
+                    }`}
                     disabled={isCurrentPlan || loadingPlan !== null}
                     onClick={() => handleSubscribe(plan.id, plan.price)}
                   >
                     {loadingPlan === plan.id ? (
-                      <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                     ) : isCurrentPlan ? (
                       "Current Plan"
                     ) : (
-                      "Subscribe"
+                      "Subscribe Now"
                     )}
                   </Button>
                 </CardFooter>

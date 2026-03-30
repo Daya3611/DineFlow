@@ -23,7 +23,7 @@ const navItems = [
 ];
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
-  const { user, userData, loading } = useAuth();
+  const { user, userData, restaurant, subscription, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -52,9 +52,39 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
   };
 
   const pageLabel = pathname.split("/").filter(Boolean).pop() || "Dashboard";
+  const isSubscriptionPage = pathname === "/restaurant/subscription";
+  
+  const showBlockingModal = !loading && restaurant && !isSubscriptionPage && (
+    !restaurant.plan || 
+    restaurant.plan === "none" || 
+    restaurant.subscriptionStatus === "inactive" || 
+    restaurant.subscriptionStatus === "expired" ||
+    subscription?.status === "expired" ||
+    (subscription?.expiryDate && subscription.expiryDate < Date.now())
+  );
 
   return (
-    <div className="h-screen overflow-hidden flex bg-[#f8fafc]">
+    <div className="h-screen overflow-hidden flex bg-[#f8fafc] relative">
+      {/* Subscription Blocking Overlay */}
+      {showBlockingModal && (
+        <div className="absolute inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border border-slate-100 flex flex-col items-center animate-in fade-in zoom-in duration-300">
+            <div className="h-20 w-20 bg-red-50 rounded-full flex items-center justify-center mb-6">
+              <CreditCard className="h-10 w-10 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">Subscription Expired</h2>
+            <p className="text-slate-500 mb-8 text-[15px] leading-relaxed">
+              Your subscription is inactive or has ended. Please choose a plan or renew to continue using Dineflow.pro features.
+            </p>
+            <Link href="/restaurant/subscription" className="w-full">
+              <button className="w-full bg-[#0f9d6a] hover:bg-[#0c7f56] active:scale-[0.98] text-white font-bold h-14 rounded-xl transition-all shadow-md hover:shadow-lg">
+                Renew Now
+              </button>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Mobile overlay */}
       <AnimatePresence>
         {sidebarOpen && (

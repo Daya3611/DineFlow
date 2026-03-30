@@ -20,8 +20,8 @@ export interface Restaurant {
   gstNumber?: string;
   upiId?: string;
   logo: string; // Cloudinary URL
-  subscriptionStatus: "active" | "inactive";
-  plan: "basic" | "pro" | "none";
+  subscriptionStatus: "active" | "inactive" | "expired";
+  plan: "basic" | "pro" | "premium" | "trial" | "none";
   createdAt: number;
 }
 
@@ -37,9 +37,10 @@ export interface Menu {
 export interface Subscription {
   id: string;
   userId: string;
-  plan: "basic" | "pro";
-  status: "active" | "inactive" | "cancelled";
+  plan: "basic" | "pro" | "premium" | "trial";
+  status: "active" | "inactive" | "cancelled" | "expired";
   razorpayPaymentId?: string;
+  startDate: number;
   expiryDate: number;
   createdAt: number;
 }

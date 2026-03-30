@@ -7,7 +7,7 @@ import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/f
 import { Order as OrderType } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Loader2, Printer, CheckCircle, Clock, Utensils, UtensilsCrossed, Bell, Table, Search, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
