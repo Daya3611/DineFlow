@@ -304,9 +304,9 @@ function MenuContent() {
       if (isMobile) {
         window.location.href = upiLink;
       } else {
-        toast.info("Please scan the QR code", {
-          description: "UPI apps can only be opened directly on a mobile phone.",
-        });
+        toast.warning(
+          "UPI apps can only be opened directly on a mobile phone. Please scan the QR code."
+        );
       }
     };
 
