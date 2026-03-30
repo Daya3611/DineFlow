@@ -49,7 +49,7 @@ export default function LiveOrdersPage() {
   useEffect(() => {
     if (newOrderTrigger > 0 && isSoundEnabled) {
       playNewOrderSound();
-      toast.success("🔔 New order received!", { duration: 4000 });
+      toast.success("🔔 New order received!");
     }
   }, [newOrderTrigger, isSoundEnabled]);
 
