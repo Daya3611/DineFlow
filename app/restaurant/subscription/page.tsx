@@ -46,14 +46,14 @@ export default function SubscriptionPage() {
       });
 
       if (!response.ok) throw new Error("Failed to create order");
-      
+
       const order = await response.json();
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
-        name: "RestoOS Cloud",
+        name: "DineFlow.pro",
         description: `Subscription for ${planId} plan`,
         order_id: order.id,
         handler: async function (response: Record<string, string>) {
@@ -140,13 +140,12 @@ export default function SubscriptionPage() {
         <div className="grid md:grid-cols-2 gap-8">
           {plans.map((plan) => {
             const isCurrentPlan = restaurant?.plan === plan.id;
-            
+
             return (
-              <Card 
-                key={plan.id} 
-                className={`relative flex flex-col border-2 ${
-                  plan.id === "pro" ? "border-indigo-600 shadow-xl shadow-indigo-100" : "border-slate-200"
-                }`}
+              <Card
+                key={plan.id}
+                className={`relative flex flex-col border-2 ${plan.id === "pro" ? "border-indigo-600 shadow-xl shadow-indigo-100" : "border-slate-200"
+                  }`}
               >
                 {plan.id === "pro" && (
                   <div className="absolute -top-4 left-0 right-0 mx-auto w-max px-3 py-1 bg-indigo-600 text-white text-xs font-semibold rounded-full">
@@ -171,12 +170,11 @@ export default function SubscriptionPage() {
                   </ul>
                 </CardContent>
                 <CardFooter className="pt-6">
-                  <Button 
-                    className={`w-full rounded-full font-medium h-12 transition duration-200 ${
-                      isCurrentPlan 
-                        ? "bg-white border border-slate-200 text-slate-400 cursor-default" 
-                        : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30"
-                    }`}
+                  <Button
+                    className={`w-full rounded-full font-medium h-12 transition duration-200 ${isCurrentPlan
+                      ? "bg-white border border-slate-200 text-slate-400 cursor-default"
+                      : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30"
+                      }`}
                     size="lg"
                     disabled={isCurrentPlan || loadingPlan !== null}
                     onClick={() => handleSubscribe(plan.id, plan.price)}
