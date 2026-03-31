@@ -187,7 +187,7 @@ export default function Home() {
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
-    
+
     // Use Lenis for premium scroll if available
     if (typeof window !== 'undefined' && (window as any).lenis) {
       (window as any).lenis.scrollTo(`#${id}`);
@@ -680,6 +680,11 @@ export default function Home() {
               <p className="text-sm text-gray-500 leading-relaxed max-w-[220px]">
                 The all-in-one restaurant management platform built for modern India.
               </p>
+              <div className="-mb-8">
+                <a href="https://www.foundrlist.com/product/dineflow" target="_blank" rel="nofollow noopener noreferrer">
+                  <img src="https://www.foundrlist.com/api/badge/dineflow" alt="Live on FoundrList" width="160" height="64" />
+                </a>
+              </div>
             </div>
 
             {/* Product */}
