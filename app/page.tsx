@@ -296,9 +296,9 @@ export default function Home() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-semibold px-4 py-2 rounded-full border border-emerald-200 mb-8 shadow-sm"
+              className="inline-flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-4 py-1 rounded-full border border-slate-200 mb-3 shadow-sm"
             >
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
               Trusted by 500+ restaurants across India
             </motion.div>
 
@@ -422,7 +422,7 @@ export default function Home() {
         <section id="features" className="py-24 bg-white">
           <div className="container mx-auto px-6 max-w-6xl">
             <div className="text-center mb-16">
-              <motion.div {...fadeUp(0)} className="inline-flex items-center text-emerald-700 font-semibold text-sm bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200 mb-4">
+              <motion.div {...fadeUp(0)} className="inline-flex items-center text-slate-700 font-semibold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 mb-4">
                 Powerful features
               </motion.div>
               <motion.h2 {...fadeUp(0.08)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-5">
@@ -510,7 +510,7 @@ export default function Home() {
         <section id="pricing" className="py-24 bg-white">
           <div className="container mx-auto px-6 max-w-5xl">
             <div className="text-center mb-16">
-              <motion.div {...fadeUp(0)} className="inline-flex items-center text-emerald-700 font-semibold text-sm bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200 mb-4">
+              <motion.div {...fadeUp(0)} className="inline-flex items-center text-slate-700 font-semibold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 mb-4">
                 Simple pricing
               </motion.div>
               <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
@@ -582,7 +582,7 @@ export default function Home() {
         <section className="py-24 bg-[#F9FAFB]">
           <div className="container mx-auto px-6 max-w-6xl">
             <div className="text-center mb-16">
-              <motion.div {...fadeUp(0)} className="inline-flex items-center text-emerald-700 font-semibold text-sm bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200 mb-4">
+              <motion.div {...fadeUp(0)} className="inline-flex items-center text-slate-700 font-semibold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 mb-4">
                 Real reviews
               </motion.div>
               <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">
