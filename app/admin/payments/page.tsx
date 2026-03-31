@@ -46,7 +46,7 @@ export default function AdminPaymentsPage() {
   };
 
   const getAmountForPlan = (plan: string) => {
-    return plan === "pro" ? "₹499" : plan === "basic" ? "₹199" : "₹0";
+    return plan === "pro" ? "₹499" : plan === "premium" ? "₹999" : plan === "basic" ? "₹299" : "₹0";
   };
 
   return (
