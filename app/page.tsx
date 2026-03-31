@@ -180,7 +180,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { userData } = useAuth();
-  
+
   useEffect(() => {
     setIsLoggedIn(isTokenValid());
   }, []);
@@ -387,7 +387,7 @@ export default function Home() {
               transition={{ duration: 0.7, delay: 0.35, ease: "easeOut" }}
               className="relative mx-auto max-w-5xl"
             >
-              <div className="relative rounded-2xl overflow-hidden border border-gray-200/80 shadow-2xl shadow-gray-300/40 ring-1 ring-gray-100">
+              {/* <div className="relative rounded-2xl overflow-hidden border border-gray-200/80 shadow-2xl shadow-gray-300/40 ring-1 ring-gray-100">
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20 pointer-events-none z-10 rounded-2xl" />
                 <Image
                   src="/hero.png"
@@ -397,7 +397,7 @@ export default function Home() {
                   className="w-full h-auto object-cover"
                   priority
                 />
-              </div>
+              </div> */}
               {/* Glow under image */}
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-emerald-400/20 blur-3xl rounded-full -z-10" />
             </motion.div>
