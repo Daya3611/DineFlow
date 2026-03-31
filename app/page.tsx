@@ -673,7 +673,7 @@ export default function Home() {
           </div>
 
           <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-            <p>© {new Date().getFullYear()} Dineflow.pro. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} DINEFLOW TECHNOLOGIES PRIVATE LIMITED . All rights reserved.</p>
             <div className="flex gap-6">
               <Link href="#" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
               <Link href="#" className="hover:text-gray-600 transition-colors">Terms of Service</Link>
