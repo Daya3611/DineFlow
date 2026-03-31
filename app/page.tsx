@@ -23,6 +23,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -177,6 +178,8 @@ const staggerItem: Variants = {
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isAuthenticated, userData } = useAuth();
+  const dashboardLink = userData?.role === "super_admin" ? "/admin/dashboard" : "/restaurant/dashboard";
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans antialiased">
@@ -201,14 +204,24 @@ export default function Home() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <Link href="/login" className="hidden md:block text-[15px] font-bold text-gray-500 hover:text-[#0f9d6a] transition-colors px-2">
-              Log in
-            </Link>
-            <Link href="/register" className="hidden md:block shrink-0">
-              <Button className="h-10 px-5 sm:px-6 rounded-full font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all duration-200">
-                Start Free Trial
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <Link href={dashboardLink} className="hidden md:block shrink-0">
+                <Button className="h-10 px-5 sm:px-6 rounded-full font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all duration-200">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="hidden md:block text-[15px] font-bold text-gray-500 hover:text-[#0f9d6a] transition-colors px-2">
+                  Log in
+                </Link>
+                <Link href="/register" className="hidden md:block shrink-0">
+                  <Button className="h-10 px-5 sm:px-6 rounded-full font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all duration-200">
+                    Start Free Trial
+                  </Button>
+                </Link>
+              </>
+            )}
             <button
               className="md:hidden p-2 text-gray-600 hover:text-gray-900 bg-gray-50 rounded-lg shrink-0"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -232,14 +245,26 @@ export default function Home() {
                 <Link href="#features" onClick={() => setMobileMenuOpen(false)} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Features</Link>
                 <Link href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">How it works</Link>
                 <Link href="#pricing" onClick={() => setMobileMenuOpen(false)} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Pricing</Link>
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Log in</Link>
-                <div className="mt-4">
-                  <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                    <Button className="w-full text-base h-12 rounded-xl font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56]">
-                      Start Free Trial
-                    </Button>
-                  </Link>
-                </div>
+                {isAuthenticated ? (
+                  <div className="mt-4">
+                    <Link href={dashboardLink} onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full text-base h-12 rounded-xl font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56]">
+                        Go to Dashboard
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Log in</Link>
+                    <div className="mt-4">
+                      <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
+                        <Button className="w-full text-base h-12 rounded-xl font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56]">
+                          Start Free Trial
+                        </Button>
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             </motion.div>
           )}
@@ -324,10 +349,10 @@ export default function Home() {
               transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
             >
-              <Link href="/register">
+              <Link href={isAuthenticated ? dashboardLink : "/register"}>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300 }}>
                   <Button size="lg" className="h-14 px-10 text-base rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200 shadow-[0_4px_14px_rgba(15,157,106,0.25)]">
-                    Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+                    {isAuthenticated ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </motion.div>
               </Link>
@@ -608,9 +633,9 @@ export default function Home() {
               Join 500+ restaurants using Dineflow.pro to serve customers faster, smarter, and without paper menus.
             </motion.p>
             <motion.div {...fadeUp(0.14)} className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/register">
+              <Link href={isAuthenticated ? dashboardLink : "/register"}>
                 <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold px-10 h-14 text-base rounded-2xl shadow-xl transition-all hover:scale-105">
-                  Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+                  {isAuthenticated ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </motion.div>
