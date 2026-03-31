@@ -63,7 +63,7 @@ export default function LoginPage() {
 
         <div className="absolute top-6 left-6 z-20">
           <Link href="/">
-            <Image src="/logo.png" alt="Dineflow Icon" width={48} height={48} className="h-10 w-auto object-contain brightness-0 invert opacity-90 hover:scale-105 transition-all duration-200 drop-shadow-sm" priority />
+            <Image src="/logo.png" alt="Dineflow Icon" width={150} height={150} className="w-auto object-contain brightness-0 invert opacity-90 hover:scale-105 transition-all duration-200 drop-shadow-sm" priority />
           </Link>
         </div>
 
@@ -91,7 +91,7 @@ export default function LoginPage() {
         {/* Mobile logo */}
         <div className="lg:hidden absolute top-6 left-6 z-20">
           <Link href="/">
-            <Image src="/logo.png" alt="Dineflow Icon" width={40} height={40} className="h-8 w-auto object-contain opacity-90 hover:scale-105 transition-all duration-200 drop-shadow-sm" priority />
+            <Image src="/logo.png" alt="Dineflow Icon" width={150} height={150} className="w-auto object-contain opacity-90 hover:scale-105 transition-all duration-200 drop-shadow-sm" priority />
           </Link>
         </div>
 

@@ -186,7 +186,7 @@ export default function Home() {
         <div className="mx-auto px-6 lg:px-8 max-w-7xl h-16 md:h-20 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <Image src="/logo.png" alt="Dineflow Icon" width={44} height={44} className="h-10 md:h-11 w-auto object-contain group-hover:scale-105 transition-transform" priority />
+            <Image src="/logo.png" alt="Dineflow Icon" width={150} height={150} className=" w-auto object-contain group-hover:scale-105 transition-transform" priority />
             {/* <span className="text-xl md:text-2xl font-bold tracking-tight text-gray-900 flex items-center">
               Dineflow<span className="text-[#0f9d6a]">.pro</span>
             </span> */}
@@ -628,7 +628,7 @@ export default function Home() {
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <Link href="/" className="flex items-center gap-2.5 mb-4">
-                <Image src="/logo.png" alt="Dineflow.pro Logo" width={140} height={36} className="h-8 md:h-9 w-auto object-contain" priority />
+                <Image src="/logo.png" alt="Dineflow.pro Logo" width={140} height={100} className="w-auto object-contain" priority />
               </Link>
               <p className="text-sm text-gray-500 leading-relaxed max-w-[220px]">
                 The all-in-one restaurant management platform built for modern India.

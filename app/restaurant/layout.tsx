@@ -39,7 +39,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="flex flex-col items-center gap-3">
-          <Image src="/logo.png" alt="Dineflow Logo" width={60} height={60} className="h-12 w-12 object-contain" priority />
+          <Image src="/logo.png" alt="Dineflow Logo" width={100} height={100} className="w-auto object-contain" priority />
           <Loader2 className="h-6 w-6 animate-spin text-[#0f9d6a]" />
         </div>
       </div>
@@ -53,11 +53,11 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
 
   const pageLabel = pathname.split("/").filter(Boolean).pop() || "Dashboard";
   const isSubscriptionPage = pathname === "/restaurant/subscription";
-  
+
   const showBlockingModal = !loading && restaurant && !isSubscriptionPage && (
-    !restaurant.plan || 
-    restaurant.plan === "none" || 
-    restaurant.subscriptionStatus === "inactive" || 
+    !restaurant.plan ||
+    restaurant.plan === "none" ||
+    restaurant.subscriptionStatus === "inactive" ||
     restaurant.subscriptionStatus === "expired" ||
     subscription?.status === "expired" ||
     (subscription?.expiryDate && subscription.expiryDate < Date.now())
