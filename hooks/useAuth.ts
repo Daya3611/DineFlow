@@ -104,7 +104,6 @@ export const useAuth = create<AuthState>((set) => ({
             set({ userData: data });
 
             // If user has a restaurant, fetch it
-            let hasExpired = false;
             if (data.restaurantId) {
               const resDoc = await getDoc(doc(db, "restaurants", data.restaurantId));
               if (resDoc.exists()) {

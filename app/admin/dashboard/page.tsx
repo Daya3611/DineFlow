@@ -44,7 +44,7 @@ export default function AdminDashboardPage() {
           allRests.push(rest);
           if (rest.subscriptionStatus === "active") {
             subCount++;
-            revenue += rest.plan === "pro" ? 1999 : 999;
+            revenue += rest.plan === "pro" ? 499 : rest.plan === "premium" ? 999 : 299;
           }
         });
 
