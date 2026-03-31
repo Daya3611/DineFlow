@@ -124,11 +124,12 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
   }
 
   html {
     @apply font-sans;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
   }
 }
 

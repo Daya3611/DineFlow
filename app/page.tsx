@@ -185,6 +185,22 @@ export default function Home() {
     setIsLoggedIn(isTokenValid());
   }, []);
 
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    
+    // Use Lenis for premium scroll if available
+    if (typeof window !== 'undefined' && (window as any).lenis) {
+      (window as any).lenis.scrollTo(`#${id}`);
+    } else {
+      // Fallback
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+    setMobileMenuOpen(false);
+  };
+
   const dashboardLink = userData?.role === "super_admin" ? "/admin/dashboard" : "/restaurant/dashboard";
 
   return (
@@ -203,9 +219,9 @@ export default function Home() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-gray-600">
-            <Link href="#features" className="hover:text-[#0f9d6a] transition-colors">Features</Link>
-            <Link href="#how-it-works" className="hover:text-[#0f9d6a] transition-colors">How it works</Link>
-            <Link href="#pricing" className="hover:text-[#0f9d6a] transition-colors">Pricing</Link>
+            <Link href="#features" onClick={(e) => scrollToSection(e, 'features')} className="hover:text-[#0f9d6a] transition-colors">Features</Link>
+            <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="hover:text-[#0f9d6a] transition-colors">How it works</Link>
+            <Link href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="hover:text-[#0f9d6a] transition-colors">Pricing</Link>
           </nav>
 
           {/* Right Actions */}
@@ -248,9 +264,9 @@ export default function Home() {
               className="md:hidden border-t border-gray-100 bg-white absolute top-full left-0 right-0 shadow-lg pb-6 -z-10"
             >
               <div className="flex flex-col px-6 py-4 gap-2 text-lg font-medium text-gray-700">
-                <Link href="#features" onClick={() => setMobileMenuOpen(false)} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Features</Link>
-                <Link href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">How it works</Link>
-                <Link href="#pricing" onClick={() => setMobileMenuOpen(false)} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Pricing</Link>
+                <Link href="#features" onClick={(e) => scrollToSection(e, 'features')} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Features</Link>
+                <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">How it works</Link>
+                <Link href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Pricing</Link>
                 {isLoggedIn ? (
                   <div className="mt-4">
                     <Link href={dashboardLink} onClick={() => setMobileMenuOpen(false)}>
@@ -362,7 +378,7 @@ export default function Home() {
                   </Button>
                 </motion.div>
               </Link>
-              <Link href="#how-it-works">
+              <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')}>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300 }}>
                   <Button size="lg" variant="outline" className="h-14 px-10 text-base rounded-full bg-white border border-[#e5e7eb] text-[#0f172a] hover:bg-[#f1f5f9] font-semibold transition-all">
                     See How It Works
@@ -670,9 +686,9 @@ export default function Home() {
             <div>
               <h4 className="text-gray-900 font-bold text-sm mb-4">Product</h4>
               <ul className="space-y-2.5 text-sm">
-                <li><Link href="#features" className="hover:text-[#0f9d6a] transition-colors">Features</Link></li>
-                <li><Link href="#pricing" className="hover:text-[#0f9d6a] transition-colors">Pricing</Link></li>
-                <li><Link href="#how-it-works" className="hover:text-[#0f9d6a] transition-colors">How It Works</Link></li>
+                <li><Link href="#features" onClick={(e) => scrollToSection(e, 'features')} className="hover:text-[#0f9d6a] transition-colors">Features</Link></li>
+                <li><Link href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="hover:text-[#0f9d6a] transition-colors">Pricing</Link></li>
+                <li><Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="hover:text-[#0f9d6a] transition-colors">How It Works</Link></li>
               </ul>
             </div>
 
