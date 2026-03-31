@@ -15,6 +15,10 @@ interface AuthState {
   setRestaurant: (restaurant: Restaurant | null) => void;
   setSubscription: (subscription: Subscription | null) => void;
   initialize: () => Unsubscribe;
+  isAuthenticated: boolean;
+  token: string | null;
+  logout: () => Promise<void>;
+  checkToken: () => boolean;
 }
 
 export const useAuth = create<AuthState>((set) => ({
@@ -27,12 +31,57 @@ export const useAuth = create<AuthState>((set) => ({
   setUserData: (userData) => set({ userData }),
   setRestaurant: (restaurant) => set({ restaurant }),
   setSubscription: (subscription) => set({ subscription }),
+  isAuthenticated: false,
+  token: null,
+
+  logout: async () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+    }
+    set({ user: null, userData: null, restaurant: null, subscription: null, isAuthenticated: false, token: null });
+    const { signOut } = await import("firebase/auth");
+    await signOut(auth);
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
+  },
+
+  checkToken: () => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const tokenExpired = payload.exp * 1000 < Date.now();
+          if (tokenExpired) {
+             const state = useAuth.getState();
+             state.logout();
+             return false;
+          }
+          set({ isAuthenticated: true, token });
+          return true;
+        } catch (e) {
+             const state = useAuth.getState();
+             state.logout();
+             return false;
+        }
+      }
+    }
+    set({ isAuthenticated: false, token: null });
+    return false;
+  },
 
   initialize: () => {
+    useAuth.getState().checkToken();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       set({ loading: true });
       if (firebaseUser) {
         set({ user: firebaseUser });
+        if (typeof window !== "undefined") {
+          const token = await firebaseUser.getIdToken();
+          localStorage.setItem("token", token);
+          set({ isAuthenticated: true, token });
+        }
         try {
           // Fetch user data from firestore
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));

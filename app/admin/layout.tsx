@@ -22,17 +22,21 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, userData, loading } = useAuth();
+  const { user, userData, loading, checkToken, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    if (!checkToken()) {
+      router.push("/login");
+      return;
+    }
     if (!loading) {
       if (!user) router.push("/login");
       else if (userData?.role !== "super_admin") router.push("/restaurant/dashboard");
     }
-  }, [user, userData, loading, router]);
+  }, [user, userData, loading, router, checkToken]);
 
   if (loading || !userData || userData.role !== "super_admin") {
     return (
@@ -46,8 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const handleLogout = async () => {
-    await signOut(auth);
-    router.push("/login");
+    await logout();
   };
 
   const pageLabel = pathname.split("/").filter(Boolean).pop() || "Dashboard";

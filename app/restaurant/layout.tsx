@@ -23,17 +23,21 @@ const navItems = [
 ];
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
-  const { user, userData, restaurant, subscription, loading } = useAuth();
+  const { user, userData, restaurant, subscription, loading, checkToken, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    if (!checkToken()) {
+      router.push("/login");
+      return;
+    }
     if (!loading) {
       if (!user) router.push("/login");
       else if (userData?.role !== "restaurant_owner") router.push("/admin/dashboard");
     }
-  }, [user, userData, loading, router]);
+  }, [user, userData, loading, router, checkToken]);
 
   if (loading || !userData || userData.role !== "restaurant_owner") {
     return (
@@ -47,8 +51,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
   }
 
   const handleLogout = async () => {
-    await signOut(auth);
-    router.push("/login");
+    await logout();
   };
 
   const pageLabel = pathname.split("/").filter(Boolean).pop() || "Dashboard";

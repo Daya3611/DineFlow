@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,6 +17,8 @@ import Image from "next/image";
 import { ChefHat, Loader2, Mail, Lock, User } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { useAuth } from "@/hooks/useAuth";
+
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
@@ -26,6 +28,13 @@ const formSchema = z.object({
 export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { checkToken } = useAuth();
+
+  useEffect(() => {
+    if (checkToken()) {
+      router.push("/restaurant/dashboard");
+    }
+  }, [router, checkToken]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
