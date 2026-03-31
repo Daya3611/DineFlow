@@ -668,7 +668,7 @@ export default function Home() {
         </section>
       </main>
 
-      {/* ── Footer ── */}
+      {/* ── Footer ─-----─ */}
       <footer className="bg-white border-t border-gray-100 text-gray-500">
         <div className="container mx-auto px-6 max-w-7xl py-14">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 pb-12 border-b border-gray-100">
