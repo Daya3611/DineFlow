@@ -24,6 +24,12 @@ service cloud.firestore {
         get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.get('ownerId', '') == request.auth.uid;
     }
 
+    function isRestaurantActive(restaurantId) {
+      return !exists(/databases/$(database)/documents/restaurants/$(restaurantId)) ||
+             (get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.get('subscriptionStatus', 'active') != 'inactive' && 
+              get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.get('status', 'active') != 'inactive');
+    }
+
     // Users collection
     match /users/{userId} {
       allow read: if isOwner(userId) || isSuperAdmin();
@@ -43,11 +49,11 @@ service cloud.firestore {
 
     // Menus collection
     match /menus/{menuId} {
-      allow read: if true; // Publicly readable for customers
+      allow read: if isSuperAdmin() || isRestaurantActive(resource.data.restaurantId);
       // Only the specific restaurant owner or super admin can manage menus
-      allow create: if isSuperAdmin() || isRestaurantOwner(request.resource.data.restaurantId);
-      allow update: if isSuperAdmin() || (isRestaurantOwner(resource.data.restaurantId) && isRestaurantOwner(request.resource.data.restaurantId));
-      allow delete: if isSuperAdmin() || isRestaurantOwner(resource.data.restaurantId);
+      allow create: if isSuperAdmin() || (isRestaurantOwner(request.resource.data.restaurantId) && isRestaurantActive(request.resource.data.restaurantId));
+      allow update: if isSuperAdmin() || (isRestaurantOwner(resource.data.restaurantId) && isRestaurantOwner(request.resource.data.restaurantId) && isRestaurantActive(resource.data.restaurantId));
+      allow delete: if isSuperAdmin() || (isRestaurantOwner(resource.data.restaurantId) && isRestaurantActive(resource.data.restaurantId));
     }
 
     // Subscriptions collection
@@ -60,15 +66,15 @@ service cloud.firestore {
 
     // Tables collection
     match /tables/{tableId} {
-      allow read: if true; // Publicly readable to get table info if needed
-      allow create, update, delete: if isSuperAdmin() || isRestaurantOwner(resource.data.restaurantId) || isRestaurantOwner(request.resource.data.restaurantId);
+      allow read: if isSuperAdmin() || isRestaurantActive(resource.data.restaurantId);
+      allow create, update, delete: if isSuperAdmin() || (isRestaurantOwner(resource.data.restaurantId) && isRestaurantActive(resource.data.restaurantId)) || (isRestaurantOwner(request.resource.data.restaurantId) && isRestaurantActive(request.resource.data.restaurantId));
     }
 
     // Orders collection
     match /orders/{orderId} {
-      allow read: if true; // Customers might need to read their order status based on order ID somehow, or restaurant owner polling
-      allow create: if true; // Anyone can place an order from table via QR
-      allow update, delete: if isSuperAdmin() || isRestaurantOwner(resource.data.restaurantId);
+      allow read: if isSuperAdmin() || isRestaurantActive(resource.data.restaurantId); // Customers might need to read their order status based on order ID somehow, or restaurant owner polling
+      allow create: if isSuperAdmin() || isRestaurantActive(request.resource.data.restaurantId); // Anyone can place an order from table via QR if active
+      allow update, delete: if isSuperAdmin() || (isRestaurantOwner(resource.data.restaurantId) && isRestaurantActive(resource.data.restaurantId));
     }
   }
 }
