@@ -7,7 +7,7 @@ import * as z from "zod";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/firebase";
 import { doc, setDoc } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ import Image from "next/image";
 import { ChefHat, Loader2, Mail, Lock, User } from "lucide-react";
 import { motion } from "framer-motion";
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, isTokenValid } from "@/hooks/useAuth";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -27,14 +27,16 @@ const formSchema = z.object({
 
 export default function RegisterPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(false);
-  const { checkToken } = useAuth();
 
   useEffect(() => {
-    if (checkToken()) {
-      router.push("/restaurant/dashboard");
+    if (isTokenValid()) {
+      if (pathname !== "/restaurant/dashboard" && pathname !== "/admin/dashboard") {
+        router.replace("/restaurant/dashboard");
+      }
     }
-  }, [router, checkToken]);
+  }, []);
 
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -60,8 +62,8 @@ export default function RegisterPage() {
       });
 
       toast.success("Account created! Welcome to Dineflow.pro 🎉");
-      if (assignedRole === "super_admin") router.push("/admin/dashboard");
-      else router.push("/restaurant/dashboard");
+      if (assignedRole === "super_admin") router.replace("/admin/dashboard");
+      else router.replace("/restaurant/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, isTokenValid } from "@/hooks/useAuth";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -26,19 +26,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
+  // Validate token initially
   useEffect(() => {
-    if (!checkToken()) {
-      router.push("/login");
-      return;
+    if (!isTokenValid()) {
+      localStorage.removeItem("token");
+      if (pathname !== "/login") router.replace("/login");
+    } else {
+      setIsChecking(false);
     }
-    if (!loading) {
-      if (!user) router.push("/login");
-      else if (userData?.role !== "super_admin") router.push("/restaurant/dashboard");
-    }
-  }, [user, userData, loading, router, checkToken]);
+  }, [pathname, router]);
 
-  if (loading || !userData || userData.role !== "super_admin") {
+  // Periodic token validation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!isTokenValid()) {
+        localStorage.removeItem("token");
+        if (pathname !== "/login") router.replace("/login");
+      }
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [pathname, router]);
+
+  // Role protection once user data loads
+  useEffect(() => {
+    if (!isChecking && !loading) {
+      if (!user) {
+        if (pathname !== "/login") router.replace("/login");
+      }
+      else if (userData?.role !== "super_admin") {
+        if (pathname !== "/restaurant/dashboard") router.replace("/restaurant/dashboard");
+      }
+    }
+  }, [isChecking, loading, user, userData, pathname, router]);
+
+  if (isChecking || loading || !userData || userData.role !== "super_admin") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="flex flex-col items-center gap-3">

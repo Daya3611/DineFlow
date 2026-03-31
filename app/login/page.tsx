@@ -7,7 +7,7 @@ import * as z from "zod";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChefHat, Loader2, Mail, Lock } from "lucide-react";
 import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, isTokenValid } from "@/hooks/useAuth";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -25,14 +25,16 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(false);
-  const { checkToken } = useAuth();
   
   useEffect(() => {
-    if (checkToken()) {
-      router.push("/restaurant/dashboard");
+    if (isTokenValid()) {
+      if (pathname !== "/restaurant/dashboard" && pathname !== "/admin/dashboard") {
+        router.replace("/restaurant/dashboard");
+      }
     }
-  }, [router, checkToken]);
+  }, []);
 
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,8 +50,8 @@ export default function LoginPage() {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         toast.success("Welcome back! 👋");
-        if (userData.role === "super_admin") router.push("/admin/dashboard");
-        else router.push("/restaurant/dashboard");
+        if (userData.role === "super_admin") router.replace("/admin/dashboard");
+        else router.replace("/restaurant/dashboard");
       } else {
         toast.error("User profile not found.");
       }

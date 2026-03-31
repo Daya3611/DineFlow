@@ -3,6 +3,20 @@ import { User as FirebaseUser, onAuthStateChanged, Unsubscribe } from "firebase/
 import { auth, db } from "@/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { User, Restaurant, Subscription } from "@/types";
+import { jwtDecode } from "jwt-decode";
+
+export const isTokenValid = () => {
+  if (typeof window === "undefined") return false;
+  const token = localStorage.getItem("token");
+  if (!token) return false;
+
+  try {
+    const decoded: any = jwtDecode(token);
+    return decoded.exp > Date.now() / 1000;
+  } catch {
+    return false;
+  }
+};
 
 interface AuthState {
   user: FirebaseUser | null;
@@ -135,6 +149,9 @@ export const useAuth = create<AuthState>((set) => ({
           console.error("Error fetching user data:", error);
         }
       } else {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+        }
         set({ user: null, userData: null, restaurant: null, subscription: null });
       }
       set({ loading: false });
