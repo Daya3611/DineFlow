@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   subscriptionId?: string;
   restaurantId?: string;
+  photoUrl?: string;
   createdAt: number;
 }
 

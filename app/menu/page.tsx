@@ -292,10 +292,10 @@ function MenuContent() {
   if (orderPlaced) {
     const upiLink = restaurant.upiId
       ? `upi://pay?pa=${restaurant.upiId}&pn=${encodeURIComponent(
-          restaurant.name
-        )}&am=${placedOrderTotal}&cu=INR&tn=${encodeURIComponent(
-          "Order " + orderPlaced.slice(-6).toUpperCase()
-        )}`
+        restaurant.name
+      )}&am=${placedOrderTotal}&cu=INR&tn=${encodeURIComponent(
+        "Order " + orderPlaced.slice(-6).toUpperCase()
+      )}`
       : "";
 
     const handleUpiDeepLink = () => {
@@ -362,22 +362,20 @@ function MenuContent() {
               <div className="grid grid-cols-2 gap-3 mb-5">
                 <button
                   onClick={() => setPaymentOption("counter")}
-                  className={`py-3 px-2 rounded-[16px] text-sm font-semibold border-2 transition-all duration-200 ${
-                    paymentOption === "counter"
-                      ? "border-[#0f9d6a] bg-[#f0fdf4] text-[#0f9d6a]"
-                      : "border-gray-100 text-gray-400 hover:border-gray-200"
-                  }`}
+                  className={`py-3 px-2 rounded-[16px] text-sm font-semibold border-2 transition-all duration-200 ${paymentOption === "counter"
+                    ? "border-[#0f9d6a] bg-[#f0fdf4] text-[#0f9d6a]"
+                    : "border-gray-100 text-gray-400 hover:border-gray-200"
+                    }`}
                 >
                   Pay at Counter
                 </button>
                 {restaurant.upiId ? (
                   <button
                     onClick={() => setPaymentOption("upi")}
-                    className={`py-3 px-2 rounded-[16px] text-sm font-semibold border-2 transition-all duration-200 ${
-                      paymentOption === "upi"
-                        ? "border-[#0f9d6a] bg-[#f0fdf4] text-[#0f9d6a]"
-                        : "border-gray-100 text-gray-400 hover:border-gray-200"
-                    }`}
+                    className={`py-3 px-2 rounded-[16px] text-sm font-semibold border-2 transition-all duration-200 ${paymentOption === "upi"
+                      ? "border-[#0f9d6a] bg-[#f0fdf4] text-[#0f9d6a]"
+                      : "border-gray-100 text-gray-400 hover:border-gray-200"
+                      }`}
                   >
                     Pay via UPI
                   </button>
@@ -535,11 +533,10 @@ function MenuContent() {
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
-                    className={`shrink-0 flex items-center gap-[6px] px-4 h-[40px] rounded-full transition-all duration-200 active:scale-95 border ${
-                      isActive
-                        ? "bg-[#0f9d6a] border-[#0f9d6a] text-white"
-                        : "bg-[#f1f5f9] border-transparent text-gray-700 hover:bg-gray-100"
-                    }`}
+                    className={`shrink-0 flex items-center gap-[6px] px-4 h-[40px] rounded-full transition-all duration-200 active:scale-95 border ${isActive
+                      ? "bg-[#0f9d6a] border-[#0f9d6a] text-white"
+                      : "bg-[#f1f5f9] border-transparent text-gray-700 hover:bg-gray-100"
+                      }`}
                   >
                     <span className="text-[14px] leading-none">{getCategoryIcon(cat)}</span>
                     <span className="text-[13px] font-medium leading-none whitespace-nowrap">
@@ -708,42 +705,7 @@ function MenuContent() {
         )}
       </AnimatePresence>
 
-      {/* ── BOTTOM NAV ── */}
-      <nav className="fixed bottom-0 left-0 right-0 h-[64px] bg-white border-t border-gray-100 flex items-center z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.02)] pt-1 pb-[env(safe-area-inset-bottom)]">
-        {(
-          [
-            { id: "home", icon: Home, label: "Home" },
-            { id: "menu", icon: BookOpen, label: "Menu" },
-            { id: "orders", icon: ClipboardList, label: "Orders" },
-            { id: "profile", icon: User, label: "Profile" },
-          ] as const
-        ).map(({ id, icon: Icon, label }) => {
-          const isActive = activeNav === id;
-          return (
-            <button
-              key={id}
-              onClick={() => setActiveNav(id)}
-              className="flex-1 flex flex-col items-center justify-center gap-[4px] py-1 transition-all duration-200"
-            >
-              <Icon
-                className={`h-[22px] w-[22px] transition-colors duration-200 ${
-                  isActive ? "text-[#0f9d6a]" : "text-gray-400"
-                }`}
-                strokeWidth={isActive ? 2.5 : 2}
-              />
-              <span
-                className={`text-[10px] font-medium transition-colors duration-200 ${
-                  isActive ? "text-[#0f9d6a]" : "text-gray-500"
-                }`}
-              >
-                {label}
-              </span>
-            </button>
-          );
-        })}
-      </nav>
 
-      {/* ── CHECKOUT DIALOG ── */}
       <Dialog open={openCheckout} onOpenChange={setOpenCheckout}>
         <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden rounded-[24px] border-0">
           <DialogHeader className="px-5 pt-6 pb-4 border-b border-gray-50">

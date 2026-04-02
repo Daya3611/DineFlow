@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { Store, CreditCard, Activity, ArrowRight, TrendingUp, DollarSign, Loader2, ShoppingBag } from "lucide-react";
+import { Store, CreditCard, Activity, ArrowRight, TrendingUp, IndianRupee, Loader2, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState, useMemo } from "react";
@@ -21,8 +21,14 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function RestaurantDashboard() {
-  const { userData, restaurant } = useAuth();
+  const { userData, restaurant, subscription } = useAuth();
   const hasRestaurant = !!restaurant;
+
+  const remainingDays = useMemo(() => {
+    if (!subscription?.expiryDate) return null;
+    const diffTime = subscription.expiryDate - Date.now();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }, [subscription]);
 
   const [orders, setOrders] = useState<any[]>([]);
   const [menuCount, setMenuCount] = useState(0);
@@ -40,7 +46,7 @@ export default function RestaurantDashboard() {
 
         const ordersQ = query(collection(db, "orders"), where("restaurantId", "==", restaurant.id));
         const ordersSnapshot = await getDocs(ordersQ);
-        
+
         const fetchedOrders = ordersSnapshot.docs.map(doc => doc.data());
         setOrders(fetchedOrders);
       } catch (e) {
@@ -54,10 +60,10 @@ export default function RestaurantDashboard() {
 
   const { chartData, totalRevenue, totalOrders, averageOrderValue } = useMemo(() => {
     if (!orders.length) return { chartData: [], totalRevenue: 0, totalOrders: 0, averageOrderValue: 0 };
-    
+
     const now = Date.now();
     let timeFilter = 0;
-    
+
     if (timeRange === "7d") {
       timeFilter = now - 7 * 24 * 60 * 60 * 1000;
     } else if (timeRange === "30d") {
@@ -67,13 +73,13 @@ export default function RestaurantDashboard() {
     }
 
     const filteredOrders = orders.filter(o => o.createdAt >= timeFilter);
-    
+
     const totalRev = filteredOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     const totalOrd = filteredOrders.length;
     const avgVal = totalOrd > 0 ? totalRev / totalOrd : 0;
-    
+
     const grouped: Record<string, number> = {};
-    
+
     filteredOrders.forEach(o => {
       const date = new Date(o.createdAt);
       let key = "";
@@ -82,13 +88,13 @@ export default function RestaurantDashboard() {
       } else {
         key = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       }
-      
+
       if (!grouped[key]) grouped[key] = 0;
       grouped[key] += (o.totalAmount || 0);
     });
-    
+
     const generatedData = [];
-    
+
     if (timeRange === "6m") {
       for (let i = 5; i >= 0; i--) {
         const d = new Date();
@@ -145,7 +151,7 @@ export default function RestaurantDashboard() {
       </div>
 
       {!hasRestaurant ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -184,7 +190,11 @@ export default function RestaurantDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <Card className={`border shadow-sm hover:shadow-md transition-shadow ${remainingDays !== null && remainingDays <= 0 ? "border-red-500" :
+              remainingDays !== null && remainingDays <= 3 ? "border-red-500" :
+                remainingDays !== null && remainingDays <= 10 ? "border-yellow-400" :
+                  "border-gray-100"
+              }`}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">
                   Current Plan
@@ -193,20 +203,34 @@ export default function RestaurantDashboard() {
               </CardHeader>
               <CardContent>
                 {loadingStats ? (
-                   <Loader2 className="h-5 w-5 animate-spin text-gray-300 mt-2" />
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-300 mt-2" />
                 ) : (
                   <>
                     <div className="text-2xl font-bold text-gray-900 capitalize">{restaurant.plan} Plan</div>
                     <p className="text-xs text-gray-500 mt-1 font-medium">
                       {restaurant.plan === "none" ? "Upgrade required" : "Billed monthly"}
                     </p>
+                    {restaurant.plan !== "none" && remainingDays !== null && subscription?.expiryDate && (
+                      <div className="mt-1.5 space-y-0.5 flex justify-between">
+                        <p className="text-xs text-gray-500 font-medium">
+                          Valid till: {new Date(subscription.expiryDate).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </p>
+                        <p className={`text-xs font-bold ${remainingDays <= 0 ? "text-red-500" :
+                          remainingDays <= 3 ? "text-red-500" :
+                            remainingDays <= 10 ? "text-yellow-600" :
+                              "text-emerald-600"
+                          }`}>
+                          {remainingDays <= 0 ? "Subscription expired" : `Expires in ${remainingDays} days`}
+                        </p>
+                      </div>
+                    )}
                   </>
                 )}
               </CardContent>
               {restaurant.plan === "none" && (
                 <CardFooter className="pb-4 pt-0 mt-2 text-xs">
                   <Link href="/restaurant/subscription" className="w-full">
-                     <Button variant="outline" className="w-full bg-white border-[#e5e7eb] text-[#0f172a] hover:bg-[#f1f5f9] rounded-xl font-semibold">View Plans</Button>
+                    <Button variant="outline" className="w-full bg-white border-[#e5e7eb] text-[#0f172a] hover:bg-[#f1f5f9] rounded-xl font-semibold">View Plans</Button>
                   </Link>
                 </CardFooter>
               )}
@@ -234,103 +258,103 @@ export default function RestaurantDashboard() {
 
           {/* Sales Analytics Graph Section */}
           <div className="pt-6">
-             <div className="flex items-center justify-between mb-4">
-               <h2 className="text-xl font-bold tracking-tight text-gray-900">Sales Overview</h2>
-               <Select value={timeRange} onValueChange={(val) => setTimeRange(val || "7d")}>
-                 <SelectTrigger className="w-[140px] h-9 rounded-xl border-gray-200 text-sm font-semibold text-gray-700 bg-white">
-                   <SelectValue placeholder="Select range" />
-                 </SelectTrigger>
-                 <SelectContent className="rounded-xl border-gray-100 shadow-lg">
-                   <SelectItem value="7d" className="font-medium cursor-pointer">Last 7 days</SelectItem>
-                   <SelectItem value="30d" className="font-medium cursor-pointer">Last 30 days</SelectItem>
-                   <SelectItem value="6m" className="font-medium cursor-pointer">Last 6 months</SelectItem>
-                 </SelectContent>
-               </Select>
-             </div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold tracking-tight text-gray-900">Sales Overview</h2>
+              <Select value={timeRange} onValueChange={(val) => setTimeRange(val || "7d")}>
+                <SelectTrigger className="w-[140px] h-9 rounded-xl border-gray-200 text-sm font-semibold text-gray-700 bg-white">
+                  <SelectValue placeholder="Select range" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-gray-100 shadow-lg">
+                  <SelectItem value="7d" className="font-medium cursor-pointer">Last 7 days</SelectItem>
+                  <SelectItem value="30d" className="font-medium cursor-pointer">Last 30 days</SelectItem>
+                  <SelectItem value="6m" className="font-medium cursor-pointer">Last 6 months</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-             <Card className="border border-gray-100 shadow-sm bg-white overflow-hidden rounded-2xl">
-                <div className="p-6">
-                  {/* Top Stats of Graph */}
-                  <div className="grid grid-cols-3 gap-4 mb-8">
-                    <div>
-                      <div className="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                        <DollarSign className="w-3.5 h-3.5 mr-1 text-emerald-500" /> Total Revenue
-                      </div>
-                      <div className="text-2xl md:text-3xl font-extrabold text-gray-900">
-                        {loadingStats ? <Loader2 className="h-6 w-6 animate-spin text-gray-300" /> : `₹${totalRevenue.toLocaleString()}`}
-                      </div>
+            <Card className="border border-gray-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+              <div className="p-6">
+                {/* Top Stats of Graph */}
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                  <div>
+                    <div className="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                      <IndianRupee className="w-3.5 h-3.5 mr-1 text-emerald-500" /> Total Revenue
                     </div>
-                    <div>
-                      <div className="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                        <ShoppingBag className="w-3.5 h-3.5 mr-1 text-emerald-500" /> Total Orders
-                      </div>
-                      <div className="text-2xl md:text-3xl font-extrabold text-gray-900">
-                        {loadingStats ? <Loader2 className="h-6 w-6 animate-spin text-gray-300" /> : totalOrders}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                         <TrendingUp className="w-3.5 h-3.5 mr-1 text-emerald-500" /> Avg Order Value
-                      </div>
-                      <div className="text-2xl md:text-3xl font-extrabold text-gray-900">
-                        {loadingStats ? <Loader2 className="h-6 w-6 animate-spin text-gray-300" /> : `₹${Math.round(averageOrderValue).toLocaleString()}`}
-                      </div>
+                    <div className="text-2xl md:text-3xl font-extrabold text-gray-900">
+                      {loadingStats ? <Loader2 className="h-6 w-6 animate-spin text-gray-300" /> : `₹${totalRevenue.toLocaleString()}`}
                     </div>
                   </div>
-
-                  {/* Graph */}
-                  <div className="h-[300px] w-full">
-                    {loadingStats ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-3">
-                        <Loader2 className="h-8 w-8 animate-spin text-emerald-300" />
-                        <span className="text-sm font-medium">Loading sales data...</span>
-                      </div>
-                    ) : orders.length === 0 ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-3 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                        <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-                          <TrendingUp className="h-6 w-6 text-gray-300" />
-                        </div>
-                        <span className="text-sm font-semibold text-gray-500">No sales data yet</span>
-                      </div>
-                    ) : (
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis 
-                            dataKey="date" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fontSize: 12, fill: '#64748b' }} 
-                            dy={10}
-                          />
-                          <YAxis 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fontSize: 12, fill: '#64748b' }}
-                            tickFormatter={(value: number) => `₹${value}`}
-                          />
-                          <Tooltip content={<CustomTooltip />} />
-                          <Area 
-                            type="monotone" 
-                            dataKey="total" 
-                            stroke="#10b981" 
-                            strokeWidth={3}
-                            fillOpacity={1} 
-                            fill="url(#colorTotal)" 
-                            activeDot={{ r: 6, fill: "#059669", strokeWidth: 0 }}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    )}
+                  <div>
+                    <div className="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                      <ShoppingBag className="w-3.5 h-3.5 mr-1 text-emerald-500" /> Total Orders
+                    </div>
+                    <div className="text-2xl md:text-3xl font-extrabold text-gray-900">
+                      {loadingStats ? <Loader2 className="h-6 w-6 animate-spin text-gray-300" /> : totalOrders}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                      <TrendingUp className="w-3.5 h-3.5 mr-1 text-emerald-500" /> Avg Order Value
+                    </div>
+                    <div className="text-2xl md:text-3xl font-extrabold text-gray-900">
+                      {loadingStats ? <Loader2 className="h-6 w-6 animate-spin text-gray-300" /> : `₹${Math.round(averageOrderValue).toLocaleString()}`}
+                    </div>
                   </div>
                 </div>
-             </Card>
+
+                {/* Graph */}
+                <div className="h-[300px] w-full">
+                  {loadingStats ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-emerald-300" />
+                      <span className="text-sm font-medium">Loading sales data...</span>
+                    </div>
+                  ) : orders.length === 0 ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-3 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                      <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                        <TrendingUp className="h-6 w-6 text-gray-300" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-500">No sales data yet</span>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                      <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis
+                          dataKey="date"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 12, fill: '#64748b' }}
+                          dy={10}
+                        />
+                        <YAxis
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 12, fill: '#64748b' }}
+                          tickFormatter={(value: number) => `₹${value}`}
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Area
+                          type="monotone"
+                          dataKey="total"
+                          stroke="#10b981"
+                          strokeWidth={3}
+                          fillOpacity={1}
+                          fill="url(#colorTotal)"
+                          activeDot={{ r: 6, fill: "#059669", strokeWidth: 0 }}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </div>
+            </Card>
           </div>
         </>
       )}
