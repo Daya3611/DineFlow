@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth, isTokenValid } from "@/hooks/useAuth";
+import HomeScroll from "@/components/HomeScroll";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -188,11 +189,9 @@ export default function Home() {
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
 
-    // Use Lenis for premium scroll if available
     if (typeof window !== 'undefined' && (window as any).lenis) {
       (window as any).lenis.scrollTo(`#${id}`);
     } else {
-      // Fallback
       const element = document.getElementById(id);
       if (element) {
         element.scrollIntoView({ behavior: "smooth" });
@@ -204,9 +203,10 @@ export default function Home() {
   const dashboardLink = userData?.role === "super_admin" ? "/admin/dashboard" : "/restaurant/dashboard";
 
   return (
-    <div className="flex flex-col min-h-screen bg-white font-sans antialiased">
+    <HomeScroll>
+      <div className="flex flex-col min-h-screen bg-white font-sans antialiased">
 
-      {/* ── Navbar ── */}
+        {/* ── Navbar ── */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 transition-all">
         <div className="mx-auto px-6 lg:px-8 max-w-7xl h-16 md:h-20 flex items-center justify-between">
           {/* Logo */}
@@ -734,5 +734,6 @@ export default function Home() {
         </div>
       </footer>
     </div>
+    </HomeScroll>
   );
 }

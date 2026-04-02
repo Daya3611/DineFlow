@@ -70,5 +70,6 @@ export interface Order {
   paymentMethod: "counter" | "upi" | "razorpay";
   paymentStatus: "unpaid" | "pending_verification" | "paid";
   customerName?: string;
+  note?: string;
   createdAt: number;
 }

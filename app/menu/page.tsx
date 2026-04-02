@@ -85,6 +85,7 @@ function MenuContent() {
   const [cart, setCart] = useState<{ [key: string]: OrderItem }>({});
   const [openCheckout, setOpenCheckout] = useState(false);
   const [customerName, setCustomerName] = useState("");
+  const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState<string | null>(null);
   const [placedOrderTotal, setPlacedOrderTotal] = useState<number>(0);
@@ -182,6 +183,7 @@ function MenuContent() {
         paymentMethod: "counter",
         paymentStatus: "unpaid",
         customerName: customerName.trim() || undefined,
+        note: note.trim() || undefined,
         createdAt: Date.now(),
       };
       await setDoc(doc(db, "orders", orderId), newOrder);
@@ -793,6 +795,19 @@ function MenuContent() {
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="e.g. John Doe"
                 className="w-full h-[48px] px-4 rounded-[12px] bg-[#f8fafc] text-[14px] text-gray-900 placeholder:text-gray-400 outline-none border border-gray-200 focus:border-[#0f9d6a] focus:bg-white focus:shadow-[0_0_0_2px_rgba(22,163,74,0.1)] transition-all duration-200"
+              />
+            </div>
+
+            <div className="mt-4 space-y-[8px]">
+              <Label htmlFor="note" className="text-[13px] font-semibold text-gray-900">
+                Custom Note <span className="text-gray-400 font-normal">(Optional)</span>
+              </Label>
+              <textarea
+                id="note"
+                placeholder="Add note (less spicy, no onion, etc)"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="w-full p-3 rounded-[12px] bg-[#f8fafc] text-[14px] text-gray-900 placeholder:text-gray-400 outline-none border border-gray-200 focus:border-[#0f9d6a] focus:bg-white focus:shadow-[0_0_0_2px_rgba(22,163,74,0.1)] transition-all duration-200 resize-none h-[80px]"
               />
             </div>
           </div>

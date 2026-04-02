@@ -264,20 +264,30 @@ export default function LiveOrdersPage() {
                       </Badge>
                     </CardHeader>
 
-                    <CardContent className="p-0 flex-1 flex flex-col">
-                      <ul className="p-5 space-y-2.5 flex-1 min-h-[100px]">
-                        {order.items.map((item, i) => (
-                           <li key={i} className="flex justify-between items-center text-sm">
-                             <span className="text-gray-700 flex items-center gap-2">
-                               <span className="inline-flex items-center justify-center h-5 w-5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-md">{item.quantity}</span>
-                               {item.name}
-                             </span>
-                             <span className="text-gray-500 font-medium">₹{item.price * item.quantity}</span>
-                           </li>
-                        ))}
-                      </ul>
+                    <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+                      <div className="flex-1 min-h-0 flex flex-col">
+                        <ul className="px-5 py-3 space-y-2.5 flex-1 overflow-y-auto scroll-smooth scrollbar-thin">
+                          {order.items.map((item, i) => (
+                             <li key={i} className="flex justify-between items-start text-sm py-1 border-b border-gray-50 last:border-0">
+                               <span className="text-gray-700 flex items-start gap-2">
+                                 <span className="inline-flex items-center justify-center h-5 w-5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-md shrink-0 mt-0.5">{item.quantity}</span>
+                                 <span className="leading-tight">{item.name}</span>
+                               </span>
+                               <span className="text-gray-500 font-medium whitespace-nowrap ml-3">₹{item.price * item.quantity}</span>
+                             </li>
+                          ))}
+                        </ul>
+                        {order.note && (
+                          <div className="px-5 pb-3 shrink-0">
+                            <div className="bg-green-50 border border-green-200 p-2.5 rounded-lg">
+                              <p className="text-xs text-green-700 font-bold mb-0.5">Customer Note:</p>
+                              <p className="text-xs text-gray-700 leading-tight">{order.note}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                      <div className="px-5 pb-5 pt-0 space-y-4 border-t border-dashed mt-0 pt-4">
+                      <div className="px-5 pb-5 space-y-4 border-t border-dashed pt-4 shrink-0">
                         <div className="flex justify-between items-end">
                            <div>
                               <div className="text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Payment</div>
@@ -313,7 +323,7 @@ export default function LiveOrdersPage() {
                             <Button
                               size="sm"
                               className={`rounded-xl text-white font-semibold h-9 ${
-                              config.nextStatus === "paid" ? "bg-[#0f9d6a] hover:bg-[#0c7f56] rounded-full" : "bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-full"
+                              config.nextStatus === "paid" ? "bg-[#16a34a] hover:bg-[#15803d]" : "bg-slate-900 hover:bg-slate-800"
                               }`}
                               onClick={() => updateOrderStatus(order.id, config.nextStatus!)}
                               disabled={config.nextStatus === "paid" && payStatus === "pending_verification"}
@@ -380,7 +390,7 @@ export default function LiveOrdersPage() {
                         <td className="px-6 py-4 font-semibold text-gray-900">Table {o.tableNumber}</td>
                         <td className="px-6 py-4 text-gray-500">{o.items.reduce((a, i) => a + i.quantity, 0)} items</td>
                         <td className="px-6 py-4 text-gray-500">
-                           <Badge variant="outline" className="bg-emerald-50 text-[#0f9d6a] border-emerald-200 pointer-events-none">Paid</Badge>
+                           <Badge variant="outline" className="bg-[#dcfce7] text-[#16a34a] border-green-200 pointer-events-none">Paid</Badge>
                         </td>
                         <td className="px-6 py-4 font-extrabold text-gray-900">₹{o.totalAmount}</td>
                         <td className="px-6 py-4 text-gray-400">{new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
@@ -410,9 +420,9 @@ export default function LiveOrdersPage() {
         <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 gap-0 border-gray-100 shadow-xl">
           {selectedOrder && (
             <>
-              <div className="bg-[#0f172a] p-6 text-white flex justify-between items-start">
+              <div className="bg-gradient-to-br from-[#16a34a] to-[#22c55e] p-6 text-white flex justify-between items-start">
                  <div>
-                   <Badge className="bg-emerald-500/30 text-emerald-50 hover:bg-emerald-500/40 border-none mb-2 pointer-events-none">
+                   <Badge className="bg-white/20 text-white hover:bg-white/30 border-none mb-2 pointer-events-none">
                      Completed Order
                    </Badge>
                    <h2 className="text-2xl font-black font-mono tracking-tight">#ORD-{selectedOrder.id.slice(-6).toUpperCase()}</h2>
@@ -427,23 +437,29 @@ export default function LiveOrdersPage() {
               <div className="p-6 bg-white space-y-6">
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold text-gray-400 tracking-wider uppercase">Order Items</h4>
-                  <div className="space-y-2.5 max-h-48 overflow-y-auto pr-2 scrollbar-thin">
+                  <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-2 scroll-smooth border-b border-gray-50 pb-2 scrollbar-thin">
                     {selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-start text-sm">
                         <div className="flex gap-3">
-                          <span className="font-bold text-[#0f9d6a] bg-emerald-50 px-2 rounded-md h-6 flex items-center justify-center min-w-[28px]">{item.quantity}x</span>
+                          <span className="font-bold text-[#16a34a] bg-[#dcfce7] px-2 rounded-md h-6 flex items-center justify-center min-w-[28px]">{item.quantity}x</span>
                           <span className="font-medium text-gray-900">{item.name}</span>
                         </div>
-                        <span className="text-gray-500 font-medium whitespace-nowrap border-b border-gray-100 pb-2">₹{item.price * item.quantity}</span>
+                        <span className="text-gray-500 font-medium whitespace-nowrap pb-2">₹{item.price * item.quantity}</span>
                       </div>
                     ))}
                   </div>
+                  {selectedOrder.note && (
+                    <div className="bg-green-50 border border-green-200 p-3 rounded-lg mt-3">
+                      <p className="text-sm text-green-700 font-medium">Customer Note:</p>
+                      <p className="text-sm text-gray-700">{selectedOrder.note}</p>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="pt-4 border-t border-dashed border-gray-200">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-gray-500 font-semibold">Total Amount</span>
-                    <span className="text-2xl font-black text-[#0f9d6a]">₹{selectedOrder.totalAmount}</span>
+                    <span className="text-2xl font-black text-[#16a34a]">₹{selectedOrder.totalAmount}</span>
                   </div>
 
                   <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center border border-gray-100">
@@ -453,7 +469,7 @@ export default function LiveOrdersPage() {
                      </div>
                      <div className="text-right space-y-1">
                        <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Status</span>
-                       <Badge className="bg-green-100 text-green-700 border-none shadow-none pointer-events-none">Paid</Badge>
+                       <Badge className="bg-[#dcfce7] text-[#16a34a] border-none shadow-none pointer-events-none">Paid</Badge>
                      </div>
                   </div>
                 </div>
@@ -463,7 +479,7 @@ export default function LiveOrdersPage() {
                      Close
                   </Button>
                   <Button 
-                    className="rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200 w-full"
+                    className="rounded-full bg-[#16a34a] text-white hover:bg-[#15803d] focus:ring-2 focus:ring-[#16a34a]/30 transition duration-200 w-full"
                     onClick={() => { printBill(selectedOrder); setSelectedOrder(null); }}
                   >
                     <Printer className="h-4 w-4 mr-2" /> Print Bill

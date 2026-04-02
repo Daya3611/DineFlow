@@ -130,13 +130,14 @@
   html {
     @apply font-sans;
     scroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
 /* ══ Smooth custom scrollbar ══ */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -144,10 +145,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #a7f3d0;
-  border-radius: 99px;
+  background: #22c55e;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #10b981;
+  background: #16a34a;
 }
