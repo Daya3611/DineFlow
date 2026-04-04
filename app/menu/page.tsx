@@ -97,9 +97,53 @@ function MenuContent() {
   const [splitCount, setSplitCount] = useState<number>(2);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [paymentVerified, setPaymentVerified] = useState(false);
+  const [activeSession, setActiveSession] = useState<{
+    orderId: string;
+    tableNumber: string;
+    totalAmount: number;
+    expiresAt: number;
+  } | null>(null);
+  const [sessionDismissed, setSessionDismissed] = useState(false);
   const [activeNav, setActiveNav] = useState<"home" | "menu" | "orders" | "profile">("menu");
 
   const searchRef = useRef<HTMLInputElement>(null);
+
+  /* ── localStorage session helpers ── */
+  const SESSION_KEY = "dineflow_order";
+
+  const saveOrderSession = (order: OrderType) => {
+    try {
+      const session = {
+        orderId: order.id,
+        tableNumber: order.tableNumber,
+        restaurantId: order.restaurantId,
+        totalAmount: order.totalAmount,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } catch {/* ignore storage errors */}
+  };
+
+  const clearOrderSession = () => {
+    try { localStorage.removeItem(SESSION_KEY); } catch {/* ignore */}
+  };
+
+  /* ── Restore session on mount ── */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return;
+      const session = JSON.parse(raw);
+      if (!session?.orderId || !session?.expiresAt) { clearOrderSession(); return; }
+      if (Date.now() > session.expiresAt) { clearOrderSession(); return; }
+      // Only restore session that belongs to this table+restaurant
+      if (restaurantId && session.restaurantId !== restaurantId) return;
+      if (table && session.tableNumber !== table) return;
+      setActiveSession(session);
+    } catch { clearOrderSession(); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantId, table]);
 
   /* ── Fetch data ── */
   useEffect(() => {
@@ -205,6 +249,15 @@ function MenuContent() {
       
       await setDoc(doc(db, "orders", orderId), newOrder);
 
+      // Persist session to localStorage for 2-hour recovery
+      saveOrderSession(newOrder);
+      setActiveSession({
+        orderId,
+        tableNumber: table,
+        totalAmount,
+        expiresAt: Date.now() + 2 * 60 * 60 * 1000,
+      });
+
       // Auto update table to occupied if free/reserved
       if (!tsnap.empty) {
         const tdoc = tsnap.docs[0];
@@ -236,6 +289,8 @@ function MenuContent() {
         { merge: true }
       );
       setPaymentVerified(true);
+      clearOrderSession(); // payment submitted — session no longer needed
+      setActiveSession(null);
       toast.success("Payment sent for verification.");
     } catch {
       toast.error("Failed to update payment status.");
@@ -573,6 +628,7 @@ function MenuContent() {
                 setOrderPlaced(null);
                 setPaymentOption("counter");
                 setPaymentVerified(false);
+                // Keep the session alive — customer may want to recheck
               }}
             >
               Order something else?
@@ -644,6 +700,40 @@ function MenuContent() {
 
       {/* ── SCROLLABLE BODY ── */}
       <div className="flex-1 overflow-y-auto pb-36">
+
+        {/* ── Active Order Recovery Banner ── */}
+        {activeSession && !sessionDismissed && !orderPlaced && (
+          <div className="mx-4 mt-3 mb-1">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-start gap-3">
+              <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                <ClipboardList className="h-4 w-4 text-emerald-700" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-emerald-900 leading-snug">You have an active order</p>
+                <p className="text-[11px] text-emerald-700 mt-0.5">
+                  Order #{activeSession.orderId.slice(-6).toUpperCase()} · Table {activeSession.tableNumber} · ₹{activeSession.totalAmount}
+                </p>
+                <div className="flex items-center gap-2 mt-2.5">
+                  <button
+                    onClick={() => {
+                      setPlacedOrderTotal(activeSession.totalAmount);
+                      setOrderPlaced(activeSession.orderId);
+                    }}
+                    className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                  >
+                    View Order
+                  </button>
+                  <button
+                    onClick={() => { clearOrderSession(); setActiveSession(null); }}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Category chips */}
         {categories.length > 1 && (
           <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-4 pt-1 pb-3">
