@@ -166,79 +166,115 @@ export default function ReservationsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
                   >
-                    <Card className="overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 rounded-2xl">
-                      {/* Status bar */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+
+                      {/* Top accent bar */}
                       <div className={`h-1 w-full ${cfg.barColor}`} />
-                      <CardContent className="p-5">
-                        <div className="flex flex-col md:flex-row justify-between gap-5">
-                          <div className="space-y-3 flex-1">
-                            {/* Name + Status */}
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <div className="h-10 w-10 rounded-xl bg-green-50 flex items-center justify-center font-extrabold text-green-700 text-lg shrink-0">
-                                {res.customerName.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <h3 className="font-bold text-gray-900 text-base leading-tight">{res.customerName}</h3>
-                                <p className="text-xs text-gray-400">{new Date(res.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
-                              </div>
-                              <Badge className={`ml-auto capitalize text-xs font-semibold border px-3 py-1 rounded-full ${cfg.color}`}>
-                                {cfg.label}
-                              </Badge>
+
+                      <div className="p-5 flex flex-col gap-4">
+
+                        {/* Header: Avatar + Name + Status badge */}
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="h-10 w-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-base shrink-0">
+                              {res.customerName.charAt(0).toUpperCase()}
                             </div>
-
-                            {/* Details chips */}
-                            <div className="flex flex-wrap gap-2">
-                              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-700">
-                                <Calendar className="h-3.5 w-3.5 text-gray-400" /> {res.date}
-                              </div>
-                              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-700">
-                                <Clock className="h-3.5 w-3.5 text-gray-400" /> {res.time}
-                              </div>
-                              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-700">
-                                <Users className="h-3.5 w-3.5 text-gray-400" /> {res.guestCount} Guest{res.guestCount !== 1 ? "s" : ""}
-                              </div>
-                              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-700">
-                                <Phone className="h-3.5 w-3.5 text-gray-400" /> {res.phone}
-                              </div>
-                              {tableLabel && (
-                                <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-full px-3 py-1.5 text-xs font-bold text-green-700">
-                                  <MapPin className="h-3.5 w-3.5 text-green-500" /> Table {tableLabel}
-                                </div>
-                              )}
+                            <div className="min-w-0">
+                              <p className="font-bold text-gray-900 text-sm leading-tight truncate">{res.customerName}</p>
+                              <p className="text-[11px] text-gray-400 mt-0.5">
+                                {new Date(res.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                              </p>
                             </div>
-
-                            {/* Notes */}
-                            {res.notes && (
-                              <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-sm text-amber-800 leading-relaxed">
-                                <span className="font-semibold">📝 Note: </span>{res.notes}
-                              </div>
-                            )}
                           </div>
-
-                          {/* Action dropdown */}
-                          <div className="shrink-0">
-                            {res.status !== "completed" && res.status !== "cancelled" && res.status !== "no-show" && (
-                              <AppDropdown
-                                label="Actions"
-                                items={[
-                                  ...(res.status === "pending" ? [
-                                    { label: "Confirm",  icon: CheckCircle2,  onClick: () => updateReservationStatus(res.id, "confirmed") },
-                                    { label: "Reject",   icon: XCircle,       danger: true, separator: true, onClick: () => updateReservationStatus(res.id, "cancelled") },
-                                  ] : []),
-                                  ...(res.status === "confirmed" ? [
-                                    { label: "Mark Arrived", icon: CheckCircle2, onClick: () => updateReservationStatus(res.id, "arrived") },
-                                    { label: "No Show",      icon: AlertCircle,  danger: true, separator: true, onClick: () => updateReservationStatus(res.id, "no-show") },
-                                  ] : []),
-                                  ...(res.status === "arrived" ? [
-                                    { label: "Complete", icon: CheckCircle2, onClick: () => updateReservationStatus(res.id, "completed") },
-                                  ] : []),
-                                ]}
-                              />
-                            )}
-                          </div>
+                          <span className={`shrink-0 text-[11px] font-bold px-3 py-1 rounded-full border ${cfg.color}`}>
+                            {cfg.label}
+                          </span>
                         </div>
-                      </CardContent>
-                    </Card>
+
+                        {/* Info pills */}
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-600">
+                            <Calendar className="h-3 w-3 text-gray-400" /> {res.date}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-600">
+                            <Clock className="h-3 w-3 text-gray-400" /> {res.time}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-600">
+                            <Users className="h-3 w-3 text-gray-400" /> {res.guestCount} Guest{res.guestCount !== 1 ? "s" : ""}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-600">
+                            <Phone className="h-3 w-3 text-gray-400" /> {res.phone}
+                          </span>
+                          {tableLabel && (
+                            <span className="inline-flex items-center gap-1.5 bg-green-50 border border-green-200 px-3 py-1.5 rounded-full text-xs font-bold text-green-700">
+                              <MapPin className="h-3 w-3 text-green-500" /> Table {tableLabel}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Note — subtle amber block */}
+                        {res.notes && (
+                          <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 text-sm">
+                            <span className="text-base shrink-0">📝</span>
+                            <p className="text-amber-800 leading-snug">
+                              <span className="font-semibold">Note: </span>{res.notes}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Action buttons — bottom right */}
+                        {res.status !== "completed" && res.status !== "cancelled" && res.status !== "no-show" && (
+                          <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-50">
+                            {res.status === "pending" && (
+                              <>
+                                <button
+                                  disabled={isUpdating}
+                                  onClick={() => updateReservationStatus(res.id, "confirmed")}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5" /> Confirm
+                                </button>
+                                <button
+                                  disabled={isUpdating}
+                                  onClick={() => updateReservationStatus(res.id, "cancelled")}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-200 text-red-500 text-xs font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
+                                >
+                                  <XCircle className="h-3.5 w-3.5" /> Reject
+                                </button>
+                              </>
+                            )}
+                            {res.status === "confirmed" && (
+                              <>
+                                <button
+                                  disabled={isUpdating}
+                                  onClick={() => updateReservationStatus(res.id, "arrived")}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5" /> Arrived
+                                </button>
+                                <button
+                                  disabled={isUpdating}
+                                  onClick={() => updateReservationStatus(res.id, "no-show")}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-orange-200 text-orange-500 text-xs font-semibold hover:bg-orange-50 transition-colors disabled:opacity-50"
+                                >
+                                  <AlertCircle className="h-3.5 w-3.5" /> No Show
+                                </button>
+                              </>
+                            )}
+                            {res.status === "arrived" && (
+                              <button
+                                disabled={isUpdating}
+                                onClick={() => updateReservationStatus(res.id, "completed")}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Complete
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                      </div>
+                    </div>
                   </motion.div>
                 );
               })
