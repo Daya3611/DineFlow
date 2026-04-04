@@ -78,6 +78,8 @@ export interface Order {
   status: "pending" | "preparing" | "served" | "paid";
   paymentMethod: "counter" | "upi" | "razorpay";
   paymentStatus: "unpaid" | "partial" | "pending_verification" | "paid";
+  isActive: boolean;
+  sessionId: string;
   splitBill?: "equal" | "custom";
   customerName?: string;
   note?: string;

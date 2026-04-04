@@ -122,11 +122,11 @@ function MenuContent() {
         expiresAt: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
       };
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    } catch {/* ignore storage errors */}
+    } catch {/* ignore storage errors */ }
   };
 
   const clearOrderSession = () => {
-    try { localStorage.removeItem(SESSION_KEY); } catch {/* ignore */}
+    try { localStorage.removeItem(SESSION_KEY); } catch {/* ignore */ }
   };
 
   /* ── Restore session on mount ── */
@@ -142,7 +142,7 @@ function MenuContent() {
       if (table && session.tableNumber !== table) return;
       setActiveSession(session);
     } catch { clearOrderSession(); }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId, table]);
 
   /* ── Fetch data ── */
@@ -217,60 +217,113 @@ function MenuContent() {
     }
     setSubmitting(true);
     try {
-      const items = Object.values(cart);
-      const totalAmount = items.reduce(
-        (acc, item) => acc + item.price * item.quantity,
-        0
+      const newItems = Object.values(cart);
+      const newAmount = newItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+      // Check for existing active order for this table/restaurant
+      const orderQ = query(
+        collection(db, "orders"),
+        where("restaurantId", "==", restaurantId),
+        where("tableNumber", "==", table),
+        where("isActive", "==", true),
+        where("status", "in", ["pending", "preparing", "served"])
       );
-      
-      // Look up actual table object first
-      let resolvedTableId = "";
-      const tq = query(collection(db, "tables"), where("restaurantId", "==", restaurantId), where("tableNumber", "==", table));
-      const tsnap = await getDocs(tq);
-      if (!tsnap.empty) {
-        resolvedTableId = tsnap.docs[0].id;
-      }
+      const orderSnap = await getDocs(orderQ);
+      let orderId = "";
+      let finalTotal = 0;
 
-      const orderId = `ord_${Date.now()}`;
-      const newOrder: OrderType = {
-        id: orderId,
-        restaurantId,
-        tableNumber: table,
-        tableId: resolvedTableId || undefined,
-        items,
-        totalAmount,
-        status: "pending",
-        paymentMethod: "counter",
-        paymentStatus: "unpaid",
-        customerName: customerName.trim() || undefined,
-        note: note.trim() || undefined,
-        createdAt: Date.now(),
-      };
-      
-      await setDoc(doc(db, "orders", orderId), newOrder);
+      if (!orderSnap.empty) {
+        // UPDATE EXISTING ORDER
+        const existingOrderDoc = orderSnap.docs[0];
+        const existingOrder = existingOrderDoc.data() as OrderType;
+        orderId = existingOrderDoc.id;
 
-      // Persist session to localStorage for 2-hour recovery
-      saveOrderSession(newOrder);
-      setActiveSession({
-        orderId,
-        tableNumber: table,
-        totalAmount,
-        expiresAt: Date.now() + 2 * 60 * 60 * 1000,
-      });
+        // Merge items (if same item exists, update quantity, otherwise add new)
+        const combinedItems = [...existingOrder.items];
+        newItems.forEach(newItem => {
+          const idx = combinedItems.findIndex(i => i.id === newItem.id);
+          if (idx > -1) {
+            combinedItems[idx].quantity += newItem.quantity;
+          } else {
+            combinedItems.push(newItem);
+          }
+        });
 
-      // Auto update table to occupied if free/reserved
-      if (!tsnap.empty) {
-        const tdoc = tsnap.docs[0];
-        const tdata = tdoc.data();
-        if (tdata.status !== "occupied") {
-          await updateDoc(doc(db, "tables", tdoc.id), { status: "occupied" });
+        finalTotal = combinedItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+        const updates: any = {
+          items: combinedItems,
+          totalAmount: finalTotal,
+          status: "pending" // Reset status to pending so kitchen sees new items
+        };
+        if (!existingOrder.sessionId) {
+          updates.sessionId = `sess_${Date.now()}`;
+        }
+
+        await updateDoc(doc(db, "orders", orderId), updates);
+
+        const updatedOrder = { 
+          ...existingOrder, 
+          ...updates,
+          sessionId: existingOrder.sessionId || updates.sessionId 
+        };
+        saveOrderSession(updatedOrder);
+        setActiveSession({
+          orderId,
+          tableNumber: table,
+          totalAmount: finalTotal,
+          expiresAt: Date.now() + 2 * 60 * 60 * 1000,
+        });
+      } else {
+        // CREATE NEW ORDER
+        orderId = `ord_${Date.now()}`;
+        finalTotal = newAmount;
+
+        // Look up actual table object first
+        let resolvedTableId = "";
+        const tq = query(collection(db, "tables"), where("restaurantId", "==", restaurantId), where("tableNumber", "==", table));
+        const tsnap = await getDocs(tq);
+        if (!tsnap.empty) {
+          resolvedTableId = tsnap.docs[0].id;
+        }
+
+        const newOrder: OrderType = {
+          id: orderId,
+          restaurantId,
+          tableNumber: table,
+          tableId: resolvedTableId || undefined,
+          items: newItems,
+          totalAmount: finalTotal,
+          status: "pending",
+          paymentMethod: "counter",
+          paymentStatus: "unpaid",
+          isActive: true,
+          sessionId: `sess_${Date.now()}`,
+          customerName: customerName.trim() || undefined,
+          note: note.trim() || undefined,
+          createdAt: Date.now(),
+        };
+
+        await setDoc(doc(db, "orders", orderId), newOrder);
+        saveOrderSession(newOrder);
+        setActiveSession({
+          orderId,
+          tableNumber: table,
+          totalAmount: finalTotal,
+          expiresAt: Date.now() + 2 * 60 * 60 * 1000,
+        });
+
+        // Update table to occupied
+        if (!tsnap.empty) {
+          await updateDoc(doc(db, "tables", tsnap.docs[0].id), { status: "occupied" });
         }
       }
 
       setOrderPlaced(orderId);
-      setPlacedOrderTotal(totalAmount);
+      setPlacedOrderTotal(finalTotal);
       setCart({});
       setOpenCheckout(false);
+      toast.success(orderSnap.empty ? "Order placed successfully!" : "Order updated with new items!");
     } catch {
       toast.error("Failed to place order.");
     } finally {
@@ -567,11 +620,11 @@ function MenuContent() {
               {paymentOption === "split" && restaurant.upiId && !paymentVerified && (
                 <div className="bg-white rounded-[16px] border border-gray-100 p-5 flex flex-col items-center text-center">
                   <div className="w-full flex items-center justify-between mb-4 bg-gray-50 rounded-xl p-2 border border-gray-100">
-                     <button onClick={() => setSplitCount(Math.max(2, splitCount - 1))} className="h-8 w-8 rounded-lg bg-white border flex items-center justify-center font-bold text-gray-600">-</button>
-                     <span className="font-bold text-sm text-gray-800">Split by {splitCount}</span>
-                     <button onClick={() => setSplitCount(splitCount + 1)} className="h-8 w-8 rounded-lg bg-white border flex items-center justify-center font-bold text-gray-600">+</button>
+                    <button onClick={() => setSplitCount(Math.max(2, splitCount - 1))} className="h-8 w-8 rounded-lg bg-white border flex items-center justify-center font-bold text-gray-600">-</button>
+                    <span className="font-bold text-sm text-gray-800">Split by {splitCount}</span>
+                    <button onClick={() => setSplitCount(splitCount + 1)} className="h-8 w-8 rounded-lg bg-white border flex items-center justify-center font-bold text-gray-600">+</button>
                   </div>
-                  
+
                   {(() => {
                     const splitAmount = Math.ceil(placedOrderTotal / splitCount);
                     const splitUpiLink = `upi://pay?pa=${restaurant.upiId}&pn=${encodeURIComponent(restaurant.name)}&am=${splitAmount}&cu=INR&tn=${encodeURIComponent("Split Order " + orderPlaced.slice(-6).toUpperCase())}`;
@@ -586,7 +639,7 @@ function MenuContent() {
                           ₹{splitAmount} <span className="text-xs text-gray-400 font-medium tracking-wide">each</span>
                         </p>
                         <p className="text-[10px] text-gray-500 font-semibold mb-4 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-                           {splitCount} payments of ₹{splitAmount} required to settle ₹{placedOrderTotal}.
+                          {splitCount} payments of ₹{splitAmount} required to settle ₹{placedOrderTotal}.
                         </p>
                         <Button
                           variant="outline"
@@ -665,11 +718,11 @@ function MenuContent() {
           </div>
 
           <div className="flex items-center gap-3">
-             <Link href={`/book/${restaurant.plan === "premium" && !!restaurant.customSlug ? restaurant.customSlug : restaurantId}`}>
-               <Button className="h-8 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none px-3 shadow-none">
-                 <BookOpen className="w-3 h-3 mr-1" /> Book Table
-               </Button>
-             </Link>
+            <Link href={`/book/${restaurant.plan === "premium" && !!restaurant.customSlug ? restaurant.customSlug : restaurantId}`}>
+              <Button className="h-8 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none px-3 shadow-none">
+                <BookOpen className="w-3 h-3 mr-1" /> Book Table
+              </Button>
+            </Link>
             {restaurant.logo ? (
               <img
                 src={restaurant.logo}
@@ -824,14 +877,14 @@ function MenuContent() {
                           )}
                           <div className="flex flex-wrap gap-1 mt-0.5 mb-1.5">
                             {item.highlight && item.highlight !== "none" && (
-                               <span className="bg-yellow-50 text-yellow-700 border border-yellow-200 text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-sm shrink-0">
-                                 *{item.highlight}
-                               </span>
+                              <span className="bg-yellow-50 text-yellow-700 border border-yellow-200 text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-sm shrink-0">
+                                *{item.highlight}
+                              </span>
                             )}
                             {item.dietaryTags?.map(tag => (
-                               <span key={tag} className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-sm border shrink-0 ${tag === 'veg' ? 'bg-green-50 text-green-700 border-green-200' : tag === 'non-veg' ? 'bg-red-50 text-red-700 border-red-200' : tag === 'vegan' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
-                                 {tag}
-                               </span>
+                              <span key={tag} className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-sm border shrink-0 ${tag === 'veg' ? 'bg-green-50 text-green-700 border-green-200' : tag === 'non-veg' ? 'bg-red-50 text-red-700 border-red-200' : tag === 'vegan' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
+                                {tag}
+                              </span>
                             ))}
                           </div>
                           <p className="text-[14px] font-semibold text-gray-900 mt-auto">

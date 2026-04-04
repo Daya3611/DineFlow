@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { FramerToaster } from "@/components/ui/framer-toaster";
+import BottomNav from "@/components/mobile/BottomNav";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -30,9 +32,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col bg-[#F9FAFB] text-gray-900 overflow-x-hidden" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-[#F9FAFB] text-gray-900 overflow-x-hidden pb-16 md:pb-0" suppressHydrationWarning>
         <AuthProvider>
           {children}
+          <BottomNav />
           <FramerToaster />
         </AuthProvider>
       </body>

@@ -16,9 +16,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AppDropdown } from "@/components/common/AppDropdown";
 
 const statusConfig = {
-  free:     { label: "Free",     dot: "bg-green-500",  badge: "bg-green-50 text-green-700 border-green-200" },
-  occupied: { label: "Occupied", dot: "bg-red-500",    badge: "bg-red-50 text-red-700 border-red-200"       },
-  reserved: { label: "Reserved", dot: "bg-amber-400",  badge: "bg-amber-50 text-amber-700 border-amber-200" },
+  free: { label: "Free", dot: "bg-green-500", badge: "bg-green-50 text-green-700 border-green-200" },
+  occupied: { label: "Occupied", dot: "bg-red-500", badge: "bg-red-50 text-red-700 border-red-200" },
+  reserved: { label: "Reserved", dot: "bg-amber-400", badge: "bg-amber-50 text-amber-700 border-amber-200" },
 };
 
 export default function TablesPage() {
@@ -35,7 +35,7 @@ export default function TablesPage() {
     if (!restaurant) return;
     setLoading(true);
     const q = query(collection(db, "tables"), where("restaurantId", "==", restaurant.id));
-    
+
     const unsubscribe = onSnapshot(q, (snapshot: any) => {
       const fetched: TableType[] = [];
       snapshot.forEach((d: any) => fetched.push(d.data() as TableType));
@@ -304,7 +304,7 @@ export default function TablesPage() {
                       triggerClassName={`w-full justify-start gap-2 text-xs font-bold px-3 py-2 h-auto ${cfg.badge} border hover:brightness-95 hover:bg-transparent`}
                       align="start"
                       items={[
-                        { label: "Free",     onClick: () => updateStatus(table.id, "free")     },
+                        { label: "Free", onClick: () => updateStatus(table.id, "free") },
                         { label: "Occupied", onClick: () => updateStatus(table.id, "occupied") },
                         { label: "Reserved", onClick: () => updateStatus(table.id, "reserved") },
                       ]}
