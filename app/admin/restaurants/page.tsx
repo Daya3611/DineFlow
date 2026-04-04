@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/lib/toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppDropdown } from "@/components/common/AppDropdown";
 
 export default function AdminRestaurantsPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -88,14 +89,23 @@ export default function AdminRestaurantsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className={restaurant.subscriptionStatus === "active" ? "text-red-600 hover:text-red-700 hover:bg-red-50" : "text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"}
-                        onClick={() => toggleSubscription(restaurant.id, restaurant.subscriptionStatus)}
-                      >
-                        {restaurant.subscriptionStatus === "active" ? "Deactivate" : "Activate"}
-                      </Button>
+                      <AppDropdown
+                        label="Actions"
+                        items={[
+                          restaurant.subscriptionStatus === "active"
+                            ? {
+                                label: "Deactivate",
+                                icon: ShieldOff,
+                                danger: true,
+                                onClick: () => toggleSubscription(restaurant.id, restaurant.subscriptionStatus),
+                              }
+                            : {
+                                label: "Activate",
+                                icon: ShieldCheck,
+                                onClick: () => toggleSubscription(restaurant.id, restaurant.subscriptionStatus),
+                              },
+                        ]}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

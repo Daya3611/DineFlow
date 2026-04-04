@@ -206,204 +206,214 @@ export default function Home() {
     <HomeScroll>
       <div className="flex flex-col min-h-screen bg-white font-sans antialiased">
 
-        {/* ── Navbar ── */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 transition-all">
-        <div className="mx-auto px-6 lg:px-8 max-w-7xl h-16 md:h-20 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <Image src="/logo.png" alt="Dineflow Icon" width={150} height={150} className=" w-auto object-contain group-hover:scale-105 transition-transform" priority />
-            {/* <span className="text-xl md:text-2xl font-bold tracking-tight text-gray-900 flex items-center">
-              Dineflow<span className="text-[#0f9d6a]">.pro</span>
-            </span> */}
-          </Link>
+        {/* ── Floating Navbar ── */}
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-6xl px-0">
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="flex items-center justify-between px-4 sm:px-6 py-2.5
+              bg-white/80 backdrop-blur-xl
+              border border-gray-200/80
+              rounded-full "
+          >
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 shrink-0 group">
+              <div className="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                <Image src="/logo.png" alt="Dineflow Icon" width={32} height={32} className="object-contain" priority />
+              </div>
+              <span className="text-[17px] font-extrabold tracking-tight text-gray-900 leading-none">
+                Dineflow<span className="text-[#0f9d6a]">.pro</span>
+              </span>
+            </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-gray-600">
-            <Link href="#features" onClick={(e) => scrollToSection(e, 'features')} className="hover:text-[#0f9d6a] transition-colors">Features</Link>
-            <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="hover:text-[#0f9d6a] transition-colors">How it works</Link>
-            <Link href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="hover:text-[#0f9d6a] transition-colors">Pricing</Link>
-          </nav>
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-1 text-[14px] font-medium text-gray-500">
+              <Link href="#features" onClick={(e) => scrollToSection(e, 'features')} className="px-3 py-1.5 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-150">Features</Link>
+              <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="px-3 py-1.5 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-150">How it works</Link>
+              <Link href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="px-3 py-1.5 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-150">Pricing</Link>
+            </nav>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            {isLoggedIn ? (
-              <Link href={dashboardLink} className="hidden md:block shrink-0">
-                <Button className="h-10 px-5 sm:px-6 rounded-full font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all duration-200">
-                  Go to Dashboard
-                </Button>
-              </Link>
-            ) : (
-              <>
-                <Link href="/login" className="hidden md:block text-[15px] font-bold text-gray-500 hover:text-[#0f9d6a] transition-colors px-2">
-                  Log in
-                </Link>
-                <Link href="/register" className="hidden md:block shrink-0">
-                  <Button className="h-10 px-5 sm:px-6 rounded-full font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all duration-200">
-                    Start Free Trial
+            {/* Right Actions */}
+            <div className="flex items-center gap-2">
+              {isLoggedIn ? (
+                <Link href={dashboardLink} className="hidden md:block shrink-0">
+                  <Button className="h-9 px-5 rounded-xl text-[13px] font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all duration-200">
+                    Dashboard →
                   </Button>
                 </Link>
-              </>
-            )}
-            <button
-              className="md:hidden p-2 text-gray-600 hover:text-gray-900 bg-gray-50 rounded-lg shrink-0"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-        </div>
+              ) : (
+                <>
+                  <Link href="/login" className="hidden md:block text-[14px] font-semibold text-gray-500 hover:text-gray-900 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100">
+                    Log in
+                  </Link>
+                  <Link href="/register" className="hidden md:block shrink-0">
+                    <Button className="h-9 px-5 rounded-xl text-[13px] font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all duration-200">
+                      Start Free Trial
+                    </Button>
+                  </Link>
+                </>
+              )}
+              <button
+                className="md:hidden p-1.5 text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors shrink-0"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
+          </motion.div>
 
-        {/* Mobile Nav Dropdown */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ y: -50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -50, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="md:hidden border-t border-gray-100 bg-white absolute top-full left-0 right-0 shadow-lg pb-6 -z-10"
-            >
-              <div className="flex flex-col px-6 py-4 gap-2 text-lg font-medium text-gray-700">
-                <Link href="#features" onClick={(e) => scrollToSection(e, 'features')} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Features</Link>
-                <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">How it works</Link>
-                <Link href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Pricing</Link>
-                {isLoggedIn ? (
-                  <div className="mt-4">
-                    <Link href={dashboardLink} onClick={() => setMobileMenuOpen(false)}>
-                      <Button className="w-full text-base h-12 rounded-xl font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56]">
+          {/* Mobile Nav Dropdown */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="md:hidden mt-2 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-xl overflow-hidden"
+              >
+                <div className="flex flex-col p-3 gap-0.5 text-[15px] font-medium text-gray-700">
+                  <Link href="#features" onClick={(e) => scrollToSection(e, 'features')} className="px-4 py-3 rounded-xl hover:bg-gray-50 hover:text-[#0f9d6a] transition-colors">Features</Link>
+                  <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="px-4 py-3 rounded-xl hover:bg-gray-50 hover:text-[#0f9d6a] transition-colors">How it works</Link>
+                  <Link href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="px-4 py-3 rounded-xl hover:bg-gray-50 hover:text-[#0f9d6a] transition-colors">Pricing</Link>
+                  <div className="h-px bg-gray-100 my-1" />
+                  {isLoggedIn ? (
+                    <Link href={dashboardLink} onClick={() => setMobileMenuOpen(false)} className="mt-1">
+                      <Button className="w-full h-11 rounded-xl font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56]">
                         Go to Dashboard
                       </Button>
                     </Link>
-                  </div>
-                ) : (
-                  <>
-                    <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="py-3 hover:text-[#0f9d6a] border-b border-gray-50">Log in</Link>
-                    <div className="mt-4">
-                      <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                        <Button className="w-full text-base h-12 rounded-xl font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56]">
+                  ) : (
+                    <>
+                      <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 hover:text-[#0f9d6a] transition-colors">Log in</Link>
+                      <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="mt-1">
+                        <Button className="w-full h-11 rounded-xl font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56]">
                           Start Free Trial
                         </Button>
                       </Link>
-                    </div>
-                  </>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-      <main className="flex-1">
+        {/* Spacer for fixed navbar */}
+        <div className="h-20" />
 
-        {/* ── Hero ── */}
-        <section className="relative overflow-hidden pt-20 pb-16 md:pt-32 md:pb-24">
-          {/* Background blobs */}
-          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-green-50/40 via-white to-white overflow-hidden">
-            <motion.div
-              animate={{ y: [0, -30, 0], x: [0, 20, 0] }}
-              transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
-              className="absolute top-0 left-1/4 -translate-x-1/2 w-[800px] h-[600px] bg-emerald-200/20 rounded-full blur-[120px] -z-10"
-            />
-            <motion.div
-              animate={{ y: [0, 30, 0], x: [0, -20, 0] }}
-              transition={{ repeat: Infinity, duration: 10, ease: "easeInOut" }}
-              className="absolute top-20 right-1/4 translate-x-1/2 w-[600px] h-[600px] bg-teal-100/30 rounded-full blur-[120px] -z-10"
-            />
-          </div>
+        <main className="flex-1">
 
-          <div className="container mx-auto px-6 max-w-5xl text-center">
+          {/* ── Hero ── */}
+          <section className="relative overflow-hidden pt-20 pb-16 md:pt-32 md:pb-24">
+            {/* Background blobs */}
+            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-green-50/40 via-white to-white overflow-hidden">
+              <motion.div
+                animate={{ y: [0, -30, 0], x: [0, 20, 0] }}
+                transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
+                className="absolute top-0 left-1/4 -translate-x-1/2 w-[800px] h-[600px] bg-emerald-200/20 rounded-full blur-[120px] -z-10"
+              />
+              <motion.div
+                animate={{ y: [0, 30, 0], x: [0, -20, 0] }}
+                transition={{ repeat: Infinity, duration: 10, ease: "easeInOut" }}
+                className="absolute top-20 right-1/4 translate-x-1/2 w-[600px] h-[600px] bg-teal-100/30 rounded-full blur-[120px] -z-10"
+              />
+            </div>
 
-            {/* Pill badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="inline-flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-4 py-1 rounded-full border border-slate-200 mb-3 shadow-sm"
-            >
-              <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
-              Trusted by 500+ restaurants across India
-            </motion.div>
+            <div className="container mx-auto px-6 max-w-5xl text-center">
 
-            {/* Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
-              className="text-3xl sm:text-4xl md:text-[4.5rem] font-extrabold tracking-tight text-gray-900 mb-6 leading-[1.08]"
-            >
-              The smarter way to{" "}
-              <br className="hidden sm:block" />
-              <span className="relative inline-block">
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
-                  className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-[#0f9d6a]"
-                >
-                  run your restaurant
-                </motion.span>
-                <motion.svg
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 0.55 }}
-                  transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
-                  className="absolute -bottom-2 left-0 w-full"
-                  viewBox="0 0 300 10" fill="none"
-                >
-                  <path d="M2 8 Q150 2 298 8" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-                </motion.svg>
-              </span>
-            </motion.h1>
+              {/* Pill badge */}
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="inline-flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-4 py-1 rounded-full border border-slate-200 mb-3 shadow-sm"
+              >
+                <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
+                Trusted by 500+ restaurants across India
+              </motion.div>
 
-            {/* Sub */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
-              className="text-lg md:text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed"
-            >
-              QR-based ordering, real-time kitchen tracking, smart billing, and powerful analytics — all in one platform built for modern Indian restaurants.
-            </motion.p>
+              {/* Headline */}
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+                className="text-3xl sm:text-4xl md:text-[4.5rem] font-extrabold tracking-tight text-gray-900 mb-6 leading-[1.08]"
+              >
+                The smarter way to{" "}
+                <br className="hidden sm:block" />
+                <span className="relative inline-block">
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
+                    className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-[#0f9d6a]"
+                  >
+                    run your restaurant
+                  </motion.span>
+                  <motion.svg
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 0.55 }}
+                    transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
+                    className="absolute -bottom-2 left-0 w-full"
+                    viewBox="0 0 300 10" fill="none"
+                  >
+                    <path d="M2 8 Q150 2 298 8" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                  </motion.svg>
+                </span>
+              </motion.h1>
 
-            {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
-            >
-              <Link href={isLoggedIn ? dashboardLink : "/register"}>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300 }}>
-                  <Button size="lg" className="h-14 px-10 text-base rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200 shadow-[0_4px_14px_rgba(15,157,106,0.25)]">
-                    {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </motion.div>
-              </Link>
-              <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')}>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300 }}>
-                  <Button size="lg" variant="outline" className="h-14 px-10 text-base rounded-full bg-white border border-[#e5e7eb] text-[#0f172a] hover:bg-[#f1f5f9] font-semibold transition-all">
-                    See How It Works
-                  </Button>
-                </motion.div>
-              </Link>
-            </motion.div>
+              {/* Sub */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
+                className="text-lg md:text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed"
+              >
+                QR-based ordering, real-time kitchen tracking, smart billing, and powerful analytics — all in one platform built for modern Indian restaurants.
+              </motion.p>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.45 }}
-              className="text-sm text-gray-400 font-medium mb-16"
-            >
-              No credit card required &nbsp;·&nbsp; Setup in 2 minutes &nbsp;·&nbsp; Cancel anytime
-            </motion.p>
+              {/* CTAs */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
+                className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
+              >
+                <Link href={isLoggedIn ? dashboardLink : "/register"}>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300 }}>
+                    <Button size="lg" className="h-14 px-10 text-base rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200 shadow-[0_4px_14px_rgba(15,157,106,0.25)]">
+                      {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </motion.div>
+                </Link>
+                <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')}>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300 }}>
+                    <Button size="lg" variant="outline" className="h-14 px-10 text-base rounded-full bg-white border border-[#e5e7eb] text-[#0f172a] hover:bg-[#f1f5f9] font-semibold transition-all">
+                      See How It Works
+                    </Button>
+                  </motion.div>
+                </Link>
+              </motion.div>
 
-            {/* Dashboard preview */}
-            <motion.div
-              initial={{ opacity: 0, y: 48, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.35, ease: "easeOut" }}
-              className="relative mx-auto max-w-5xl"
-            >
-              {/* <div className="relative rounded-2xl overflow-hidden border border-gray-200/80 shadow-2xl shadow-gray-300/40 ring-1 ring-gray-100">
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.45 }}
+                className="text-sm text-gray-400 font-medium mb-16"
+              >
+                No credit card required &nbsp;·&nbsp; Setup in 2 minutes &nbsp;·&nbsp; Cancel anytime
+              </motion.p>
+
+              {/* Dashboard preview */}
+              <motion.div
+                initial={{ opacity: 0, y: 48, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.7, delay: 0.35, ease: "easeOut" }}
+                className="relative mx-auto max-w-5xl"
+              >
+                {/* <div className="relative rounded-2xl overflow-hidden border border-gray-200/80 shadow-2xl shadow-gray-300/40 ring-1 ring-gray-100">
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20 pointer-events-none z-10 rounded-2xl" />
                 <Image
                   src="/hero.png"
@@ -414,326 +424,327 @@ export default function Home() {
                   priority
                 />
               </div> */}
-              {/* Glow under image */}
-              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-emerald-400/20 blur-3xl rounded-full -z-10" />
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ── Social proof stats ── */}
-        <section className="py-14 border-y border-gray-100 bg-gray-50/50">
-          <div className="container mx-auto px-6 max-w-5xl">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-50px" }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x divide-gray-200"
-            >
-              {stats.map((s, i) => (
-                <motion.div key={i} variants={staggerItem} className="text-center md:px-6">
-                  <div className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-1">{s.value}</div>
-                  <div className="text-sm text-gray-500 font-medium">{s.label}</div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ── Features ── */}
-        <section id="features" className="py-24 bg-white">
-          <div className="container mx-auto px-6 max-w-6xl">
-            <div className="text-center mb-16">
-              <motion.div {...fadeUp(0)} className="inline-flex items-center text-slate-700 font-semibold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 mb-4">
-                Powerful features
+                {/* Glow under image */}
+                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-emerald-400/20 blur-3xl rounded-full -z-10" />
               </motion.div>
-              <motion.h2 {...fadeUp(0.08)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-5">
-                Everything you need to<br />run your restaurant
-              </motion.h2>
-              <motion.p {...fadeUp(0.14)} className="text-gray-500 text-lg max-w-xl mx-auto">
-                Every feature is crafted to save time, reduce errors, and delight your customers.
-              </motion.p>
             </div>
+          </section>
 
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-50px" }}
-              className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
-              {features.map((f, i) => {
-                const Icon = f.icon;
-                return (
+          {/* ── Social proof stats ── */}
+          <section className="py-14 border-y border-gray-100 bg-gray-50/50">
+            <div className="container mx-auto px-6 max-w-5xl">
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "-50px" }}
+                className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x divide-gray-200"
+              >
+                {stats.map((s, i) => (
+                  <motion.div key={i} variants={staggerItem} className="text-center md:px-6">
+                    <div className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-1">{s.value}</div>
+                    <div className="text-sm text-gray-500 font-medium">{s.label}</div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          </section>
+
+          {/* ── Features ── */}
+          <section id="features" className="py-24 bg-white">
+            <div className="container mx-auto px-6 max-w-6xl">
+              <div className="text-center mb-16">
+                <motion.div {...fadeUp(0)} className="inline-flex items-center text-slate-700 font-semibold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 mb-4">
+                  Powerful features
+                </motion.div>
+                <motion.h2 {...fadeUp(0.08)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-5">
+                  Everything you need to<br />run your restaurant
+                </motion.h2>
+                <motion.p {...fadeUp(0.14)} className="text-gray-500 text-lg max-w-xl mx-auto">
+                  Every feature is crafted to save time, reduce errors, and delight your customers.
+                </motion.p>
+              </div>
+
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "-50px" }}
+                className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {features.map((f, i) => {
+                  const Icon = f.icon;
+                  return (
+                    <motion.div
+                      key={i}
+                      variants={staggerItem}
+                      className="bg-white p-7 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-50/80 transition-all duration-300 group cursor-default"
+                    >
+                      <div className={`h-12 w-12 rounded-xl ${f.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">{f.title}</h3>
+                      <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            </div>
+          </section>
+
+          {/* ── How It Works ── */}
+          <section id="how-it-works" className="py-24 bg-[#F9FAFB]">
+            <div className="container mx-auto px-6 max-w-6xl">
+              <div className="text-center mb-16">
+                <motion.div {...fadeUp(0)} className="inline-flex items-center text-emerald-700 font-semibold text-sm bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200 mb-4">
+                  Simple setup
+                </motion.div>
+                <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
+                  Up and running in 3 steps
+                </motion.h2>
+                <motion.p {...fadeUp(0.13)} className="text-gray-500 text-lg max-w-lg mx-auto">
+                  No technical skills needed. No engineers required. Just sign up and serve.
+                </motion.p>
+              </div>
+
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "-50px" }}
+                className="grid md:grid-cols-3 gap-8 relative"
+              >
+                {/* Connector line (desktop only) */}
+                <div className="hidden md:block absolute top-10 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-0.5 bg-gradient-to-r from-emerald-200 via-emerald-300 to-emerald-200" />
+
+                {steps.map((s, i) => {
+                  const Icon = s.icon;
+                  return (
+                    <motion.div key={i} variants={staggerItem} className="text-center relative">
+                      <div className="relative inline-flex items-center justify-center mb-6 pt-3 pr-3">
+                        <div className="h-20 w-20 rounded-full bg-white border-2 border-emerald-100 shadow-lg shadow-emerald-100/40 flex items-center justify-center z-10 relative">
+                          <Icon className="h-8 w-8 text-[#0f9d6a]" />
+                        </div>
+                        <span className="absolute top-0 right-0 text-[10px] font-black bg-[#0f9d6a] text-white rounded-full h-6 w-6 flex items-center justify-center shadow-md z-20">
+                          {s.step}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-extrabold text-gray-900 mb-3">{s.title}</h3>
+                      <p className="text-gray-500 text-sm leading-relaxed max-w-xs mx-auto">{s.desc}</p>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            </div>
+          </section>
+
+          {/* ── Pricing ── */}
+          <section id="pricing" className="py-24 bg-white">
+            <div className="container mx-auto px-6 max-w-5xl">
+              <div className="text-center mb-16">
+                <motion.div {...fadeUp(0)} className="inline-flex items-center text-slate-700 font-semibold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 mb-4">
+                  Simple pricing
+                </motion.div>
+                <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
+                  Pay only for what you need
+                </motion.h2>
+                <motion.p {...fadeUp(0.13)} className="text-gray-500 text-lg max-w-md mx-auto">
+                  No hidden fees. Cancel anytime. Start free for 14 days.
+                </motion.p>
+              </div>
+
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "-50px" }}
+                className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto"
+              >
+                {plans.map((plan, i) => (
                   <motion.div
                     key={i}
                     variants={staggerItem}
-                    className="bg-white p-7 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-50/80 transition-all duration-300 group cursor-default"
+                    className={`relative rounded-2xl p-8 flex flex-col border-2 transition-all ${plan.highlighted
+                      ? "border-emerald-500 bg-[#0f9d6a] text-white shadow-2xl shadow-[0_4px_14px_rgba(15,157,106,0.2)] scale-[1.02]"
+                      : "border-gray-100 bg-white shadow-sm hover:shadow-lg hover:border-gray-200"
+                      }`}
                   >
-                    <div className={`h-12 w-12 rounded-xl ${f.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">{f.title}</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ── How It Works ── */}
-        <section id="how-it-works" className="py-24 bg-[#F9FAFB]">
-          <div className="container mx-auto px-6 max-w-6xl">
-            <div className="text-center mb-16">
-              <motion.div {...fadeUp(0)} className="inline-flex items-center text-emerald-700 font-semibold text-sm bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200 mb-4">
-                Simple setup
-              </motion.div>
-              <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
-                Up and running in 3 steps
-              </motion.h2>
-              <motion.p {...fadeUp(0.13)} className="text-gray-500 text-lg max-w-lg mx-auto">
-                No technical skills needed. No engineers required. Just sign up and serve.
-              </motion.p>
-            </div>
-
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-50px" }}
-              className="grid md:grid-cols-3 gap-8 relative"
-            >
-              {/* Connector line (desktop only) */}
-              <div className="hidden md:block absolute top-10 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-0.5 bg-gradient-to-r from-emerald-200 via-emerald-300 to-emerald-200" />
-
-              {steps.map((s, i) => {
-                const Icon = s.icon;
-                return (
-                  <motion.div key={i} variants={staggerItem} className="text-center relative">
-                    <div className="relative inline-flex items-center justify-center mb-6 pt-3 pr-3">
-                      <div className="h-20 w-20 rounded-full bg-white border-2 border-emerald-100 shadow-lg shadow-emerald-100/40 flex items-center justify-center z-10 relative">
-                        <Icon className="h-8 w-8 text-[#0f9d6a]" />
+                    {plan.highlighted && (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-xs font-extrabold px-4 py-1 rounded-full shadow-md">
+                        ⚡ Most Popular
                       </div>
-                      <span className="absolute top-0 right-0 text-[10px] font-black bg-[#0f9d6a] text-white rounded-full h-6 w-6 flex items-center justify-center shadow-md z-20">
-                        {s.step}
-                      </span>
+                    )}
+
+                    <div className="mb-6">
+                      <h3 className={`text-lg font-extrabold mb-1 ${plan.highlighted ? "text-white" : "text-gray-900"}`}>{plan.name}</h3>
+                      <p className={`text-sm mb-4 ${plan.highlighted ? "text-emerald-100" : "text-gray-500"}`}>{plan.desc}</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className={`text-5xl font-extrabold ${plan.highlighted ? "text-white" : "text-gray-900"}`}>{plan.price}</span>
+                        <span className={`text-sm font-medium ${plan.highlighted ? "text-emerald-200" : "text-gray-400"}`}>{plan.period}</span>
+                      </div>
                     </div>
-                    <h3 className="text-xl font-extrabold text-gray-900 mb-3">{s.title}</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed max-w-xs mx-auto">{s.desc}</p>
+
+                    <ul className="space-y-3 mb-8 flex-1">
+                      {plan.features.map((feat, j) => (
+                        <li key={j} className="flex items-center gap-2.5 text-sm font-medium">
+                          <CheckCircle2 className={`h-4 w-4 shrink-0 ${plan.highlighted ? "text-emerald-300" : "text-emerald-500"}`} />
+                          <span className={plan.highlighted ? "text-emerald-50" : "text-gray-700"}>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Link href="/register">
+                      <Button
+                        size="lg"
+                        className={`w-full font-medium rounded-full h-12 transition duration-200 ${plan.highlighted
+                          ? "bg-white text-[#0f9d6a] hover:bg-slate-50"
+                          : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30"
+                          }`}
+                      >
+                        {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
                   </motion.div>
-                );
-              })}
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ── Pricing ── */}
-        <section id="pricing" className="py-24 bg-white">
-          <div className="container mx-auto px-6 max-w-5xl">
-            <div className="text-center mb-16">
-              <motion.div {...fadeUp(0)} className="inline-flex items-center text-slate-700 font-semibold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 mb-4">
-                Simple pricing
+                ))}
               </motion.div>
-              <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
-                Pay only for what you need
-              </motion.h2>
-              <motion.p {...fadeUp(0.13)} className="text-gray-500 text-lg max-w-md mx-auto">
-                No hidden fees. Cancel anytime. Start free for 14 days.
-              </motion.p>
             </div>
+          </section>
 
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-50px" }}
-              className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto"
-            >
-              {plans.map((plan, i) => (
-                <motion.div
-                  key={i}
-                  variants={staggerItem}
-                  className={`relative rounded-2xl p-8 flex flex-col border-2 transition-all ${plan.highlighted
-                    ? "border-emerald-500 bg-[#0f9d6a] text-white shadow-2xl shadow-[0_4px_14px_rgba(15,157,106,0.2)] scale-[1.02]"
-                    : "border-gray-100 bg-white shadow-sm hover:shadow-lg hover:border-gray-200"
-                    }`}
-                >
-                  {plan.highlighted && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-xs font-extrabold px-4 py-1 rounded-full shadow-md">
-                      ⚡ Most Popular
-                    </div>
-                  )}
-
-                  <div className="mb-6">
-                    <h3 className={`text-lg font-extrabold mb-1 ${plan.highlighted ? "text-white" : "text-gray-900"}`}>{plan.name}</h3>
-                    <p className={`text-sm mb-4 ${plan.highlighted ? "text-emerald-100" : "text-gray-500"}`}>{plan.desc}</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className={`text-5xl font-extrabold ${plan.highlighted ? "text-white" : "text-gray-900"}`}>{plan.price}</span>
-                      <span className={`text-sm font-medium ${plan.highlighted ? "text-emerald-200" : "text-gray-400"}`}>{plan.period}</span>
-                    </div>
-                  </div>
-
-                  <ul className="space-y-3 mb-8 flex-1">
-                    {plan.features.map((feat, j) => (
-                      <li key={j} className="flex items-center gap-2.5 text-sm font-medium">
-                        <CheckCircle2 className={`h-4 w-4 shrink-0 ${plan.highlighted ? "text-emerald-300" : "text-emerald-500"}`} />
-                        <span className={plan.highlighted ? "text-emerald-50" : "text-gray-700"}>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Link href="/register">
-                    <Button
-                      size="lg"
-                      className={`w-full font-medium rounded-full h-12 transition duration-200 ${plan.highlighted
-                        ? "bg-white text-[#0f9d6a] hover:bg-slate-50"
-                        : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30"
-                        }`}
-                    >
-                      {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
+          {/* ── Testimonials ── */}
+          <section className="py-24 bg-[#F9FAFB]">
+            <div className="container mx-auto px-6 max-w-6xl">
+              <div className="text-center mb-16">
+                <motion.div {...fadeUp(0)} className="inline-flex items-center text-slate-700 font-semibold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 mb-4">
+                  Real reviews
                 </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ── Testimonials ── */}
-        <section className="py-24 bg-[#F9FAFB]">
-          <div className="container mx-auto px-6 max-w-6xl">
-            <div className="text-center mb-16">
-              <motion.div {...fadeUp(0)} className="inline-flex items-center text-slate-700 font-semibold text-sm bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 mb-4">
-                Real reviews
-              </motion.div>
-              <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">
-                Loved by restaurant owners
-              </motion.h2>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {testimonials.map((t, i) => (
-                <motion.div
-                  key={i}
-                  {...fadeUp(i * 0.08)}
-                  className="bg-white rounded-2xl p-7 border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all"
-                >
-                  {/* Stars */}
-                  <div className="flex gap-0.5 mb-4">
-                    {[...Array(5)].map((_, s) => (
-                      <Star key={s} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 text-sm leading-relaxed mb-6">"{t.body}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-full ${t.color} flex items-center justify-center text-white text-sm font-extrabold shrink-0`}>
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <div className="font-bold text-sm text-gray-900">{t.name}</div>
-                      <div className="text-xs text-gray-400 font-medium">{t.title}</div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Final CTA Banner ── */}
-        <section className="py-24 bg-gradient-to-br from-green-600 via-green-500 to-emerald-500  relative overflow-hidden">
-          <div className="absolute inset-0 opacity-[0.08]">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white rounded-full translate-x-1/3 -translate-y-1/3 blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-white rounded-full -translate-x-1/3 translate-y-1/3 blur-3xl" />
-          </div>
-          <div className="container mx-auto px-6 max-w-3xl text-center relative z-10">
-            <motion.h2 {...fadeUp(0)} className="text-4xl md:text-5xl font-extrabold text-white mb-5 tracking-tight">
-              Ready to modernize your restaurant?
-            </motion.h2>
-            <motion.p {...fadeUp(0.08)} className="text-emerald-100 text-lg mb-10 max-w-xl mx-auto">
-              Join 500+ restaurants using Dineflow.pro to serve customers faster, smarter, and without paper menus.
-            </motion.p>
-            <motion.div {...fadeUp(0.14)} className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href={isLoggedIn ? dashboardLink : "/register"}>
-                <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold px-10 h-14 text-base rounded-2xl shadow-xl transition-all hover:scale-105">
-                  {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </motion.div>
-            <motion.p {...fadeUp(0.2)} className="text-emerald-200/70 text-sm mt-5">
-              No credit card required &nbsp;·&nbsp; 14-day free trial
-            </motion.p>
-          </div>
-        </section>
-      </main>
-
-      {/* ── Footer ─-----─ */}
-      <footer className="bg-white border-t border-gray-100 text-gray-500">
-        <div className="container mx-auto px-6 max-w-7xl py-14">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 pb-12 border-b border-gray-100">
-            {/* Brand */}
-            <div className="col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2.5 mb-4">
-                <Image src="/logo.png" alt="Dineflow.pro Logo" width={140} height={100} className="w-auto object-contain" priority />
-              </Link>
-              <p className="text-sm text-gray-500 leading-relaxed max-w-[220px]">
-                The all-in-one restaurant management platform built for modern India.
-              </p>
-              <div className="-mb-8">
-                <a href="https://www.foundrlist.com/product/dineflow" target="_blank" rel="nofollow noopener noreferrer">
-                  <img src="https://www.foundrlist.com/api/badge/dineflow" alt="Live on FoundrList" width="160" height="64" />
-                </a>
+                <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">
+                  Loved by restaurant owners
+                </motion.h2>
               </div>
-            </div>
 
-            {/* Product */}
-            <div>
-              <h4 className="text-gray-900 font-bold text-sm mb-4">Product</h4>
-              <ul className="space-y-2.5 text-sm">
-                <li><Link href="#features" onClick={(e) => scrollToSection(e, 'features')} className="hover:text-[#0f9d6a] transition-colors">Features</Link></li>
-                <li><Link href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="hover:text-[#0f9d6a] transition-colors">Pricing</Link></li>
-                <li><Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="hover:text-[#0f9d6a] transition-colors">How It Works</Link></li>
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h4 className="text-gray-900 font-bold text-sm mb-4">Company</h4>
-              <ul className="space-y-2.5 text-sm">
-                <li><Link href="#" className="hover:text-[#0f9d6a] transition-colors">About</Link></li>
-                <li><Link href="#" className="hover:text-[#0f9d6a] transition-colors">Blog</Link></li>
-                <li><Link href="#" className="hover:text-[#0f9d6a] transition-colors">Contact</Link></li>
-              </ul>
-            </div>
-
-            {/* Socials */}
-            <div>
-              <h4 className="text-gray-900 font-bold text-sm mb-4">Follow Us</h4>
-              <div className="flex gap-3">
-                {[
-                  { Icon: Twitter, href: "#" },
-                  { Icon: Instagram, href: "#" },
-                  { Icon: Linkedin, href: "#" },
-                ].map(({ Icon, href }, i) => (
-                  <Link key={i} href={href} className="h-9 w-9 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-emerald-100 hover:text-[#0f9d6a] transition-all">
-                    <Icon className="h-4 w-4" />
-                  </Link>
+              <div className="grid md:grid-cols-3 gap-6">
+                {testimonials.map((t, i) => (
+                  <motion.div
+                    key={i}
+                    {...fadeUp(i * 0.08)}
+                    className="bg-white rounded-2xl p-7 border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all"
+                  >
+                    {/* Stars */}
+                    <div className="flex gap-0.5 mb-4">
+                      {[...Array(5)].map((_, s) => (
+                        <Star key={s} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                      ))}
+                    </div>
+                    <p className="text-gray-700 text-sm leading-relaxed mb-6">"{t.body}"</p>
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 rounded-full ${t.color} flex items-center justify-center text-white text-sm font-extrabold shrink-0`}>
+                        {t.avatar}
+                      </div>
+                      <div>
+                        <div className="font-bold text-sm text-gray-900">{t.name}</div>
+                        <div className="text-xs text-gray-400 font-medium">{t.title}</div>
+                      </div>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-            <p>© {new Date().getFullYear()} DINEFLOW TECHNOLOGIES PRIVATE LIMITED . All rights reserved.</p>
-            <div className="flex gap-6">
-              <Link href="#" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
-              <Link href="#" className="hover:text-gray-600 transition-colors">Terms of Service</Link>
+          {/* ── Final CTA Banner ── */}
+          <section className="py-24 bg-gradient-to-br from-green-600 via-green-500 to-emerald-500  relative overflow-hidden">
+            <div className="absolute inset-0 opacity-[0.08]">
+              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white rounded-full translate-x-1/3 -translate-y-1/3 blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-white rounded-full -translate-x-1/3 translate-y-1/3 blur-3xl" />
+            </div>
+            <div className="container mx-auto px-6 max-w-3xl text-center relative z-10">
+              <motion.h2 {...fadeUp(0)} className="text-4xl md:text-5xl font-extrabold text-white mb-5 tracking-tight">
+                Ready to modernize your restaurant?
+              </motion.h2>
+              <motion.p {...fadeUp(0.08)} className="text-emerald-100 text-lg mb-10 max-w-xl mx-auto">
+                Join 500+ restaurants using Dineflow.pro to serve customers faster, smarter, and without paper menus.
+              </motion.p>
+              <motion.div {...fadeUp(0.14)} className="flex flex-col sm:flex-row justify-center gap-4">
+                <Link href={isLoggedIn ? dashboardLink : "/register"}>
+                  <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold px-10 h-14 text-base rounded-2xl shadow-xl transition-all hover:scale-105">
+                    {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+              </motion.div>
+              <motion.p {...fadeUp(0.2)} className="text-emerald-200/70 text-sm mt-5">
+                No credit card required &nbsp;·&nbsp; 14-day free trial
+              </motion.p>
+            </div>
+          </section>
+        </main>
+
+        {/* ── Footer ─-----─ */}
+        <footer className="bg-white border-t border-gray-100 text-gray-500">
+          <div className="container mx-auto px-6 max-w-7xl py-14">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-10 pb-12 border-b border-gray-100">
+              {/* Brand */}
+              <div className="col-span-2 md:col-span-1">
+                <Link href="/" className="flex items-center gap-2 mb-4">
+                  <Image src="/logo.png" alt="Dineflow Icon" width={32} height={32} className="h-8 w-8 object-contain" priority />
+                  <span className="text-lg font-extrabold tracking-tight text-gray-900">Dineflow</span>
+                </Link>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-[220px]">
+                  The all-in-one restaurant management platform built for modern India.
+                </p>
+                <div className="-mb-8">
+                  <a href="https://www.foundrlist.com/product/dineflow" target="_blank" rel="nofollow noopener noreferrer">
+                    <img src="https://www.foundrlist.com/api/badge/dineflow" alt="Live on FoundrList" width="160" height="64" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Product */}
+              <div>
+                <h4 className="text-gray-900 font-bold text-sm mb-4">Product</h4>
+                <ul className="space-y-2.5 text-sm">
+                  <li><Link href="#features" onClick={(e) => scrollToSection(e, 'features')} className="hover:text-[#0f9d6a] transition-colors">Features</Link></li>
+                  <li><Link href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="hover:text-[#0f9d6a] transition-colors">Pricing</Link></li>
+                  <li><Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="hover:text-[#0f9d6a] transition-colors">How It Works</Link></li>
+                </ul>
+              </div>
+
+              {/* Company */}
+              <div>
+                <h4 className="text-gray-900 font-bold text-sm mb-4">Company</h4>
+                <ul className="space-y-2.5 text-sm">
+                  <li><Link href="#" className="hover:text-[#0f9d6a] transition-colors">About</Link></li>
+                  <li><Link href="#" className="hover:text-[#0f9d6a] transition-colors">Blog</Link></li>
+                  <li><Link href="#" className="hover:text-[#0f9d6a] transition-colors">Contact</Link></li>
+                </ul>
+              </div>
+
+              {/* Socials */}
+              <div>
+                <h4 className="text-gray-900 font-bold text-sm mb-4">Follow Us</h4>
+                <div className="flex gap-3">
+                  {[
+                    { Icon: Twitter, href: "#" },
+                    { Icon: Instagram, href: "#" },
+                    { Icon: Linkedin, href: "#" },
+                  ].map(({ Icon, href }, i) => (
+                    <Link key={i} href={href} className="h-9 w-9 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-emerald-100 hover:text-[#0f9d6a] transition-all">
+                      <Icon className="h-4 w-4" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
+              <p>© {new Date().getFullYear()} DINEFLOW TECHNOLOGIES PRIVATE LIMITED . All rights reserved.</p>
+              <div className="flex gap-6">
+                <Link href="#" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
+                <Link href="#" className="hover:text-gray-600 transition-colors">Terms of Service</Link>
+              </div>
             </div>
           </div>
-        </div>
-      </footer>
-    </div>
+        </footer>
+      </div>
     </HomeScroll>
   );
 }

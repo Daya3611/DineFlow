@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { Store, CreditCard, Activity, ArrowRight, TrendingUp, IndianRupee, Loader2, ShoppingBag } from "lucide-react";
+import { Store, CreditCard, Activity, ArrowRight, TrendingUp, IndianRupee, Loader2, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState, useMemo } from "react";
@@ -32,6 +32,7 @@ export default function RestaurantDashboard() {
 
   const [orders, setOrders] = useState<any[]>([]);
   const [menuCount, setMenuCount] = useState(0);
+  const [tables, setTables] = useState<any[]>([]);
   const [timeRange, setTimeRange] = useState("7d");
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -49,6 +50,10 @@ export default function RestaurantDashboard() {
 
         const fetchedOrders = ordersSnapshot.docs.map(doc => doc.data());
         setOrders(fetchedOrders);
+        
+        const tablesQ = query(collection(db, "tables"), where("restaurantId", "==", restaurant.id));
+        const tablesSnapshot = await getDocs(tablesQ);
+        setTables(tablesSnapshot.docs.map(doc => doc.data()));
       } catch (e) {
         console.error("Failed to fetch dashboard data:", e);
       } finally {
@@ -58,8 +63,8 @@ export default function RestaurantDashboard() {
     fetchData();
   }, [restaurant]);
 
-  const { chartData, totalRevenue, totalOrders, averageOrderValue } = useMemo(() => {
-    if (!orders.length) return { chartData: [], totalRevenue: 0, totalOrders: 0, averageOrderValue: 0 };
+  const { chartData, totalRevenue, totalOrders, averageOrderValue, popularItems } = useMemo(() => {
+    if (!orders.length) return { chartData: [], totalRevenue: 0, totalOrders: 0, averageOrderValue: 0, popularItems: [] };
 
     const now = Date.now();
     let timeFilter = 0;
@@ -79,6 +84,7 @@ export default function RestaurantDashboard() {
     const avgVal = totalOrd > 0 ? totalRev / totalOrd : 0;
 
     const grouped: Record<string, number> = {};
+    const itemCounts: Record<string, {name: string, count: number, rev: number}> = {};
 
     filteredOrders.forEach(o => {
       const date = new Date(o.createdAt);
@@ -91,7 +97,15 @@ export default function RestaurantDashboard() {
 
       if (!grouped[key]) grouped[key] = 0;
       grouped[key] += (o.totalAmount || 0);
+
+      o.items.forEach((item: any) => {
+          if (!itemCounts[item.id]) itemCounts[item.id] = { name: item.name, count: 0, rev: 0 };
+          itemCounts[item.id].count += item.quantity;
+          itemCounts[item.id].rev += (item.price * item.quantity);
+      });
     });
+
+    const popItems = Object.values(itemCounts).sort((a,b) => b.count - a.count).slice(0, 5);
 
     const generatedData = [];
 
@@ -116,7 +130,8 @@ export default function RestaurantDashboard() {
       chartData: generatedData,
       totalRevenue: totalRev,
       totalOrders: totalOrd,
-      averageOrderValue: avgVal
+      averageOrderValue: avgVal,
+      popularItems: popItems
     };
   }, [orders, timeRange]);
 
@@ -172,7 +187,7 @@ export default function RestaurantDashboard() {
       ) : (
         <>
           {/* Top Dashboard Cards */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">
@@ -251,6 +266,41 @@ export default function RestaurantDashboard() {
                     <div className="text-2xl font-extrabold text-gray-900">{menuCount}</div>
                     <p className="text-xs text-gray-500 mt-1 font-medium">Total active items</p>
                   </>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">
+                  Tables Overview
+                </CardTitle>
+                <div className="h-5 w-5 bg-emerald-50 rounded flex items-center justify-center">
+                  <UtensilsCrossed className="h-3 w-3 text-emerald-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingStats ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-300 mt-2" />
+                ) : (
+                  <div className="space-y-3 pt-1">
+                    <div className="flex justify-between items-center text-sm">
+                       <span className="text-gray-500 font-medium">Total Tables</span>
+                       <span className="font-bold text-gray-900">{tables.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                       <span className="flex items-center gap-1.5 text-gray-500 font-medium"><div className="h-2 w-2 rounded-full bg-emerald-500"></div> Free</span>
+                       <span className="font-bold text-gray-900">{tables.filter(t => !t.status || t.status === "free").length}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                       <span className="flex items-center gap-1.5 text-gray-500 font-medium"><div className="h-2 w-2 rounded-full bg-red-500"></div> Occupied</span>
+                       <span className="font-bold text-gray-900">{tables.filter(t => t.status === "occupied").length}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                       <span className="flex items-center gap-1.5 text-gray-500 font-medium"><div className="h-2 w-2 rounded-full bg-yellow-400"></div> Reserved</span>
+                       <span className="font-bold text-gray-900">{tables.filter(t => t.status === "reserved").length}</span>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -353,6 +403,41 @@ export default function RestaurantDashboard() {
                     </ResponsiveContainer>
                   )}
                 </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Popular Items Section */}
+          <div className="pt-6">
+            <h2 className="text-xl font-bold tracking-tight text-gray-900 mb-4">Popular Items</h2>
+            <Card className="border border-gray-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
+                    <tr>
+                      <th className="px-6 py-4 font-semibold">Item Name</th>
+                      <th className="px-6 py-4 font-semibold text-right">Units Sold</th>
+                      <th className="px-6 py-4 font-semibold text-right">Revenue Generated</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {popularItems.length > 0 ? (
+                      popularItems.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 font-bold text-gray-900">{item.name}</td>
+                          <td className="px-6 py-4 text-right font-medium text-gray-600">{item.count}</td>
+                          <td className="px-6 py-4 text-right font-bold text-emerald-600">₹{item.rev}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-12 text-center text-gray-500 font-medium">
+                           No item data available for this period.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </Card>
           </div>

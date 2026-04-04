@@ -23,16 +23,8 @@ export interface Restaurant {
   logo: string; // Cloudinary URL
   subscriptionStatus: "active" | "inactive" | "expired";
   plan: "basic" | "pro" | "premium" | "trial" | "none";
+  customSlug?: string;
   createdAt: number;
-}
-
-export interface Menu {
-  id: string;
-  restaurantId: string;
-  name: string;
-  price: number;
-  category: string;
-  image: string; // Cloudinary URL
 }
 
 export interface Subscription {
@@ -50,8 +42,22 @@ export interface Table {
   id: string;
   restaurantId: string;
   tableNumber: string;
+  capacity: number; // Add capacity
   qrCodeUrl: string;
+  status?: "free" | "occupied" | "reserved";
+  guests?: number;
   createdAt: number;
+}
+
+export interface Menu {
+  id: string;
+  restaurantId: string;
+  name: string;
+  price: number;
+  category: string;
+  image: string; // Cloudinary URL
+  dietaryTags?: string[]; // "veg", "non-veg", "vegan", "spicy"
+  highlight?: "popular" | "chef special" | "none";
 }
 
 export interface OrderItem {
@@ -59,18 +65,49 @@ export interface OrderItem {
   name: string;
   price: number;
   quantity: number;
+  note?: string; // Item-level notes
 }
 
 export interface Order {
   id: string;
   restaurantId: string;
   tableNumber: string;
+  tableId?: string;
   items: OrderItem[];
   totalAmount: number;
   status: "pending" | "preparing" | "served" | "paid";
   paymentMethod: "counter" | "upi" | "razorpay";
-  paymentStatus: "unpaid" | "pending_verification" | "paid";
+  paymentStatus: "unpaid" | "partial" | "pending_verification" | "paid";
+  splitBill?: "equal" | "custom";
   customerName?: string;
   note?: string;
   createdAt: number;
+}
+
+export interface Reservation {
+  id: string;
+  restaurantId: string;
+  customerName: string;
+  phone: string;
+  email?: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  durationMinutes: number; // Duration length
+  tableId?: string; // Assigned table
+  guestCount: number;
+  status: "pending" | "confirmed" | "arrived" | "no-show" | "completed" | "cancelled";
+  notes?: string;
+  createdAt: number;
+}
+
+export interface Waitlist {
+  id: string;
+  restaurantId: string;
+  name: string;
+  phone: string;
+  guests: number;
+  date: string; // Target date
+  timeSlot: string; // Target time string
+  time: number; // timestamp
+  status: "waiting" | "notified" | "seated" | "cancelled";
 }

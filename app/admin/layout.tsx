@@ -12,6 +12,7 @@ import {
 import { auth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
+import { AppDropdown } from "@/components/common/AppDropdown";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -65,7 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="flex flex-col items-center gap-3">
-          <Image src="/logo.png" alt="Dineflow Logo" width={48} height={48} className="h-12 w-12 object-contain" priority />
+          <Image src="/logo.png" alt="Dineflow Icon" width={48} height={48} className="h-12 w-12 object-contain" priority />
           <Loader2 className="h-6 w-6 animate-spin text-[#0f9d6a]" />
         </div>
       </div>
@@ -100,10 +101,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         {/* Logo */}
-        <div className="flex items-center justify-between px-5 pt-6 pb-5 border-b border-slate-200 shrink-0">
-          <div className="flex items-center">
-            <Image src="/logo.png" alt="Dineflow Logo" width={140} height={36} className="h-8 md:h-9 w-auto object-contain mb-1 brightness-0 opacity-80" priority />
-            <span className="ml-3 text-[10px] font-semibold text-slate-500 bg-slate-200 border border-slate-300 px-2 py-0.5 rounded-full">ADMIN</span>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <Image src="/logo.png" alt="Dineflow Icon" width={32} height={32} className="h-8 w-8 object-contain" priority />
+            <span className="text-[15px] font-extrabold tracking-tight text-slate-800">Dineflow</span>
+            <span className="text-[10px] font-semibold text-slate-500 bg-slate-200 border border-slate-300 px-2 py-0.5 rounded-full">ADMIN</span>
           </div>
           <button className="md:hidden text-slate-400 hover:text-slate-600 transition-colors" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
@@ -135,26 +137,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* User footer */}
         <div className="p-4 border-t border-slate-200 shrink-0 bg-[#f8fafc]">
-          <div className="flex items-center gap-3 mb-3 px-1">
-            <div className="h-9 w-9 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-600 font-bold text-sm">
+          <div className="flex items-center gap-3 px-1">
+            <div className="h-9 w-9 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-600 font-bold text-sm shrink-0">
               {userData.name.charAt(0).toUpperCase()}
             </div>
-            <div className="overflow-hidden flex-1">
+            <div className="overflow-hidden flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-700 truncate">{userData.name}</p>
               <p className="text-[11px] font-medium text-slate-400 truncate">{userData.email}</p>
             </div>
+            <AppDropdown
+              items={[
+                {
+                  label: "Sign out",
+                  icon: LogOut,
+                  danger: true,
+                  onClick: handleLogout,
+                },
+              ]}
+            />
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0f172a] transition-all"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </button>
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
         <header className="md:hidden h-16 flex items-center px-4 bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
@@ -173,13 +178,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        {/* Centered Desktop Layout + Inner White Box */}
+        {/* Single-scroll main */}
         <main className="flex-1 overflow-y-auto w-full md:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl h-full flex flex-col">
-            <div className="bg-white md:rounded-[20px] md:border border-slate-200 flex-1 flex flex-col overflow-hidden md:shadow-sm min-h-screen md:min-h-0">
-              <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-                {children}
-              </div>
+          <div className="mx-auto max-w-7xl">
+            <div className="bg-white md:rounded-[20px] md:border border-slate-200 md:shadow-sm p-4 md:p-6 lg:p-8 min-h-[calc(100vh-4rem)]">
+              {children}
             </div>
           </div>
         </main>

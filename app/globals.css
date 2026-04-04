@@ -134,10 +134,10 @@
   }
 }
 
-/* ══ Smooth custom scrollbar ══ */
+/* ══ Minimal transparent scrollbar ══ */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -145,10 +145,17 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #22c55e;
-  border-radius: 10px;
+  background: rgba(15, 157, 106, 0.25);
+  border-radius: 999px;
+  transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #16a34a;
+  background: rgba(15, 157, 106, 0.55);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 157, 106, 0.25) transparent;
 }

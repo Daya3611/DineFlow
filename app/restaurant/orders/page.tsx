@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { db } from "@/firebase";
-import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, updateDoc, getDocs } from "firebase/firestore";
 import { Order as OrderType } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -92,6 +92,30 @@ export default function LiveOrdersPage() {
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+      
+      // Auto-free table if order is fully paid/completed
+      if (newStatus === "paid") {
+        const order = orders.find(o => o.id === orderId);
+        if (order) {
+          const hasOtherActive = orders.some(o => 
+             o.id !== orderId && 
+             o.tableNumber === order.tableNumber && 
+             o.status !== "paid"
+          );
+          if (!hasOtherActive) {
+            if (order.tableId) {
+              await updateDoc(doc(db, "tables", order.tableId), { status: "free" });
+            } else if (order.tableNumber && restaurant?.id) {
+               const tq = query(collection(db, "tables"), where("restaurantId", "==", restaurant.id), where("tableNumber", "==", order.tableNumber));
+               const tsnap = await getDocs(tq);
+               if (!tsnap.empty) {
+                 await updateDoc(doc(db, "tables", tsnap.docs[0].id), { status: "free" });
+               }
+            }
+          }
+        }
+      }
+      
       toast.success(`Order marked as ${newStatus}`);
     } catch (_) {
       toast.error("Failed to update status");
@@ -101,6 +125,28 @@ export default function LiveOrdersPage() {
   const verifyPayment = async (orderId: string) => {
     try {
       await updateDoc(doc(db, "orders", orderId), { paymentStatus: "paid" });
+      
+      // Auto-free table if payment is verified
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        const hasOtherActive = orders.some(o => 
+           o.id !== orderId && 
+           o.tableNumber === order.tableNumber && 
+           o.status !== "paid"
+        );
+        if (!hasOtherActive) {
+          if (order.tableId) {
+            await updateDoc(doc(db, "tables", order.tableId), { status: "free" });
+          } else if (order.tableNumber && restaurant?.id) {
+             const tq = query(collection(db, "tables"), where("restaurantId", "==", restaurant.id), where("tableNumber", "==", order.tableNumber));
+             const tsnap = await getDocs(tq);
+             if (!tsnap.empty) {
+               await updateDoc(doc(db, "tables", tsnap.docs[0].id), { status: "free" });
+             }
+          }
+        }
+      }
+      
       toast.success("Payment verified successfully!");
     } catch (_) {
       toast.error("Failed to verify payment");

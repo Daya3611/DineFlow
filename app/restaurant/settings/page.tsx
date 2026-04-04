@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/lib/toast";
-import { Loader2, Store, MapPin, Phone, Mail, Building2, QrCode, User as UserIcon, Lock, Settings } from "lucide-react";
+import { Loader2, Store, MapPin, Phone, Mail, Building2, QrCode, User as UserIcon, Lock, Settings, Link as LinkIcon, Copy } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +25,10 @@ const restaurantSchema = z.object({
   email: z.string().email("Invalid business email"),
   gstNumber: z.string().optional(),
   upiId: z.string().optional().refine(val => !val || val.includes("@"), "Invalid UPI format (e.g., name@bank)"),
+  customSlug: z.string()
+    .regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers, and hyphens allowed")
+    .optional()
+    .or(z.literal("")),
 });
 
 const profileSchema = z.object({
@@ -59,6 +63,7 @@ export default function SettingsPage() {
       email: restaurant?.email || "",
       gstNumber: restaurant?.gstNumber || "",
       upiId: restaurant?.upiId || "",
+      customSlug: restaurant?.customSlug || "",
     }
   });
 
@@ -79,6 +84,7 @@ export default function SettingsPage() {
         email: restaurant.email || "",
         gstNumber: restaurant.gstNumber || "",
         upiId: restaurant.upiId || "",
+        customSlug: restaurant.customSlug || "",
       });
     }
   }, [restaurant, restaurantForm]);
@@ -99,6 +105,18 @@ export default function SettingsPage() {
     try {
       const restaurantId = restaurant?.id || `rest_${user.uid}`;
 
+      // Check slug uniqueness
+      if (values.customSlug && values.customSlug !== restaurant?.customSlug && restaurant?.plan === "premium") {
+        const { query, collection, where, getDocs } = await import("firebase/firestore");
+        const checkQ = query(collection(db, "restaurants"), where("customSlug", "==", values.customSlug));
+        const checkSnap = await getDocs(checkQ);
+        if (!checkSnap.empty) {
+           toast.error("This custom URL is already taken by another restaurant.");
+           setRestaurantLoading(false);
+           return;
+        }
+      }
+
       const restaurantData = {
         id: restaurantId,
         ownerId: user.uid,
@@ -111,6 +129,7 @@ export default function SettingsPage() {
         logo: logoUrl,
         subscriptionStatus: restaurant?.subscriptionStatus || "inactive",
         plan: restaurant?.plan || "none",
+        customSlug: restaurant?.plan === "premium" ? (values.customSlug || "") : (restaurant?.customSlug || ""),
         createdAt: restaurant?.createdAt || Date.now(),
       };
 
@@ -290,6 +309,54 @@ export default function SettingsPage() {
                   </CardContent>
                 </Card>
               </div>
+
+              <Card className="border-emerald-100 shadow-sm shadow-emerald-50 rounded-2xl ring-1 ring-emerald-50 group">
+                <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 transition-colors group-hover:bg-emerald-50">
+                  <CardTitle className="text-lg flex items-center gap-2 text-emerald-900"><LinkIcon className="h-4 w-4 text-[#0f9d6a]" /> Booking Link</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold text-gray-700">Your Shareable URL</Label>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 select-all overflow-hidden text-ellipsis whitespace-nowrap">
+                        {typeof window !== 'undefined' ? window.location.origin : ''}/book/{restaurant?.plan === "premium" && restaurant.customSlug ? restaurant.customSlug : restaurant?.id}
+                      </div>
+                      <Button type="button" variant="outline" className="shrink-0 h-11 px-4" onClick={() => {
+                        const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/book/${restaurant?.plan === "premium" && restaurant.customSlug ? restaurant.customSlug : restaurant?.id}`;
+                        navigator.clipboard.writeText(url);
+                        toast.success("Link copied to clipboard!");
+                      }}>
+                        <Copy className="h-4 w-4 mr-2" /> Copy
+                      </Button>
+                    </div>
+                  </div>
+
+                  {restaurant?.plan === "premium" ? (
+                    <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors pt-4 border-t border-emerald-100 mt-4">
+                      <Label htmlFor="customSlug" className="text-sm font-semibold text-gray-700">Custom Booking Slug</Label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-400 select-none">
+                           dineflow.pro/book/
+                        </span>
+                        <Input 
+                          id="customSlug" 
+                          placeholder="e.g. spice-garden" 
+                          className="pl-[125px] h-12 rounded-xl border-emerald-200 focus-visible:ring-emerald-500 transition-all font-medium text-emerald-900" 
+                          {...restaurantForm.register("customSlug", { 
+                             onChange: (e) => { e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }
+                          })} 
+                        />
+                      </div>
+                      {restaurantForm.formState.errors.customSlug && <p className="text-xs text-red-500 font-medium">{restaurantForm.formState.errors.customSlug.message}</p>}
+                      <p className="text-xs text-emerald-600 mt-1 font-medium">Use a descriptive, memorable name for your restaurant. Only lowercase letters, numbers, and hyphens.</p>
+                    </div>
+                  ) : (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-xl mt-4 leading-relaxed font-medium">
+                      🚀 <span className="font-bold">Upgrade to Premium</span> to unlock a branded Custom Booking URL (e.g. {typeof window !== 'undefined' ? window.location.hostname : 'dineflow.pro'}/book/spice-garden).
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               <div className="flex justify-end pt-4">
                 <Button

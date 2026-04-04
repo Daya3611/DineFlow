@@ -11,6 +11,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { Menu, Restaurant, OrderItem, Order as OrderType } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ import {
   Star,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 const ALL_LABEL = "All";
@@ -89,9 +91,10 @@ function MenuContent() {
   const [submitting, setSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState<string | null>(null);
   const [placedOrderTotal, setPlacedOrderTotal] = useState<number>(0);
-  const [paymentOption, setPaymentOption] = useState<"counter" | "upi">(
+  const [paymentOption, setPaymentOption] = useState<"counter" | "upi" | "split">(
     "counter"
   );
+  const [splitCount, setSplitCount] = useState<number>(2);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [paymentVerified, setPaymentVerified] = useState(false);
   const [activeNav, setActiveNav] = useState<"home" | "menu" | "orders" | "profile">("menu");
@@ -107,7 +110,10 @@ function MenuContent() {
     const fetchData = async () => {
       try {
         const resDoc = await getDoc(doc(db, "restaurants", restaurantId));
-        if (resDoc.exists()) setRestaurant(resDoc.data() as Restaurant);
+        if (resDoc.exists()) {
+          const resData = resDoc.data() as Restaurant;
+          setRestaurant(resData);
+        }
 
         const q = query(
           collection(db, "menus"),
@@ -172,11 +178,21 @@ function MenuContent() {
         (acc, item) => acc + item.price * item.quantity,
         0
       );
+      
+      // Look up actual table object first
+      let resolvedTableId = "";
+      const tq = query(collection(db, "tables"), where("restaurantId", "==", restaurantId), where("tableNumber", "==", table));
+      const tsnap = await getDocs(tq);
+      if (!tsnap.empty) {
+        resolvedTableId = tsnap.docs[0].id;
+      }
+
       const orderId = `ord_${Date.now()}`;
       const newOrder: OrderType = {
         id: orderId,
         restaurantId,
         tableNumber: table,
+        tableId: resolvedTableId || undefined,
         items,
         totalAmount,
         status: "pending",
@@ -186,7 +202,18 @@ function MenuContent() {
         note: note.trim() || undefined,
         createdAt: Date.now(),
       };
+      
       await setDoc(doc(db, "orders", orderId), newOrder);
+
+      // Auto update table to occupied if free/reserved
+      if (!tsnap.empty) {
+        const tdoc = tsnap.docs[0];
+        const tdata = tdoc.data();
+        if (tdata.status !== "occupied") {
+          await updateDoc(doc(db, "tables", tdoc.id), { status: "occupied" });
+        }
+      }
+
       setOrderPlaced(orderId);
       setPlacedOrderTotal(totalAmount);
       setCart({});
@@ -288,6 +315,24 @@ function MenuContent() {
     );
   }
 
+  /* ══════════════════════ SUBSCRIPTION EXPIRED ══════════════════════ */
+  if (restaurant.subscriptionStatus !== "active") {
+    return (
+      <div className="menu-screen flex flex-col items-center justify-center bg-[#f8fafc] p-8 text-center">
+        <div className="h-24 w-24 rounded-full bg-red-50 flex items-center justify-center mb-6">
+          <CheckCircle className="h-12 w-12 text-red-300 hidden" />
+          <svg className="h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Service Unavailable</h1>
+        <p className="text-gray-500 text-sm max-w-xs leading-relaxed mb-6">
+          Your subscription has expired. Please renew.
+        </p>
+      </div>
+    );
+  }
+
   /* ══════════════════════ ORDER PLACED VIEW ══════════════════════ */
   if (orderPlaced) {
     const upiLink = restaurant.upiId
@@ -359,29 +404,44 @@ function MenuContent() {
                 How would you like to pay?
               </p>
 
-              <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="grid grid-cols-3 gap-2 mb-5">
                 <button
                   onClick={() => setPaymentOption("counter")}
-                  className={`py-3 px-2 rounded-[16px] text-sm font-semibold border-2 transition-all duration-200 ${paymentOption === "counter"
+                  className={`py-3 px-1 rounded-[16px] text-xs font-semibold border-2 transition-all duration-200 ${paymentOption === "counter"
                     ? "border-[#0f9d6a] bg-[#f0fdf4] text-[#0f9d6a]"
                     : "border-gray-100 text-gray-400 hover:border-gray-200"
                     }`}
                 >
-                  Pay at Counter
+                  At Counter
                 </button>
                 {restaurant.upiId ? (
                   <button
                     onClick={() => setPaymentOption("upi")}
-                    className={`py-3 px-2 rounded-[16px] text-sm font-semibold border-2 transition-all duration-200 ${paymentOption === "upi"
+                    className={`py-3 px-1 rounded-[16px] text-xs font-semibold border-2 transition-all duration-200 ${paymentOption === "upi"
                       ? "border-[#0f9d6a] bg-[#f0fdf4] text-[#0f9d6a]"
                       : "border-gray-100 text-gray-400 hover:border-gray-200"
                       }`}
                   >
-                    Pay via UPI
+                    Pay full (UPI)
                   </button>
                 ) : (
-                  <div className="py-3 px-2 rounded-[16px] text-sm font-semibold border-2 border-dashed border-gray-100 text-gray-300 text-center opacity-50 cursor-not-allowed">
-                    UPI Unavailable
+                  <div className="py-3 px-1 rounded-[16px] text-xs font-semibold border-2 border-dashed border-gray-100 text-gray-300 text-center opacity-50 cursor-not-allowed">
+                    UPI Off
+                  </div>
+                )}
+                {restaurant.upiId ? (
+                  <button
+                    onClick={() => setPaymentOption("split")}
+                    className={`py-3 px-1 rounded-[16px] text-xs font-semibold border-2 transition-all duration-200 ${paymentOption === "split"
+                      ? "border-[#0f9d6a] bg-[#f0fdf4] text-[#0f9d6a]"
+                      : "border-gray-100 text-gray-400 hover:border-gray-200"
+                      }`}
+                  >
+                    Split Bill
+                  </button>
+                ) : (
+                  <div className="py-3 px-1 rounded-[16px] text-xs font-semibold border-2 border-dashed border-gray-100 text-gray-300 text-center opacity-50 cursor-not-allowed">
+                    Split Off
                   </div>
                 )}
               </div>
@@ -448,6 +508,60 @@ function MenuContent() {
                   </p>
                 </div>
               )}
+
+              {paymentOption === "split" && restaurant.upiId && !paymentVerified && (
+                <div className="bg-white rounded-[16px] border border-gray-100 p-5 flex flex-col items-center text-center">
+                  <div className="w-full flex items-center justify-between mb-4 bg-gray-50 rounded-xl p-2 border border-gray-100">
+                     <button onClick={() => setSplitCount(Math.max(2, splitCount - 1))} className="h-8 w-8 rounded-lg bg-white border flex items-center justify-center font-bold text-gray-600">-</button>
+                     <span className="font-bold text-sm text-gray-800">Split by {splitCount}</span>
+                     <button onClick={() => setSplitCount(splitCount + 1)} className="h-8 w-8 rounded-lg bg-white border flex items-center justify-center font-bold text-gray-600">+</button>
+                  </div>
+                  
+                  {(() => {
+                    const splitAmount = Math.ceil(placedOrderTotal / splitCount);
+                    const splitUpiLink = `upi://pay?pa=${restaurant.upiId}&pn=${encodeURIComponent(restaurant.name)}&am=${splitAmount}&cu=INR&tn=${encodeURIComponent("Split Order " + orderPlaced.slice(-6).toUpperCase())}`;
+                    return (
+                      <>
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(splitUpiLink)}`}
+                          alt="UPI QR"
+                          className="w-32 h-32 rounded-[16px] border border-gray-100 p-2 mb-3"
+                        />
+                        <p className="text-lg font-extrabold text-[#0f9d6a] mb-0">
+                          ₹{splitAmount} <span className="text-xs text-gray-400 font-medium tracking-wide">each</span>
+                        </p>
+                        <p className="text-[10px] text-gray-500 font-semibold mb-4 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                           {splitCount} payments of ₹{splitAmount} required to settle ₹{placedOrderTotal}.
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="w-full bg-white border-2 border-[#e5e7eb] text-[#0f172a] hover:bg-[#f1f5f9] font-bold h-12 rounded-full transition-all active:scale-[0.98]"
+                          onClick={handleUpiPaid}
+                          disabled={updatingPayment}
+                        >
+                          {updatingPayment ? (
+                            <Loader2 className="animate-spin h-4 w-4" />
+                          ) : (
+                            "Everyone Paid"
+                          )}
+                        </Button>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {paymentOption === "split" && paymentVerified && (
+                <div className="bg-[#f0fdf4] rounded-[16px] p-5 text-center border border-green-100">
+                  <CheckCircle className="h-8 w-8 text-[#0f9d6a] mx-auto mb-2" />
+                  <p className="text-[#0f9d6a] font-bold text-sm">
+                    Split Payments Verification Pending
+                  </p>
+                  <p className="text-green-600 text-[11px] mt-1">
+                    Our team will verify your payments shortly.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -494,17 +608,24 @@ function MenuContent() {
             </div>
           </div>
 
-          {restaurant.logo ? (
-            <img
-              src={restaurant.logo}
-              alt={restaurant.name}
-              className="h-10 w-10 rounded-full object-cover border border-gray-100 shadow-sm"
-            />
-          ) : (
-            <div className="h-10 w-10 rounded-full bg-[#0f9d6a] flex items-center justify-center text-white font-extrabold text-[15px] shadow-sm">
-              {restaurant.name.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+             <Link href={`/book/${restaurant.plan === "premium" && !!restaurant.customSlug ? restaurant.customSlug : restaurantId}`}>
+               <Button className="h-8 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none px-3 shadow-none">
+                 <BookOpen className="w-3 h-3 mr-1" /> Book Table
+               </Button>
+             </Link>
+            {restaurant.logo ? (
+              <img
+                src={restaurant.logo}
+                alt={restaurant.name}
+                className="h-10 w-10 rounded-full object-cover border border-gray-100 shadow-sm"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-[#0f9d6a] flex items-center justify-center text-white font-extrabold text-[15px] shadow-sm">
+                {restaurant.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Row 2: Search bar */}
@@ -611,6 +732,18 @@ function MenuContent() {
                               {item.category}
                             </p>
                           )}
+                          <div className="flex flex-wrap gap-1 mt-0.5 mb-1.5">
+                            {item.highlight && item.highlight !== "none" && (
+                               <span className="bg-yellow-50 text-yellow-700 border border-yellow-200 text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-sm shrink-0">
+                                 *{item.highlight}
+                               </span>
+                            )}
+                            {item.dietaryTags?.map(tag => (
+                               <span key={tag} className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-sm border shrink-0 ${tag === 'veg' ? 'bg-green-50 text-green-700 border-green-200' : tag === 'non-veg' ? 'bg-red-50 text-red-700 border-red-200' : tag === 'vegan' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
+                                 {tag}
+                               </span>
+                            ))}
+                          </div>
                           <p className="text-[14px] font-semibold text-gray-900 mt-auto">
                             ₹{item.price}
                           </p>

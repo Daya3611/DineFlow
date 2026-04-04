@@ -70,5 +70,19 @@ service cloud.firestore {
       allow create: if true; // Anyone can place an order from table via QR
       allow update, delete: if isSuperAdmin() || isRestaurantOwner(resource.data.restaurantId);
     }
+
+    // Reservations collection
+    match /reservations/{reservationId} {
+      allow read: if true; // Public read required for availability calculation in the portal
+      allow create: if true; // Customers can create via the portal
+      allow update, delete: if isSuperAdmin() || isRestaurantOwner(resource.data.restaurantId);
+    }
+
+    // Waitlist collection
+    match /waitlist/{waitlistId} {
+      allow read: if isSuperAdmin() || isRestaurantOwner(resource.data.restaurantId);
+      allow create: if true; // Customers can join waitlist via the portal
+      allow update, delete: if isSuperAdmin() || isRestaurantOwner(resource.data.restaurantId);
+    }
   }
 }

@@ -7,14 +7,16 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   LayoutDashboard, Menu as MenuIcon, Settings, CreditCard,
-  LogOut, Loader2, Utensils, QrCode, ClipboardList, ChefHat, X
+  LogOut, Loader2, Utensils, QrCode, ClipboardList, ChefHat, X, Calendar
 } from "lucide-react";
 import { auth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
+import { AppDropdown } from "@/components/common/AppDropdown";
 
 const navItems = [
   { href: "/restaurant/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/restaurant/reservations", label: "Reservations", icon: Calendar },
   { href: "/restaurant/menu", label: "Menu Items", icon: Utensils },
   { href: "/restaurant/tables", label: "QR Tables", icon: QrCode },
   { href: "/restaurant/orders", label: "Live Orders", icon: ClipboardList },
@@ -66,7 +68,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="flex flex-col items-center gap-3">
-          <Image src="/logo.png" alt="Dineflow Logo" width={100} height={100} className="w-auto object-contain" priority />
+          <Image src="/logo.png" alt="Dineflow Icon" width={48} height={48} className="h-12 w-12 object-contain" priority />
           <Loader2 className="h-6 w-6 animate-spin text-[#0f9d6a]" />
         </div>
       </div>
@@ -131,8 +133,11 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         {/* Logo */}
-        <div className="flex items-center md:justify-center justify-between p-1 border-b border-slate-200 shrink-0">
-          <Image src="/logo.png" alt="Dineflow Logo" width={140} height={36} className="h-10 md:h-15 w-auto object-contain mb-1 brightness-0 opacity-80" priority />
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <Image src="/logo.png" alt="Dineflow Icon" width={32} height={32} className="h-8 w-8 object-contain" priority />
+            <span className="text-[15px] font-extrabold tracking-tight text-slate-800">Dineflow</span>
+          </div>
           <button className="md:hidden text-slate-400 hover:text-slate-600 transition-colors" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
           </button>
@@ -166,26 +171,35 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
 
         {/* User footer */}
         <div className="p-4 border-t border-slate-200 shrink-0 bg-[#f8fafc]">
-          <div className="flex items-center gap-3 mb-3 px-1">
-            <div className="h-9 w-9 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-600 font-bold text-sm">
+          <div className="flex items-center gap-3 px-1">
+            <div className="h-9 w-9 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-600 font-bold text-sm shrink-0">
               {userData.name.charAt(0).toUpperCase()}
             </div>
-            <div className="overflow-hidden flex-1">
+            <div className="overflow-hidden flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-700 truncate">{userData.name}</p>
               <p className="text-[11px] font-medium text-slate-400 truncate">{userData.email}</p>
             </div>
+            <AppDropdown
+              items={[
+                {
+                  label: "Settings",
+                  icon: Settings,
+                  onClick: () => router.push("/restaurant/settings"),
+                },
+                {
+                  label: "Sign out",
+                  icon: LogOut,
+                  danger: true,
+                  separator: true,
+                  onClick: handleLogout,
+                },
+              ]}
+            />
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#64748b] hover:bg-red-100 hover:text-red-600 transition-all"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </button>
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
         <header className="md:hidden h-16 flex items-center px-4 bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
@@ -198,13 +212,11 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
           <div className="font-bold text-slate-900 capitalize text-lg">{pageLabel}</div>
         </header>
 
-        {/* Centered Desktop Layout + Inner White Box */}
+        {/* Single-scroll main */}
         <main className="flex-1 overflow-y-auto w-full md:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl h-full flex flex-col">
-            <div className="bg-white md:rounded-[20px] md:border border-slate-200 flex-1 flex flex-col overflow-hidden md:shadow-sm min-h-screen md:min-h-0">
-              <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-                {children}
-              </div>
+          <div className="mx-auto max-w-7xl">
+            <div className="bg-white md:rounded-[20px] md:border border-slate-200 md:shadow-sm p-4 md:p-6 lg:p-8 min-h-[calc(100vh-4rem)]">
+              {children}
             </div>
           </div>
         </main>

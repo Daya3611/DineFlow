@@ -77,9 +77,9 @@ export default function ForgotPasswordPage() {
             <Image
               src="/logo.png"
               alt="Dineflow Icon"
-              width={140}
-              height={140}
-              className="w-auto h-12 object-contain hover:scale-105 transition-transform duration-300 drop-shadow-sm"
+              width={48}
+              height={48}
+              className="h-12 w-12 object-contain hover:scale-105 transition-transform duration-300 drop-shadow-sm"
               priority
             />
           </Link>

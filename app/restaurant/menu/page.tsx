@@ -13,14 +13,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "@/lib/toast";
-import { Loader2, Plus, Trash2, Edit2, UtensilsCrossed, ImageIcon, Search } from "lucide-react";
+import { Loader2, Plus, UtensilsCrossed, ImageIcon, Search, Edit2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { AppDropdown } from "@/components/common/AppDropdown";
 
 const menuItemSchema = z.object({
   name: z.string().min(2, "Item name required"),
   price: z.coerce.number().min(1, "Price must be at least 1"),
   category: z.string().min(2, "Category required"),
+  dietaryTags: z.array(z.string()).optional(),
+  highlight: z.string().optional(),
 });
 
 export default function MenuPage() {
@@ -89,6 +92,8 @@ export default function MenuPage() {
       name: item.name,
       price: item.price,
       category: item.category,
+      dietaryTags: item.dietaryTags || [],
+      highlight: item.highlight || "none",
     });
     setOpen(true);
   };
@@ -109,6 +114,8 @@ export default function MenuPage() {
           price: values.price,
           category: values.category,
           image: imageUrl,
+          dietaryTags: values.dietaryTags || [],
+          highlight: (values.highlight as any) || "none",
         };
         await setDoc(doc(db, "menus", editingItem.id), updatedMenu);
         setMenus(menus.map(m => m.id === editingItem.id ? updatedMenu : m));
@@ -122,6 +129,8 @@ export default function MenuPage() {
           price: values.price,
           category: values.category,
           image: imageUrl,
+          dietaryTags: values.dietaryTags || [],
+          highlight: (values.highlight as any) || "none",
         };
 
         await setDoc(doc(db, "menus", menuId), newMenu);
@@ -224,6 +233,25 @@ export default function MenuPage() {
                     </datalist>
                     {errors.category && <p className="text-xs font-semibold text-red-500">{errors.category.message}</p>}
                   </div>
+                  <div className="space-y-1.5 col-span-2">
+                    <Label className="font-semibold text-gray-700">Dietary Tags</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {["veg", "non-veg", "vegan", "spicy"].map(tag => (
+                        <label key={tag} className="flex items-center gap-1.5 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+                          <input type="checkbox" value={tag} {...register("dietaryTags")} className="accent-emerald-500 rounded-sm" />
+                          <span className="text-sm font-medium capitalize text-slate-700">{tag}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 col-span-2">
+                    <Label className="font-semibold text-gray-700">Highlight</Label>
+                    <select {...register("highlight")} className="h-11 w-full rounded-xl border-gray-200 outline-none border px-3 bg-white text-sm">
+                      <option value="none">None</option>
+                      <option value="popular">Popular</option>
+                      <option value="chef special">Chef Special</option>
+                    </select>
+                  </div>
                 </div>
               </div>
               <DialogFooter className="pt-4 sm:pt-2">
@@ -245,7 +273,7 @@ export default function MenuPage() {
             placeholder="Search menu items or categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-11 h-12 rounded-[10px] border-slate-200 focus-visible:ring-[#1abc9c] focus-visible:border-[#0f9d6a] w-full bg-white text-base"
+            className="pl-11 h-12 rounded-full border-slate-200 w-full bg-white text-base"
           />
         </div>
       )}
@@ -338,25 +366,39 @@ export default function MenuPage() {
                           {item.name}
                         </h3>
                         <p className="text-xs sm:text-sm text-slate-500 mt-0.5 truncate">{item.category}</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.highlight && item.highlight !== "none" && (
+                            <span className="bg-yellow-50 text-yellow-700 border border-yellow-200 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-sm shrink-0">
+                              *{item.highlight}
+                            </span>
+                          )}
+                          {item.dietaryTags?.map(tag => (
+                            <span key={tag} className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-sm border shrink-0 ${tag === 'veg' ? 'bg-green-50 text-green-700 border-green-200' : tag === 'non-veg' ? 'bg-red-50 text-red-700 border-red-200' : tag === 'vegan' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                         <div className="font-semibold text-[#059669] text-[15px] sm:text-base mt-1.5">₹{item.price}</div>
                       </div>
 
                       {/* Right: Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={(e) => handleEditClick(item, e)}
-                          className="p-2 text-slate-400 hover:text-[#0f9d6a] transition-colors"
-                          title="Edit item"
-                        >
-                          <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
-                        <button
-                          onClick={(e) => onDelete(item.id, e)}
-                          className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                          title="Delete item"
-                        >
-                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
+                      <div className="shrink-0">
+                        <AppDropdown
+                          items={[
+                            {
+                              label: "Edit item",
+                              icon: Edit2,
+                              onClick: (e?: any) => handleEditClick(item, e),
+                            },
+                            {
+                              label: "Delete item",
+                              icon: Trash2,
+                              danger: true,
+                              separator: true,
+                              onClick: () => onDelete(item.id),
+                            },
+                          ]}
+                        />
                       </div>
                     </motion.div>
                   ))}
