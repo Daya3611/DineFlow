@@ -43,6 +43,8 @@ export interface Table {
   restaurantId: string;
   tableNumber: string;
   capacity: number; // Add capacity
+  posX?: number;
+  posY?: number;
   qrCodeUrl: string;
   status?: "free" | "occupied" | "reserved";
   guests?: number;
@@ -93,7 +95,10 @@ export interface Reservation {
   phone: string;
   email?: string;
   date: string; // YYYY-MM-DD
-  time: string; // HH:MM
+  time: string; // HH:MM (Legacy or maps to preferred)
+  slotStartTime?: string;
+  slotEndTime?: string;
+  preferredTime?: string;
   durationMinutes: number; // Duration length
   tableId?: string; // Assigned table
   guestCount: number;

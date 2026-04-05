@@ -111,9 +111,9 @@ export default function SettingsPage() {
         const checkQ = query(collection(db, "restaurants"), where("customSlug", "==", values.customSlug));
         const checkSnap = await getDocs(checkQ);
         if (!checkSnap.empty) {
-           toast.error("This custom URL is already taken by another restaurant.");
-           setRestaurantLoading(false);
-           return;
+          toast.error("This custom URL is already taken by another restaurant.");
+          setRestaurantLoading(false);
+          return;
         }
       }
 
@@ -336,15 +336,15 @@ export default function SettingsPage() {
                       <Label htmlFor="customSlug" className="text-sm font-semibold text-gray-700">Custom Booking Slug</Label>
                       <div className="relative">
                         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-400 select-none">
-                           dineflow.pro/book/
+                          dineflow.pro/book/
                         </span>
-                        <Input 
-                          id="customSlug" 
-                          placeholder="e.g. spice-garden" 
-                          className="pl-[125px] h-12 rounded-xl border-emerald-200 focus-visible:ring-emerald-500 transition-all font-medium text-emerald-900" 
-                          {...restaurantForm.register("customSlug", { 
-                             onChange: (e) => { e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }
-                          })} 
+                        <Input
+                          id="customSlug"
+                          placeholder="e.g. spice-garden"
+                          className="pl-[125px] h-12 rounded-xl border-emerald-200 focus-visible:ring-emerald-500 transition-all font-medium text-emerald-900"
+                          {...restaurantForm.register("customSlug", {
+                            onChange: (e) => { e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }
+                          })}
                         />
                       </div>
                       {restaurantForm.formState.errors.customSlug && <p className="text-xs text-red-500 font-medium">{restaurantForm.formState.errors.customSlug.message}</p>}
@@ -414,7 +414,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-gray-100 shadow-sm shadow-gray-100 rounded-2xl group">
+              {/* <Card className="border-gray-100 shadow-sm shadow-gray-100 rounded-2xl group">
                 <CardHeader className="bg-gray-50/50 border-b border-gray-100 transition-colors group-hover:bg-gray-50">
                   <CardTitle className="text-lg flex items-center gap-2"><Lock className="h-4 w-4 text-[#0f9d6a]" /> Security</CardTitle>
                 </CardHeader>
@@ -428,7 +428,7 @@ export default function SettingsPage() {
                     {profileForm.formState.errors.password && <p className="text-xs text-red-500 font-medium">{profileForm.formState.errors.password.message}</p>}
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               <div className="flex justify-end pt-4">
                 <Button

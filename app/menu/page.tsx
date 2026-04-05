@@ -97,12 +97,12 @@ function MenuContent() {
   const [splitCount, setSplitCount] = useState<number>(2);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [paymentVerified, setPaymentVerified] = useState(false);
-  const [activeSession, setActiveSession] = useState<{
+  const [activeSessions, setActiveSessions] = useState<{
     orderId: string;
     tableNumber: string;
     totalAmount: number;
     expiresAt: number;
-  } | null>(null);
+  }[]>([]);
   const [sessionDismissed, setSessionDismissed] = useState(false);
   const [activeNav, setActiveNav] = useState<"home" | "menu" | "orders" | "profile">("menu");
 
@@ -113,20 +113,47 @@ function MenuContent() {
 
   const saveOrderSession = (order: OrderType) => {
     try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      let sessionArray = [];
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          sessionArray = Array.isArray(parsed) ? parsed : [parsed];
+        } catch (e) {}
+      }
       const session = {
         orderId: order.id,
         tableNumber: order.tableNumber,
         restaurantId: order.restaurantId,
         totalAmount: order.totalAmount,
         createdAt: Date.now(),
-        expiresAt: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
+        expiresAt: Date.now() + 30 * 60 * 1000, // 30 minutes
       };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      sessionArray.push(session);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(sessionArray));
     } catch {/* ignore storage errors */ }
   };
 
-  const clearOrderSession = () => {
-    try { localStorage.removeItem(SESSION_KEY); } catch {/* ignore */ }
+  const clearOrderSession = (specificOrderId?: string) => {
+    if (specificOrderId) {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const sessionArray = Array.isArray(parsed) ? parsed : [parsed];
+          const updated = sessionArray.filter((s: any) => s.orderId !== specificOrderId);
+          if (updated.length > 0) {
+            localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+            setActiveSessions(updated);
+          } else {
+            localStorage.removeItem(SESSION_KEY);
+            setActiveSessions([]);
+          }
+        }
+      } catch {}
+    } else {
+      try { localStorage.removeItem(SESSION_KEY); setActiveSessions([]); } catch {/* ignore */ }
+    }
   };
 
   /* ── Restore session on mount ── */
@@ -134,13 +161,25 @@ function MenuContent() {
     try {
       const raw = localStorage.getItem(SESSION_KEY);
       if (!raw) return;
-      const session = JSON.parse(raw);
-      if (!session?.orderId || !session?.expiresAt) { clearOrderSession(); return; }
-      if (Date.now() > session.expiresAt) { clearOrderSession(); return; }
-      // Only restore session that belongs to this table+restaurant
-      if (restaurantId && session.restaurantId !== restaurantId) return;
-      if (table && session.tableNumber !== table) return;
-      setActiveSession(session);
+      const parsed = JSON.parse(raw);
+      const sessionArray = Array.isArray(parsed) ? parsed : [parsed];
+      
+      const validSessions = sessionArray.filter((session: any) => {
+        if (!session?.orderId || !session?.expiresAt) return false;
+        if (Date.now() > session.expiresAt) return false;
+        if (restaurantId && session.restaurantId !== restaurantId) return false;
+        if (table && session.tableNumber !== table) return false;
+        return true;
+      });
+
+      if (validSessions.length > 0) {
+        setActiveSessions(validSessions);
+        // Clean up expired ones from storage
+        localStorage.setItem(SESSION_KEY, JSON.stringify(validSessions));
+      } else {
+        localStorage.removeItem(SESSION_KEY);
+        setActiveSessions([]);
+      }
     } catch { clearOrderSession(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId, table]);
@@ -220,110 +259,54 @@ function MenuContent() {
       const newItems = Object.values(cart);
       const newAmount = newItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
-      // Check for existing active order for this table/restaurant
-      const orderQ = query(
-        collection(db, "orders"),
-        where("restaurantId", "==", restaurantId),
-        where("tableNumber", "==", table),
-        where("isActive", "==", true),
-        where("status", "in", ["pending", "preparing", "served"])
-      );
-      const orderSnap = await getDocs(orderQ);
-      let orderId = "";
-      let finalTotal = 0;
+      const orderId = `ord_${Date.now()}`;
+      const finalTotal = newAmount;
 
-      if (!orderSnap.empty) {
-        // UPDATE EXISTING ORDER
-        const existingOrderDoc = orderSnap.docs[0];
-        const existingOrder = existingOrderDoc.data() as OrderType;
-        orderId = existingOrderDoc.id;
+      // Look up actual table object first
+      let resolvedTableId = "";
+      const tq = query(collection(db, "tables"), where("restaurantId", "==", restaurantId), where("tableNumber", "==", table));
+      const tsnap = await getDocs(tq);
+      if (!tsnap.empty) {
+        resolvedTableId = tsnap.docs[0].id;
+      }
 
-        // Merge items (if same item exists, update quantity, otherwise add new)
-        const combinedItems = [...existingOrder.items];
-        newItems.forEach(newItem => {
-          const idx = combinedItems.findIndex(i => i.id === newItem.id);
-          if (idx > -1) {
-            combinedItems[idx].quantity += newItem.quantity;
-          } else {
-            combinedItems.push(newItem);
-          }
-        });
+      const newOrder: OrderType = {
+        id: orderId,
+        restaurantId,
+        tableNumber: table,
+        tableId: resolvedTableId || undefined,
+        items: newItems,
+        totalAmount: finalTotal,
+        status: "pending",
+        paymentMethod: "counter",
+        paymentStatus: "unpaid",
+        isActive: true,
+        sessionId: `sess_${Date.now()}`,
+        customerName: customerName.trim() || undefined,
+        note: note.trim() || undefined,
+        createdAt: Date.now(),
+      };
 
-        finalTotal = combinedItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+      await setDoc(doc(db, "orders", orderId), newOrder);
+      saveOrderSession(newOrder);
 
-        const updates: any = {
-          items: combinedItems,
-          totalAmount: finalTotal,
-          status: "pending" // Reset status to pending so kitchen sees new items
-        };
-        if (!existingOrder.sessionId) {
-          updates.sessionId = `sess_${Date.now()}`;
-        }
+      setActiveSessions(prev => [...prev, {
+        orderId,
+        tableNumber: table,
+        totalAmount: finalTotal,
+        expiresAt: Date.now() + 30 * 60 * 1000,
+      }]);
 
-        await updateDoc(doc(db, "orders", orderId), updates);
-
-        const updatedOrder = { 
-          ...existingOrder, 
-          ...updates,
-          sessionId: existingOrder.sessionId || updates.sessionId 
-        };
-        saveOrderSession(updatedOrder);
-        setActiveSession({
-          orderId,
-          tableNumber: table,
-          totalAmount: finalTotal,
-          expiresAt: Date.now() + 2 * 60 * 60 * 1000,
-        });
-      } else {
-        // CREATE NEW ORDER
-        orderId = `ord_${Date.now()}`;
-        finalTotal = newAmount;
-
-        // Look up actual table object first
-        let resolvedTableId = "";
-        const tq = query(collection(db, "tables"), where("restaurantId", "==", restaurantId), where("tableNumber", "==", table));
-        const tsnap = await getDocs(tq);
-        if (!tsnap.empty) {
-          resolvedTableId = tsnap.docs[0].id;
-        }
-
-        const newOrder: OrderType = {
-          id: orderId,
-          restaurantId,
-          tableNumber: table,
-          tableId: resolvedTableId || undefined,
-          items: newItems,
-          totalAmount: finalTotal,
-          status: "pending",
-          paymentMethod: "counter",
-          paymentStatus: "unpaid",
-          isActive: true,
-          sessionId: `sess_${Date.now()}`,
-          customerName: customerName.trim() || undefined,
-          note: note.trim() || undefined,
-          createdAt: Date.now(),
-        };
-
-        await setDoc(doc(db, "orders", orderId), newOrder);
-        saveOrderSession(newOrder);
-        setActiveSession({
-          orderId,
-          tableNumber: table,
-          totalAmount: finalTotal,
-          expiresAt: Date.now() + 2 * 60 * 60 * 1000,
-        });
-
-        // Update table to occupied
-        if (!tsnap.empty) {
-          await updateDoc(doc(db, "tables", tsnap.docs[0].id), { status: "occupied" });
-        }
+      // Update table to occupied
+      if (!tsnap.empty) {
+        await updateDoc(doc(db, "tables", tsnap.docs[0].id), { status: "occupied" });
       }
 
       setOrderPlaced(orderId);
       setPlacedOrderTotal(finalTotal);
       setCart({});
       setOpenCheckout(false);
-      toast.success(orderSnap.empty ? "Order placed successfully!" : "Order updated with new items!");
+      toast.success("Order placed successfully!");
     } catch {
       toast.error("Failed to place order.");
     } finally {
@@ -342,8 +325,7 @@ function MenuContent() {
         { merge: true }
       );
       setPaymentVerified(true);
-      clearOrderSession(); // payment submitted — session no longer needed
-      setActiveSession(null);
+      clearOrderSession(orderPlaced); // payment submitted — session no longer needed
       toast.success("Payment sent for verification.");
     } catch {
       toast.error("Failed to update payment status.");
@@ -755,8 +737,8 @@ function MenuContent() {
       <div className="flex-1 overflow-y-auto pb-36">
 
         {/* ── Active Order Recovery Banner ── */}
-        {activeSession && !sessionDismissed && !orderPlaced && (
-          <div className="mx-4 mt-3 mb-1">
+        {!sessionDismissed && !orderPlaced && activeSessions.map(session => (
+          <div key={session.orderId} className="mx-4 mt-3 mb-1">
             <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-start gap-3">
               <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
                 <ClipboardList className="h-4 w-4 text-emerald-700" />
@@ -764,20 +746,20 @@ function MenuContent() {
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-bold text-emerald-900 leading-snug">You have an active order</p>
                 <p className="text-[11px] text-emerald-700 mt-0.5">
-                  Order #{activeSession.orderId.slice(-6).toUpperCase()} · Table {activeSession.tableNumber} · ₹{activeSession.totalAmount}
+                  Order #{session.orderId.slice(-6).toUpperCase()} · Table {session.tableNumber} · ₹{session.totalAmount}
                 </p>
                 <div className="flex items-center gap-2 mt-2.5">
                   <button
                     onClick={() => {
-                      setPlacedOrderTotal(activeSession.totalAmount);
-                      setOrderPlaced(activeSession.orderId);
+                      setPlacedOrderTotal(session.totalAmount);
+                      setOrderPlaced(session.orderId);
                     }}
                     className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                   >
                     View Order
                   </button>
                   <button
-                    onClick={() => { clearOrderSession(); setActiveSession(null); }}
+                    onClick={() => { clearOrderSession(session.orderId); }}
                     className="text-[11px] font-semibold px-3 py-1.5 rounded-full border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors"
                   >
                     Dismiss
@@ -786,7 +768,7 @@ function MenuContent() {
               </div>
             </div>
           </div>
-        )}
+        ))}
         {/* Category chips */}
         {categories.length > 1 && (
           <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-4 pt-1 pb-3">

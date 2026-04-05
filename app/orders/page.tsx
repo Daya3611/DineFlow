@@ -22,14 +22,19 @@ export default function OrdersPage() {
       return;
     }
     try {
-      const session = JSON.parse(raw);
-      if (session?.orderId) {
+      const parsed = JSON.parse(raw);
+      const sessionArray = Array.isArray(parsed) ? parsed : [parsed];
+      const validOrderIds = sessionArray
+        .filter((s: any) => s?.orderId)
+        .map((s: any) => s.orderId);
+
+      if (validOrderIds.length > 0) {
         // Fetch the specific order or group by table if needed
-        const q = query(collection(db, "orders"), where("id", "==", session.orderId));
+        const q = query(collection(db, "orders"), where("id", "in", validOrderIds));
         return onSnapshot(q, (snap) => {
           const docs: OrderType[] = [];
           snap.forEach(d => docs.push(d.data() as OrderType));
-          setOrders(docs);
+          setOrders(docs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
           setLoading(false);
         });
       } else {
