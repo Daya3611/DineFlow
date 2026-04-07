@@ -7,6 +7,9 @@ export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
 
+  const isCustomerPage = pathname.startsWith("/menu") || pathname.startsWith("/orders")
+  if (!isCustomerPage) return null;
+
   const tabs = [
     {
       label: "Menu",

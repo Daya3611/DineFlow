@@ -10,10 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/lib/toast";
-import { Loader2, Plus, Trash2, Printer, QrCode, Users, LayoutGrid, MoreHorizontal } from "lucide-react";
+import { Loader2, Plus, Trash2, Printer, QrCode, Users, Sparkles } from "lucide-react";
 import QRCode from "react-qr-code";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppDropdown } from "@/components/common/AppDropdown";
+import { QRTableCard } from "@/components/common/QRTableCard";
 
 const statusConfig = {
   free: { label: "Free", dot: "bg-green-500", badge: "bg-green-50 text-green-700 border-green-200" },
@@ -30,6 +31,9 @@ export default function TablesPage() {
   const [tableNumber, setTableNumber] = useState("");
   const [capacity, setCapacity] = useState("4");
   const qrRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Premium QR card modal state
+  const [qrCardTable, setQrCardTable] = useState<TableType | null>(null);
 
   useEffect(() => {
     if (!restaurant) return;
@@ -107,40 +111,6 @@ export default function TablesPage() {
     } catch { toast.error("Failed to update status"); }
   };
 
-  const printQrCode = (tableNum: string, tableId: string) => {
-    const svgElement = qrRefs.current[tableId]?.querySelector("svg");
-    if (!svgElement) { toast.error("Could not render QR"); return; }
-    const svgData = new XMLSerializer().serializeToString(svgElement);
-    let printFrame = document.getElementById("qr-print-frame") as HTMLIFrameElement;
-    if (!printFrame) {
-      printFrame = document.createElement("iframe");
-      printFrame.id = "qr-print-frame";
-      Object.assign(printFrame.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
-      document.body.appendChild(printFrame);
-    }
-    const frameDoc = printFrame.contentWindow?.document;
-    if (!frameDoc) return toast.error("Printing not supported.");
-    frameDoc.open();
-    frameDoc.write(`
-      <html><head><title>QR - Table ${tableNum}</title>
-      <style>
-        body { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; margin:0; background:#fff; }
-        h1 { font-size:2rem; margin-bottom:1.5rem; color:#052e16; }
-        .box { padding:32px; border:4px solid #10b981; border-radius:20px; }
-        p { margin-top:1rem; color:#6b7280; font-size:1rem; }
-        h2 { font-size:1.5rem; margin-top:1.5rem; color:#047857; }
-      </style></head>
-      <body>
-        <h1>${restaurant?.name}</h1>
-        <div class="box">${svgData}</div>
-        <h2>Table ${tableNum}</h2>
-        <p>Scan to view menu & order</p>
-        <script>window.onload=()=>{setTimeout(()=>{window.print();},200);}<\/script>
-      </body></html>
-    `);
-    frameDoc.close();
-  };
-
   // Summary stats
   const freeCount = tables.filter(t => !t.status || t.status === "free").length;
   const occupiedCount = tables.filter(t => t.status === "occupied").length;
@@ -156,6 +126,19 @@ export default function TablesPage() {
 
   return (
     <div className="space-y-6">
+
+      {/* Premium QR Card Modal */}
+      <AnimatePresence>
+        {qrCardTable && (
+          <QRTableCard
+            tableNumber={qrCardTable.tableNumber}
+            qrUrl={getMenuUrl(qrCardTable.tableNumber)}
+            restaurantName={restaurant.name}
+            restaurantLogo={restaurant.logo || undefined}
+            onClose={() => setQrCardTable(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -277,9 +260,17 @@ export default function TablesPage() {
                         <AppDropdown
                           items={[
                             {
-                              label: "Print QR Code",
+                              label: "Premium QR Card",
+                              icon: Sparkles,
+                              onClick: () => setQrCardTable(table),
+                            },
+                            {
+                              label: "Quick Print",
                               icon: Printer,
-                              onClick: () => printQrCode(table.tableNumber, table.id),
+                              onClick: () => {
+                                // Legacy quick print via the card modal in print mode
+                                setQrCardTable(table);
+                              },
                             },
                             {
                               label: "Delete Table",
@@ -319,6 +310,15 @@ export default function TablesPage() {
                         <QRCode value={url} size={128} level="H" fgColor="#052e16" />
                       </div>
                     </div>
+
+                    {/* Premium card button */}
+                    <button
+                      onClick={() => setQrCardTable(table)}
+                      className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 text-white text-xs font-bold tracking-wide hover:from-emerald-500 hover:to-green-400 transition-all active:scale-[0.97] shadow-md shadow-green-200"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Print Premium Card
+                    </button>
 
                   </div>
                 </motion.div>

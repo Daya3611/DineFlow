@@ -80,12 +80,12 @@ export default function SubscriptionPage() {
         setupFee = planData.setupFee;
       } else if (cycle === "yearly") {
         finalAmount = planData.yearlyPrice;
-        setupFee = 0; // No setup fee for yearly
+        setupFee = 0;
       } else if (cycle === "lifetime") {
         finalAmount = planData.price;
         setupFee = 0;
       } else if (cycle === ("trial" as any)) {
-        finalAmount = 1;
+        finalAmount = 49;
         setupFee = 0;
       }
 
@@ -124,7 +124,7 @@ export default function SubscriptionPage() {
             if (cycle === "monthly") days = 30;
             else if (cycle === "yearly") days = 365;
             else if (cycle === "lifetime") days = 36500; // 100 years
-            else if (planData.id === "trial") days = 1;
+            else if (planData.id === "trial") days = 7;
 
             const expiryDate = Date.now() + days * 24 * 60 * 60 * 1000;
             const startDate = Date.now();
@@ -218,26 +218,29 @@ export default function SubscriptionPage() {
 
         {/* Trial Banner */}
         {(restaurant?.plan as string) !== "trial" && (restaurant?.plan as string) !== "pro" && (restaurant?.plan as string) !== "premium" && (restaurant?.plan as string) !== "basic" && (restaurant?.plan as string) !== "lifetime" && (
-          <div className="bg-gradient-to-r from-teal-500 to-[#0f9d6a] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between shadow-lg text-white mb-10">
-            <div className="mb-4 md:mb-0">
+          <div className="bg-gradient-to-r from-teal-500 to-[#0f9d6a] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between shadow-lg text-white mb-10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-lg z-10 shadow-sm">
+              🔥 Best for New Users
+            </div>
+            <div className="mb-4 md:mb-0 relative z-10">
               <h2 className="text-2xl font-bold flex items-center gap-2 mb-2">
                 <Sparkles className="h-6 w-6 text-yellow-300" />
-                Try everything for ₹1
+                7 Days Trial for ₹49
               </h2>
               <p className="text-teal-50 opacity-90 max-w-lg">
-                Get full access to all features for 24 hours. See how DineFlow can transform your restaurant.
+                Get full access to all features for 7 days. See how DineFlow can transform your restaurant.
               </p>
             </div>
             <Button
               size="lg"
-              className="bg-white text-[#0f9d6a] hover:bg-slate-100 font-bold whitespace-nowrap rounded-xl shadow-sm px-8"
-              onClick={() => handleSubscribe({ id: "trial", name: "1 Day Trial" }, "trial" as any)}
+              className="bg-white text-[#0f9d6a] hover:bg-slate-100 font-bold whitespace-nowrap rounded-xl shadow-sm px-8 relative z-10"
+              onClick={() => handleSubscribe({ id: "trial", name: "7 Day Trial", price: 49 }, "trial" as any)}
               disabled={loadingPlan !== null}
             >
               {loadingPlan === "trial" ? (
                 <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#0f9d6a]" />
               ) : (
-                <>Start ₹1 Trial <Play className="ml-2 h-4 w-4 fill-current" /></>
+                <>Start ₹49 Trial <Play className="ml-2 h-4 w-4 fill-current" /></>
               )}
             </Button>
           </div>
