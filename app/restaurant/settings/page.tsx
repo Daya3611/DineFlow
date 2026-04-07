@@ -43,7 +43,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 
 const restaurantSchema = z.object({
   name: z.string().min(2, "Restaurant name is required"),
@@ -78,7 +78,7 @@ const profileSchema = z.object({
     ),
 });
 
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0, y: 12 },
   visible: (i: number) => ({
     opacity: 1,

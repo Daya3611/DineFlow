@@ -30,30 +30,9 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
-  // Validate token initially
+  // Add an effect to redirect to login if not authenticated after loading finishes
   useEffect(() => {
-    if (!isTokenValid()) {
-      localStorage.removeItem("token");
-      if (pathname !== "/login") router.replace("/login");
-    } else {
-      setIsChecking(false);
-    }
-  }, [pathname, router]);
-
-  // Periodic token validation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isTokenValid()) {
-        localStorage.removeItem("token");
-        if (pathname !== "/login") router.replace("/login");
-      }
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [pathname, router]);
-
-  // Role protection once user data loads
-  useEffect(() => {
-    if (!isChecking && !loading) {
+    if (!loading) {
       if (!user) {
         if (pathname !== "/login") router.replace("/login");
       }
@@ -61,9 +40,9 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         if (pathname !== "/admin/dashboard") router.replace("/admin/dashboard");
       }
     }
-  }, [isChecking, loading, user, userData, pathname, router]);
+  }, [loading, user, userData, pathname, router]);
 
-  if (isChecking || loading || !userData || userData.role !== "restaurant_owner") {
+  if (loading || !userData || userData.role !== "restaurant_owner") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="flex flex-col items-center gap-3">

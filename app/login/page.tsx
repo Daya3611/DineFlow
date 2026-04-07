@@ -29,13 +29,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const { user, userData, loading: authLoading } = useAuth();
+
   useEffect(() => {
-    if (isTokenValid()) {
-      if (pathname !== "/restaurant/dashboard" && pathname !== "/admin/dashboard") {
+    if (!authLoading && user && userData) {
+      if (userData.role === "super_admin") {
+        router.replace("/admin/dashboard");
+      } else if (userData.role === "restaurant_owner") {
         router.replace("/restaurant/dashboard");
       }
     }
-  }, []);
+  }, [authLoading, user, userData, router]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,6 +50,9 @@ export default function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
+      
+      const token = await user.getIdToken();
+      localStorage.setItem("token", token);
 
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
@@ -69,6 +76,9 @@ export default function LoginPage() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+      
+      const token = await user.getIdToken();
+      localStorage.setItem("token", token);
 
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);

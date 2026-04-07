@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { User as FirebaseUser, onAuthStateChanged, Unsubscribe } from "firebase/auth";
+import { User as FirebaseUser, onAuthStateChanged, onIdTokenChanged, Unsubscribe } from "firebase/auth";
 import { auth, db } from "@/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { User, Restaurant, Subscription } from "@/types";
@@ -68,15 +68,15 @@ export const useAuth = create<AuthState>((set) => ({
           const payload = JSON.parse(atob(token.split('.')[1]));
           const tokenExpired = payload.exp * 1000 < Date.now();
           if (tokenExpired) {
-             const state = useAuth.getState();
-             state.logout();
+             localStorage.removeItem("token");
+             set({ isAuthenticated: false, token: null });
              return false;
           }
           set({ isAuthenticated: true, token });
           return true;
         } catch (e) {
-             const state = useAuth.getState();
-             state.logout();
+             localStorage.removeItem("token");
+             set({ isAuthenticated: false, token: null });
              return false;
         }
       }
@@ -87,7 +87,7 @@ export const useAuth = create<AuthState>((set) => ({
 
   initialize: () => {
     useAuth.getState().checkToken();
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       set({ loading: true });
       if (firebaseUser) {
         set({ user: firebaseUser });
