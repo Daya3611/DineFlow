@@ -11,21 +11,57 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/lib/toast";
-import { Loader2, Store, MapPin, Phone, Mail, Building2, QrCode, User as UserIcon, Lock, Settings, Link as LinkIcon, Copy } from "lucide-react";
+import {
+  Loader2,
+  Store,
+  MapPin,
+  Phone,
+  Mail,
+  Building2,
+  QrCode,
+  User as UserIcon,
+  Settings,
+  Link as LinkIcon,
+  Copy,
+  ExternalLink,
+  IndianRupee,
+  Sparkles,
+  CheckCircle2,
+  Camera,
+  Trash2,
+  Globe,
+} from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion, AnimatePresence } from "framer-motion";
 
 const restaurantSchema = z.object({
   name: z.string().min(2, "Restaurant name is required"),
   address: z.string().min(5, "Full address is required"),
-  phoneNumber: z.string().regex(/^\+?[0-9]{10,14}$/, "Valid phone number required (10+ digits)"),
+  phoneNumber: z
+    .string()
+    .regex(/^\+?[0-9]{10,14}$/, "Valid phone number required (10+ digits)"),
   email: z.string().email("Invalid business email"),
   gstNumber: z.string().optional(),
-  upiId: z.string().optional().refine(val => !val || val.includes("@"), "Invalid UPI format (e.g., name@bank)"),
-  customSlug: z.string()
+  upiId: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || val.includes("@"),
+      "Invalid UPI format (e.g., name@bank)"
+    ),
+  customSlug: z
+    .string()
     .regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers, and hyphens allowed")
     .optional()
     .or(z.literal("")),
@@ -33,17 +69,35 @@ const restaurantSchema = z.object({
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name is required"),
-  password: z.string().optional().refine(val => !val || val.length >= 6, "Password must be at least 6 characters"),
+  password: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || val.length >= 6,
+      "Password must be at least 6 characters"
+    ),
 });
+
+const fadeIn = {
+  hidden: { opacity: 0, y: 12 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.06, duration: 0.32, ease: "easeOut" },
+  }),
+};
 
 export default function SettingsPage() {
   const { user, userData, restaurant, setRestaurant, setUserData } = useAuth();
 
   const [restaurantLoading, setRestaurantLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("general");
 
   const [logoUrl, setLogoUrl] = useState<string>(restaurant?.logo || "");
-  const [photoUrl, setPhotoUrl] = useState<string>(user?.photoURL || userData?.photoUrl || "");
+  const [photoUrl, setPhotoUrl] = useState<string>(
+    user?.photoURL || userData?.photoUrl || ""
+  );
 
   useEffect(() => {
     if (restaurant?.logo) setLogoUrl(restaurant.logo);
@@ -64,7 +118,7 @@ export default function SettingsPage() {
       gstNumber: restaurant?.gstNumber || "",
       upiId: restaurant?.upiId || "",
       customSlug: restaurant?.customSlug || "",
-    }
+    },
   });
 
   const profileForm = useForm<z.infer<typeof profileSchema>>({
@@ -72,7 +126,7 @@ export default function SettingsPage() {
     defaultValues: {
       name: userData?.name || user?.displayName || "",
       password: "",
-    }
+    },
   });
 
   useEffect(() => {
@@ -87,7 +141,7 @@ export default function SettingsPage() {
         customSlug: restaurant.customSlug || "",
       });
     }
-  }, [restaurant, restaurantForm]);
+  }, [restaurant]);
 
   useEffect(() => {
     if (userData || user) {
@@ -96,19 +150,38 @@ export default function SettingsPage() {
         password: "",
       });
     }
-  }, [userData, user, profileForm]);
+  }, [userData, user]);
 
-  const onRestaurantSubmit = async (values: z.infer<typeof restaurantSchema>) => {
+  const watchedSlug = restaurantForm.watch("customSlug");
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://dineflow.pro";
+  const bookingUrl = `${origin}/book/${
+    restaurant?.plan === "premium" && restaurant.customSlug
+      ? restaurant.customSlug
+      : restaurant?.id || ""
+  }`;
+
+  const onRestaurantSubmit = async (
+    values: z.infer<typeof restaurantSchema>
+  ) => {
     if (!user || !userData) return;
     setRestaurantLoading(true);
 
     try {
       const restaurantId = restaurant?.id || `rest_${user.uid}`;
 
-      // Check slug uniqueness
-      if (values.customSlug && values.customSlug !== restaurant?.customSlug && restaurant?.plan === "premium") {
-        const { query, collection, where, getDocs } = await import("firebase/firestore");
-        const checkQ = query(collection(db, "restaurants"), where("customSlug", "==", values.customSlug));
+      if (
+        values.customSlug &&
+        values.customSlug !== restaurant?.customSlug &&
+        restaurant?.plan === "premium"
+      ) {
+        const { query, collection, where, getDocs } = await import(
+          "firebase/firestore"
+        );
+        const checkQ = query(
+          collection(db, "restaurants"),
+          where("customSlug", "==", values.customSlug)
+        );
         const checkSnap = await getDocs(checkQ);
         if (!checkSnap.empty) {
           toast.error("This custom URL is already taken by another restaurant.");
@@ -129,11 +202,16 @@ export default function SettingsPage() {
         logo: logoUrl,
         subscriptionStatus: restaurant?.subscriptionStatus || "inactive",
         plan: restaurant?.plan || "none",
-        customSlug: restaurant?.plan === "premium" ? (values.customSlug || "") : (restaurant?.customSlug || ""),
+        customSlug:
+          restaurant?.plan === "premium"
+            ? values.customSlug || ""
+            : restaurant?.customSlug || "",
         createdAt: restaurant?.createdAt || Date.now(),
       };
 
-      await setDoc(doc(db, "restaurants", restaurantId), restaurantData, { merge: true });
+      await setDoc(doc(db, "restaurants", restaurantId), restaurantData, {
+        merge: true,
+      });
 
       if (!restaurant) {
         await updateDoc(doc(db, "users", user.uid), { restaurantId });
@@ -141,8 +219,8 @@ export default function SettingsPage() {
       }
 
       setRestaurant(restaurantData as any);
-      restaurantForm.reset(values); // reset to make it "not dirty"
-      toast.success("Restaurant settings updated successfully!");
+      restaurantForm.reset(values);
+      toast.success("Settings updated successfully!");
     } catch (error: any) {
       toast.error(error.message || "Failed to save restaurant details.");
     } finally {
@@ -170,279 +248,1051 @@ export default function SettingsPage() {
       });
 
       setUserData({ ...userData, name: values.name, photoUrl } as any);
-
-      // Reset password field specifically
       profileForm.reset({ name: values.name, password: "" });
-      toast.success("User profile updated successfully! ✅");
+      toast.success("Profile updated successfully!");
     } catch (error: any) {
-      if (error.code === 'auth/requires-recent-login') {
+      if (error.code === "auth/requires-recent-login") {
         toast.error("Please re-login to change password for security reasons.");
       } else {
-        toast.error(error.message || "Failed to save user profile.");
+        toast.error(error.message || "Failed to save profile.");
       }
     } finally {
       setProfileLoading(false);
     }
   };
 
-  const isRestaurantDirty = restaurantForm.formState.isDirty || logoUrl !== (restaurant?.logo || "");
-  const isProfileDirty = profileForm.formState.isDirty || photoUrl !== (user?.photoURL || userData?.photoUrl || "");
+  const isRestaurantDirty =
+    restaurantForm.formState.isDirty || logoUrl !== (restaurant?.logo || "");
+  const isProfileDirty =
+    profileForm.formState.isDirty ||
+    photoUrl !== (user?.photoURL || userData?.photoUrl || "");
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard!");
+  };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm shadow-emerald-100">
-          <Settings className="h-5 w-5 text-[#0f9d6a]" />
+    <div className="max-w-6xl mx-auto">
+      {/* ── Page Header ─────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
+      >
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+            <Settings className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+              Settings
+            </h1>
+            <p className="text-sm text-gray-500">
+              Manage your restaurant profile, billing & booking
+            </p>
+          </div>
         </div>
+
+        {/* Plan Badge */}
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Settings Workspace</h1>
-          <p className="text-gray-500 text-sm">Manage your restaurant business and personal profile.</p>
+          {restaurant?.plan === "premium" ? (
+            <Badge className="bg-gradient-to-r from-amber-400 to-orange-400 text-white border-0 px-3 py-1.5 text-xs font-bold shadow-md shadow-amber-200 gap-1">
+              <Sparkles className="h-3 w-3" />
+              Premium Plan
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="border-gray-200 text-gray-500 px-3 py-1.5 text-xs font-semibold gap-1"
+            >
+              <Store className="h-3 w-3" />
+              Basic Plan
+            </Badge>
+          )}
         </div>
-      </div>
+      </motion.div>
 
-      <Tabs defaultValue="restaurant" className="w-full flex flex-col md:flex-row gap-8">
-        <TabsList className="flex h-auto bg-transparent space-y-2 md:w-64 w-full p-0">
-          <TabsTrigger
-            value="restaurant"
-            className="w-full justify-start px-4 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:text-[#0f9d6a] data-[state=active]:shadow-sm border border-transparent data-[state=active]:border-gray-100 transition-all font-medium text-gray-500 hover:text-gray-800"
+      {/* ── Tabs ────────────────────────────────── */}
+      <Tabs
+        defaultValue="general"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
+        <div className="mb-6">
+          <TabsList className="h-11 bg-gray-100 rounded-xl p-1 gap-0.5">
+            <TabsTrigger
+              value="general"
+              className="rounded-lg px-5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-700 transition-all"
+            >
+              <Store className="h-3.5 w-3.5 mr-1.5" />
+              General
+            </TabsTrigger>
+            <TabsTrigger
+              value="billing"
+              className="rounded-lg px-5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-700 transition-all"
+            >
+              <IndianRupee className="h-3.5 w-3.5 mr-1.5" />
+              Billing
+            </TabsTrigger>
+            <TabsTrigger
+              value="booking"
+              className="rounded-lg px-5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-700 transition-all"
+            >
+              <LinkIcon className="h-3.5 w-3.5 mr-1.5" />
+              Booking
+            </TabsTrigger>
+            <TabsTrigger
+              value="profile"
+              className="rounded-lg px-5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-700 transition-all"
+            >
+              <UserIcon className="h-3.5 w-3.5 mr-1.5" />
+              Profile
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* ════════════════════════════════════════
+            TAB: GENERAL
+        ════════════════════════════════════════ */}
+        <TabsContent value="general" className="m-0 focus-visible:outline-none">
+          <form
+            onSubmit={restaurantForm.handleSubmit(onRestaurantSubmit)}
+            className="focus-visible:outline-none"
           >
-            <Store className="mr-2 h-4 w-4" />
-            Restaurant Details
-          </TabsTrigger>
-          <TabsTrigger
-            value="profile"
-            className="w-full justify-start px-4 py-3 rounded-xl data-[state=active]:bg-white data-[state=active]:text-[#0f9d6a] data-[state=active]:shadow-sm border border-transparent data-[state=active]:border-gray-100 transition-all font-medium text-gray-500 hover:text-gray-800"
-          >
-            <UserIcon className="mr-2 h-4 w-4" />
-            User Profile
-          </TabsTrigger>
-        </TabsList>
-
-        <div className="flex-1">
-          <TabsContent value="restaurant" className="m-0 focus-visible:ring-0 focus-visible:outline-none">
-            <form onSubmit={restaurantForm.handleSubmit(onRestaurantSubmit)} className="space-y-6">
-              <Card className="border-gray-100 shadow-sm shadow-gray-100 rounded-2xl overflow-hidden group">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 transition-colors group-hover:bg-gray-50">
-                  <CardTitle className="text-lg">Brand Identity</CardTitle>
-                  <CardDescription>Upload a square logo for your digital menu.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex flex-col gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-semibold text-gray-700 block mb-2">Digital Menu Logo</Label>
-                        <ImageUpload
-                          value={logoUrl}
-                          onChange={setLogoUrl}
-                          folder={`restaurants/${user?.uid}/logo`}
-                          disabled={restaurantLoading}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                      <Label htmlFor="name" className="text-sm font-semibold text-gray-700">Business Name *</Label>
-                      <Input id="name" placeholder="e.g. Royal Greens Restaurant" className="h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 transition-all" {...restaurantForm.register("name")} />
-                      {restaurantForm.formState.errors.name && <p className="text-xs text-red-500 font-medium">{restaurantForm.formState.errors.name.message}</p>}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-gray-100 shadow-sm shadow-gray-100 rounded-2xl group">
-                  <CardHeader className="bg-gray-50/50 border-b border-gray-100 transition-colors group-hover:bg-gray-50">
-                    <CardTitle className="text-lg flex items-center gap-2"><MapPin className="h-4 w-4 text-[#0f9d6a]" /> Contact Info</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-4">
-                    <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                      <Label htmlFor="address" className="text-sm font-semibold text-gray-700">Full Address *</Label>
-                      <Textarea id="address" placeholder="123 Green Street, City, State 400001" className="min-h-[100px] rounded-xl border-gray-200 focus-visible:ring-emerald-500 transition-all" {...restaurantForm.register("address")} />
-                      {restaurantForm.formState.errors.address && <p className="text-xs text-red-500 font-medium">{restaurantForm.formState.errors.address.message}</p>}
-                    </div>
-
-                    <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                      <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Phone Number *</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input id="phone" placeholder="9876543210" className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 transition-all" {...restaurantForm.register("phoneNumber")} />
-                      </div>
-                      {restaurantForm.formState.errors.phoneNumber && <p className="text-xs text-red-500 font-medium">{restaurantForm.formState.errors.phoneNumber.message}</p>}
-                    </div>
-
-                    <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                      <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Business Email *</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input id="email" type="email" placeholder="contact@restaurant.com" className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 transition-all" {...restaurantForm.register("email")} />
-                      </div>
-                      {restaurantForm.formState.errors.email && <p className="text-xs text-red-500 font-medium">{restaurantForm.formState.errors.email.message}</p>}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-emerald-100 shadow-sm shadow-emerald-50 rounded-2xl ring-1 ring-emerald-50 group">
-                  <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 transition-colors group-hover:bg-emerald-50">
-                    <CardTitle className="text-lg flex items-center gap-2 text-emerald-900"><QrCode className="h-4 w-4 text-[#0f9d6a]" /> Billing & Payments</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-4">
-                    <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-xl mb-4 leading-relaxed">
-                      Setting a UPI ID will automatically generate scannable QR codes for your customers to pay you directly from their tables.
-                    </div>
-
-                    <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                      <Label htmlFor="upi" className="text-sm font-semibold text-gray-700">Direct UPI ID (Optional)</Label>
-                      <div className="relative">
-                        <QrCode className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
-                        <Input id="upi" placeholder="yourname@okbank" className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-500 transition-all" {...restaurantForm.register("upiId")} />
-                      </div>
-                      {restaurantForm.formState.errors.upiId && <p className="text-xs text-red-500 font-medium">{restaurantForm.formState.errors.upiId.message}</p>}
-                    </div>
-
-                    <div className="space-y-1.5 pt-2 focus-within:text-emerald-700 transition-colors">
-                      <Label htmlFor="gst" className="text-sm font-semibold text-gray-700">GST Number (Optional)</Label>
-                      <div className="relative">
-                        <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input id="gst" placeholder="22AAAAA0000A1Z5" className="pl-10 h-12 rounded-xl border-gray-200 uppercase focus-visible:ring-emerald-500 transition-all" {...restaurantForm.register("gstNumber")} />
-                      </div>
-                      {restaurantForm.formState.errors.gstNumber && <p className="text-xs text-red-500 font-medium">{restaurantForm.formState.errors.gstNumber.message}</p>}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card className="border-emerald-100 shadow-sm shadow-emerald-50 rounded-2xl ring-1 ring-emerald-50 group">
-                <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 transition-colors group-hover:bg-emerald-50">
-                  <CardTitle className="text-lg flex items-center gap-2 text-emerald-900"><LinkIcon className="h-4 w-4 text-[#0f9d6a]" /> Booking Link</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold text-gray-700">Your Shareable URL</Label>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 select-all overflow-hidden text-ellipsis whitespace-nowrap">
-                        {typeof window !== 'undefined' ? window.location.origin : ''}/book/{restaurant?.plan === "premium" && restaurant.customSlug ? restaurant.customSlug : restaurant?.id}
-                      </div>
-                      <Button type="button" variant="outline" className="shrink-0 h-11 px-4" onClick={() => {
-                        const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/book/${restaurant?.plan === "premium" && restaurant.customSlug ? restaurant.customSlug : restaurant?.id}`;
-                        navigator.clipboard.writeText(url);
-                        toast.success("Link copied to clipboard!");
-                      }}>
-                        <Copy className="h-4 w-4 mr-2" /> Copy
-                      </Button>
-                    </div>
-                  </div>
-
-                  {restaurant?.plan === "premium" ? (
-                    <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors pt-4 border-t border-emerald-100 mt-4">
-                      <Label htmlFor="customSlug" className="text-sm font-semibold text-gray-700">Custom Booking Slug</Label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-400 select-none">
-                          dineflow.pro/book/
-                        </span>
-                        <Input
-                          id="customSlug"
-                          placeholder="e.g. spice-garden"
-                          className="pl-[125px] h-12 rounded-xl border-emerald-200 focus-visible:ring-emerald-500 transition-all font-medium text-emerald-900"
-                          {...restaurantForm.register("customSlug", {
-                            onChange: (e) => { e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }
-                          })}
-                        />
-                      </div>
-                      {restaurantForm.formState.errors.customSlug && <p className="text-xs text-red-500 font-medium">{restaurantForm.formState.errors.customSlug.message}</p>}
-                      <p className="text-xs text-emerald-600 mt-1 font-medium">Use a descriptive, memorable name for your restaurant. Only lowercase letters, numbers, and hyphens.</p>
-                    </div>
-                  ) : (
-                    <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-xl mt-4 leading-relaxed font-medium">
-                      🚀 <span className="font-bold">Upgrade to Premium</span> to unlock a branded Custom Booking URL (e.g. {typeof window !== 'undefined' ? window.location.hostname : 'dineflow.pro'}/book/spice-garden).
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <div className="flex justify-end pt-4">
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="h-12 px-8 rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none"
-                  disabled={restaurantLoading || !isRestaurantDirty}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* ── Left: Brand Identity + Contact ── */}
+              <div className="lg:col-span-3 space-y-6">
+                {/* Brand Identity Card */}
+                <motion.div
+                  custom={0}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
                 >
-                  {restaurantLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Save Restaurant Settings"}
-                </Button>
-              </div>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="profile" className="m-0 focus-visible:ring-0 focus-visible:outline-none">
-            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
-              <Card className="border-gray-100 shadow-sm shadow-gray-100 rounded-2xl overflow-hidden group">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 transition-colors group-hover:bg-gray-50">
-                  <CardTitle className="text-lg flex items-center gap-2"><UserIcon className="h-4 w-4 text-[#0f9d6a]" /> Personal Information</CardTitle>
-                  <CardDescription>Update your personal details and profile picture.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex flex-col gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-semibold text-gray-700 block mb-2">Profile Photo</Label>
-                        <ImageUpload
-                          value={photoUrl}
-                          onChange={setPhotoUrl}
-                          folder={`users/${user?.uid}/avatar`}
-                          disabled={profileLoading}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                        <Label htmlFor="userName" className="text-sm font-semibold text-gray-700">Display Name</Label>
-                        <div className="relative">
-                          <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input id="userName" placeholder="John Doe" className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 transition-all" {...profileForm.register("name")} />
+                  <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+                          <Camera className="h-4 w-4 text-emerald-600" />
                         </div>
-                        {profileForm.formState.errors.name && <p className="text-xs text-red-500 font-medium">{profileForm.formState.errors.name.message}</p>}
+                        <div>
+                          <CardTitle className="text-base font-semibold text-gray-900">
+                            Brand Identity
+                          </CardTitle>
+                          <CardDescription className="text-xs mt-0.5">
+                            Your logo and business name shown on the digital menu
+                          </CardDescription>
+                        </div>
                       </div>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="flex flex-col sm:flex-row gap-6 items-start">
+                        {/* Logo Upload */}
+                        <div className="shrink-0">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2.5">
+                            Restaurant Logo
+                          </Label>
+                          <ImageUpload
+                            value={logoUrl}
+                            onChange={setLogoUrl}
+                            folder={`restaurants/${user?.uid}/logo`}
+                            disabled={restaurantLoading}
+                          />
+                        </div>
+                        {/* Business Name */}
+                        <div className="flex-1 min-w-0 w-full">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2.5">
+                            Business Name *
+                          </Label>
+                          <Input
+                            id="name"
+                            placeholder="e.g. Royal Greens Restaurant"
+                            className="h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-400 text-gray-900 font-medium transition-all"
+                            {...restaurantForm.register("name")}
+                          />
+                          {restaurantForm.formState.errors.name && (
+                            <p className="text-xs text-red-500 font-medium mt-1.5">
+                              {restaurantForm.formState.errors.name.message}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-400 mt-2">
+                            This name appears on your menu, QR cards, and booking
+                            page.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
+                {/* Contact Info Card */}
+                <motion.div
+                  custom={1}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-xl bg-blue-50 flex items-center justify-center">
+                          <MapPin className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base font-semibold text-gray-900">
+                            Contact Info
+                          </CardTitle>
+                          <CardDescription className="text-xs mt-0.5">
+                            Used on your digital menu and for customer communication
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-5">
+                      {/* Address */}
                       <div className="space-y-1.5">
-                        <Label htmlFor="userEmail" className="text-sm font-semibold text-gray-700">Account Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input id="userEmail" type="email" value={user?.email || ""} disabled className="pl-10 h-12 rounded-xl border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed opacity-80" />
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1 font-medium">To change your account email, please contact support.</p>
+                        <Label
+                          htmlFor="address"
+                          className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                        >
+                          Full Address *
+                        </Label>
+                        <Textarea
+                          id="address"
+                          placeholder="123 Green Street, City, State 400001"
+                          className="min-h-[90px] rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-400 resize-none transition-all"
+                          {...restaurantForm.register("address")}
+                        />
+                        {restaurantForm.formState.errors.address && (
+                          <p className="text-xs text-red-500 font-medium">
+                            {restaurantForm.formState.errors.address.message}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
-              {/* <Card className="border-gray-100 shadow-sm shadow-gray-100 rounded-2xl group">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 transition-colors group-hover:bg-gray-50">
-                  <CardTitle className="text-lg flex items-center gap-2"><Lock className="h-4 w-4 text-[#0f9d6a]" /> Security</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                    <Label htmlFor="password" className="text-sm font-semibold text-gray-700">New Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input id="password" type="password" placeholder="Leave blank to keep current password" className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 transition-all" {...profileForm.register("password")} autoComplete="new-password" />
-                    </div>
-                    {profileForm.formState.errors.password && <p className="text-xs text-red-500 font-medium">{profileForm.formState.errors.password.message}</p>}
-                  </div>
-                </CardContent>
-              </Card> */}
+                      {/* Phone + Email — 2-col grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="phone"
+                            className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                          >
+                            Phone Number *
+                          </Label>
+                          <div className="relative">
+                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                              id="phone"
+                              placeholder="9876543210"
+                              className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-400 transition-all"
+                              {...restaurantForm.register("phoneNumber")}
+                            />
+                          </div>
+                          {restaurantForm.formState.errors.phoneNumber && (
+                            <p className="text-xs text-red-500 font-medium">
+                              {restaurantForm.formState.errors.phoneNumber.message}
+                            </p>
+                          )}
+                        </div>
 
-              <div className="flex justify-end pt-4">
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="h-12 px-8 rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none"
-                  disabled={profileLoading || !isProfileDirty}
-                >
-                  {profileLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Save Profile Details"}
-                </Button>
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="email"
+                            className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                          >
+                            Business Email *
+                          </Label>
+                          <div className="relative">
+                            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                              id="email"
+                              type="email"
+                              placeholder="contact@restaurant.com"
+                              className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-400 transition-all"
+                              {...restaurantForm.register("email")}
+                            />
+                          </div>
+                          {restaurantForm.formState.errors.email && (
+                            <p className="text-xs text-red-500 font-medium">
+                              {restaurantForm.formState.errors.email.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               </div>
-            </form>
-          </TabsContent>
-        </div>
+
+              {/* ── Right: Quick tips / preview ── */}
+              <div className="lg:col-span-2 space-y-6">
+                <motion.div
+                  custom={2}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card className="rounded-2xl border-emerald-100 shadow-sm bg-gradient-to-br from-emerald-50/60 to-white overflow-hidden">
+                    <CardHeader className="px-6 py-4 border-b border-emerald-100">
+                      <CardTitle className="text-base font-semibold text-emerald-900 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        Setup Checklist
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-3">
+                      {[
+                        {
+                          done: !!restaurant?.logo,
+                          label: "Upload restaurant logo",
+                        },
+                        {
+                          done: !!restaurant?.name,
+                          label: "Set business name",
+                        },
+                        {
+                          done: !!restaurant?.address,
+                          label: "Add restaurant address",
+                        },
+                        {
+                          done: !!restaurant?.phoneNumber,
+                          label: "Add phone number",
+                        },
+                        {
+                          done: !!restaurant?.upiId,
+                          label: "Connect UPI for payments",
+                        },
+                      ].map((item) => (
+                        <div
+                          key={item.label}
+                          className="flex items-center gap-3"
+                        >
+                          <div
+                            className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                              item.done
+                                ? "bg-emerald-500"
+                                : "bg-gray-200"
+                            }`}
+                          >
+                            <CheckCircle2
+                              className={`h-3 w-3 ${
+                                item.done ? "text-white" : "text-gray-400"
+                              }`}
+                            />
+                          </div>
+                          <span
+                            className={`text-sm font-medium ${
+                              item.done
+                                ? "line-through text-gray-400"
+                                : "text-gray-700"
+                            }`}
+                          >
+                            {item.label}
+                          </span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Booking link quick-access */}
+                <motion.div
+                  custom={3}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
+                    <CardHeader className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                      <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-[#0f9d6a]" />
+                        Your Booking URL
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-3">
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-600 font-mono break-all select-all leading-relaxed">
+                        {bookingUrl}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 h-9 rounded-lg text-xs gap-1.5 border-gray-200"
+                          onClick={() => copyToClipboard(bookingUrl)}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                          Copy Link
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 h-9 rounded-lg text-xs gap-1.5 border-gray-200"
+                          onClick={() => window.open(bookingUrl, "_blank")}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          Preview
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Sticky Save — General */}
+            <div className="mt-8 flex justify-end">
+              <Button
+                type="submit"
+                size="lg"
+                className="h-12 px-8 rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none gap-2"
+                disabled={restaurantLoading || !isRestaurantDirty}
+              >
+                {restaurantLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </TabsContent>
+
+        {/* ════════════════════════════════════════
+            TAB: BILLING
+        ════════════════════════════════════════ */}
+        <TabsContent value="billing" className="m-0 focus-visible:outline-none">
+          <form onSubmit={restaurantForm.handleSubmit(onRestaurantSubmit)}>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* Left: UPI + GST */}
+              <div className="lg:col-span-3 space-y-6">
+                {/* UPI Feature highlight */}
+                <motion.div
+                  custom={0}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <div className="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200">
+                    <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                      <QrCode className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900 mb-0.5">
+                        Enable QR Payments at Your Tables
+                      </p>
+                      <p className="text-xs text-amber-700 leading-relaxed">
+                        Add your UPI ID to automatically generate scannable QR
+                        codes on every table. Customers can pay you directly — no
+                        cash needed.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  custom={1}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-xl bg-indigo-50 flex items-center justify-center">
+                          <IndianRupee className="h-4 w-4 text-indigo-500" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base font-semibold text-gray-900">
+                            Billing & Payments
+                          </CardTitle>
+                          <CardDescription className="text-xs mt-0.5">
+                            UPI and business tax information
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-5">
+                      {/* UPI ID */}
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor="upi"
+                          className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                        >
+                          UPI ID
+                          <span className="ml-2 font-normal normal-case text-gray-400">
+                            (optional)
+                          </span>
+                        </Label>
+                        <div className="relative">
+                          <QrCode className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                          <Input
+                            id="upi"
+                            placeholder="yourname@okbank"
+                            className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-400 transition-all"
+                            {...restaurantForm.register("upiId")}
+                          />
+                        </div>
+                        {restaurantForm.formState.errors.upiId && (
+                          <p className="text-xs text-red-500 font-medium">
+                            {restaurantForm.formState.errors.upiId.message}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400">
+                          Format: name@bankname — e.g. rajesh@okicici
+                        </p>
+                      </div>
+
+                      {/* GST Number */}
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor="gst"
+                          className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                        >
+                          GST Number
+                          <span className="ml-2 font-normal normal-case text-gray-400">
+                            (optional)
+                          </span>
+                        </Label>
+                        <div className="relative">
+                          <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="gst"
+                            placeholder="22AAAAA0000A1Z5"
+                            className="pl-10 h-12 rounded-xl border-gray-200 uppercase focus-visible:ring-emerald-500 focus-visible:border-emerald-400 transition-all tracking-widest"
+                            {...restaurantForm.register("gstNumber")}
+                          />
+                        </div>
+                        {restaurantForm.formState.errors.gstNumber && (
+                          <p className="text-xs text-red-500 font-medium">
+                            {restaurantForm.formState.errors.gstNumber.message}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400">
+                          Printed on customer bills and tax invoices
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+
+              {/* Right: Info panel */}
+              <div className="lg:col-span-2">
+                <motion.div
+                  custom={2}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card className="rounded-2xl border-emerald-100 shadow-sm bg-gradient-to-br from-emerald-50/60 to-white overflow-hidden">
+                    <CardHeader className="px-6 py-4 border-b border-emerald-100">
+                      <CardTitle className="text-base font-semibold text-emerald-900 flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-emerald-500" />
+                        Why add UPI?
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      {[
+                        "Customers scan & pay directly from their table",
+                        "No cash handling needed",
+                        "QR codes auto-generated on all table cards",
+                        "Instant payment confirmation",
+                        "Works with any UPI app (GPay, PhonePe, Paytm)",
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-start gap-2.5">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                          <span className="text-sm text-gray-700">{item}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <Button
+                type="submit"
+                size="lg"
+                className="h-12 px-8 rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed gap-2"
+                disabled={restaurantLoading || !isRestaurantDirty}
+              >
+                {restaurantLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </TabsContent>
+
+        {/* ════════════════════════════════════════
+            TAB: BOOKING
+        ════════════════════════════════════════ */}
+        <TabsContent value="booking" className="m-0 focus-visible:outline-none">
+          <form onSubmit={restaurantForm.handleSubmit(onRestaurantSubmit)}>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* Left */}
+              <div className="lg:col-span-3 space-y-6">
+                {/* Shareable URL card */}
+                <motion.div
+                  custom={0}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-xl bg-violet-50 flex items-center justify-center">
+                          <Globe className="h-4 w-4 text-violet-500" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base font-semibold text-gray-900">
+                            Shareable Booking URL
+                          </CardTitle>
+                          <CardDescription className="text-xs mt-0.5">
+                            Share with customers to let them view your menu
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-mono text-gray-700 break-all select-all leading-relaxed">
+                        {bookingUrl}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex-1 h-11 rounded-xl gap-2 border-gray-200 hover:border-emerald-300 hover:text-emerald-700 transition-all"
+                          onClick={() => copyToClipboard(bookingUrl)}
+                        >
+                          <Copy className="h-4 w-4" />
+                          Copy Link
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex-1 h-11 rounded-xl gap-2 border-gray-200 hover:border-violet-300 hover:text-violet-700 transition-all"
+                          onClick={() => window.open(bookingUrl, "_blank")}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Open Page
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Custom Slug card */}
+                <motion.div
+                  custom={1}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card
+                    className={`rounded-2xl shadow-sm overflow-hidden ${
+                      restaurant?.plan === "premium"
+                        ? "border-emerald-100"
+                        : "border-gray-100 opacity-80"
+                    }`}
+                  >
+                    <CardHeader
+                      className={`border-b px-6 py-4 ${
+                        restaurant?.plan === "premium"
+                          ? "bg-gradient-to-r from-emerald-50 to-white border-emerald-100"
+                          : "bg-gray-50/50 border-gray-100"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`h-8 w-8 rounded-xl flex items-center justify-center ${
+                              restaurant?.plan === "premium"
+                                ? "bg-amber-50"
+                                : "bg-gray-100"
+                            }`}
+                          >
+                            <LinkIcon
+                              className={`h-4 w-4 ${
+                                restaurant?.plan === "premium"
+                                  ? "text-amber-500"
+                                  : "text-gray-400"
+                              }`}
+                            />
+                          </div>
+                          <div>
+                            <CardTitle className="text-base font-semibold text-gray-900">
+                              Custom Booking Slug
+                            </CardTitle>
+                            <CardDescription className="text-xs mt-0.5">
+                              Create a branded URL for your restaurant
+                            </CardDescription>
+                          </div>
+                        </div>
+                        {restaurant?.plan === "premium" ? (
+                          <Badge className="bg-amber-100 text-amber-700 border-0 text-xs font-semibold">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Premium
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="border-gray-200 text-gray-400 text-xs"
+                          >
+                            Locked
+                          </Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      {restaurant?.plan === "premium" ? (
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <Label
+                              htmlFor="customSlug"
+                              className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                            >
+                              Custom Slug
+                            </Label>
+                            <div className="flex items-center gap-0 rounded-xl border border-gray-200 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-500/20 overflow-hidden transition-all h-12">
+                              <span className="pl-4 pr-2 text-sm text-gray-400 whitespace-nowrap shrink-0 bg-gray-50 h-full flex items-center border-r border-gray-200">
+                                dineflow.pro/book/
+                              </span>
+                              <input
+                                id="customSlug"
+                                placeholder="spice-garden"
+                                className="flex-1 h-full px-3 text-sm font-semibold text-emerald-700 bg-white focus:outline-none"
+                                {...restaurantForm.register("customSlug", {
+                                  onChange: (e) => {
+                                    e.target.value = e.target.value
+                                      .toLowerCase()
+                                      .replace(/[^a-z0-9-]/g, "");
+                                  },
+                                })}
+                              />
+                            </div>
+                            {restaurantForm.formState.errors.customSlug && (
+                              <p className="text-xs text-red-500 font-medium">
+                                {
+                                  restaurantForm.formState.errors.customSlug
+                                    .message
+                                }
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Live Preview badge */}
+                          <AnimatePresence>
+                            {watchedSlug && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0 }}
+                                className="flex items-center gap-2"
+                              >
+                                <span className="text-xs text-gray-500 font-medium">
+                                  Preview:
+                                </span>
+                                <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono text-xs px-2.5 py-0.5">
+                                  dineflow.pro/book/{watchedSlug}
+                                </Badge>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          <p className="text-xs text-gray-400">
+                            Only lowercase letters, numbers, and hyphens.
+                            Memorable slugs work best (e.g.{" "}
+                            <span className="text-emerald-600 font-medium">
+                              spice-garden
+                            </span>
+                            )
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center py-6 text-center gap-3">
+                          <div className="h-14 w-14 rounded-2xl bg-amber-50 flex items-center justify-center">
+                            <Sparkles className="h-7 w-7 text-amber-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">
+                              Unlock Custom Booking URLs
+                            </p>
+                            <p className="text-xs text-gray-500 leading-relaxed max-w-xs">
+                              Upgrade to Premium to create a branded booking link
+                              like{" "}
+                              <span className="font-medium text-emerald-600">
+                                dineflow.pro/book/spice-garden
+                              </span>
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="mt-1 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white border-0 shadow-md shadow-amber-200 gap-1.5"
+                            onClick={() =>
+                              (window.location.href =
+                                "/restaurant/subscription")
+                            }
+                          >
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Upgrade to Premium
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+
+              {/* Right: Tips */}
+              <div className="lg:col-span-2">
+                <motion.div
+                  custom={2}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card className="rounded-2xl border-violet-100 shadow-sm bg-gradient-to-br from-violet-50/60 to-white overflow-hidden">
+                    <CardHeader className="px-6 py-4 border-b border-violet-100">
+                      <CardTitle className="text-base font-semibold text-violet-900 flex items-center gap-2">
+                        <LinkIcon className="h-4 w-4 text-violet-500" />
+                        Sharing Tips
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      {[
+                        "Share on WhatsApp, Instagram bio, or Google Maps",
+                        "Print and hand out to regular customers",
+                        "Display as a QR code at your entrance",
+                        "Add to your menu cards and table tents",
+                      ].map((tip, i) => (
+                        <div key={i} className="flex items-start gap-2.5">
+                          <div className="h-5 w-5 rounded-full bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
+                            <span className="text-[10px] font-bold text-violet-600">
+                              {i + 1}
+                            </span>
+                          </div>
+                          <span className="text-sm text-gray-700">{tip}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <Button
+                type="submit"
+                size="lg"
+                className="h-12 px-8 rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed gap-2"
+                disabled={restaurantLoading || !isRestaurantDirty}
+              >
+                {restaurantLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </TabsContent>
+
+        {/* ════════════════════════════════════════
+            TAB: PROFILE
+        ════════════════════════════════════════ */}
+        <TabsContent value="profile" className="m-0 focus-visible:outline-none">
+          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* Left */}
+              <div className="lg:col-span-3 space-y-6">
+                <motion.div
+                  custom={0}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-xl bg-rose-50 flex items-center justify-center">
+                          <UserIcon className="h-4 w-4 text-rose-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base font-semibold text-gray-900">
+                            Personal Information
+                          </CardTitle>
+                          <CardDescription className="text-xs mt-0.5">
+                            Your profile details and account settings
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-6">
+                      {/* Profile photo */}
+                      <div className="flex flex-col sm:flex-row gap-6 items-start">
+                        <div className="shrink-0">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2.5">
+                            Profile Photo
+                          </Label>
+                          <ImageUpload
+                            value={photoUrl}
+                            onChange={setPhotoUrl}
+                            folder={`users/${user?.uid}/avatar`}
+                            disabled={profileLoading}
+                          />
+                        </div>
+                        <div className="flex-1 w-full space-y-4">
+                          {/* Display Name */}
+                          <div className="space-y-1.5">
+                            <Label
+                              htmlFor="userName"
+                              className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                            >
+                              Display Name *
+                            </Label>
+                            <div className="relative">
+                              <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <Input
+                                id="userName"
+                                placeholder="John Doe"
+                                className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-400 transition-all"
+                                {...profileForm.register("name")}
+                              />
+                            </div>
+                            {profileForm.formState.errors.name && (
+                              <p className="text-xs text-red-500 font-medium">
+                                {profileForm.formState.errors.name.message}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Account Email (readonly) */}
+                          <div className="space-y-1.5">
+                            <Label
+                              htmlFor="userEmail"
+                              className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                            >
+                              Account Email
+                            </Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300" />
+                              <Input
+                                id="userEmail"
+                                type="email"
+                                value={user?.email || ""}
+                                disabled
+                                className="pl-10 h-12 rounded-xl border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-400">
+                              To change your email, please contact support.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+
+              {/* Right: Account info */}
+              <div className="lg:col-span-2">
+                <motion.div
+                  custom={1}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
+                    <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
+                      <CardTitle className="text-base font-semibold text-gray-900">
+                        Account Info
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
+                        <span className="text-sm text-gray-500">Role</span>
+                        <Badge
+                          variant="outline"
+                          className="border-emerald-200 text-emerald-700 bg-emerald-50"
+                        >
+                          Restaurant Owner
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
+                        <span className="text-sm text-gray-500">Plan</span>
+                        <Badge
+                          className={
+                            restaurant?.plan === "premium"
+                              ? "bg-amber-100 text-amber-700 border-0"
+                              : "bg-gray-100 text-gray-600 border-0"
+                          }
+                        >
+                          {restaurant?.plan === "premium" ? "Premium" : "Basic"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-start justify-between py-2.5">
+                        <span className="text-sm text-gray-500">Email</span>
+                        <span className="text-sm font-medium text-gray-700 text-right max-w-[160px] truncate">
+                          {user?.email}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <Button
+                type="submit"
+                size="lg"
+                className="h-12 px-8 rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed gap-2"
+                disabled={profileLoading || !isProfileDirty}
+              >
+                {profileLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Save Profile
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </TabsContent>
       </Tabs>
     </div>
   );

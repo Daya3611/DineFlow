@@ -207,13 +207,13 @@ export default function AdminRestaurantsPage() {
   // ── Save ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!selected) return;
-    if (editExpiry && editExpiry < new Date()) {
+    if (editPlan !== "lifetime" && editExpiry && editExpiry < new Date()) {
       toast.error("Expiry date cannot be in the past");
       return;
     }
     setSaving(true);
     try {
-      const expiryTs = editExpiry ? editExpiry.getTime() : 0;
+      const expiryTs = editPlan === "lifetime" ? null : (editExpiry ? editExpiry.getTime() : 0);
 
       if (selectedSub && ownerInfo?.subscriptionId) {
         await updateDoc(doc(db, "subscriptions", selectedSub.id), {
@@ -393,19 +393,29 @@ export default function AdminRestaurantsPage() {
                     </Card>
 
                     {/* Days Left card */}
-                    <Card className={`border-0 shadow-none ${isExpiringSoon ? "bg-red-50" : daysLeft > 3 ? "bg-emerald-50" : "bg-slate-50"}`}>
+                    <Card className={`border-0 shadow-none ${editPlan === "lifetime" ? "bg-emerald-50" : isExpiringSoon ? "bg-red-50" : daysLeft > 3 ? "bg-emerald-50" : "bg-slate-50"}`}>
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between mb-1.5">
                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Days Left</p>
-                          {isExpiringSoon && (
+                          {editPlan === "lifetime" ? (
+                            <Badge className="text-[9px] py-0 px-1.5 bg-emerald-500 text-white border-0 font-bold">
+                              Lifetime Access
+                            </Badge>
+                          ) : isExpiringSoon ? (
                             <Badge className="text-[9px] py-0 px-1.5 bg-red-500 text-white border-0 font-bold">
                               Expiring Soon
                             </Badge>
-                          )}
+                          ) : null}
                         </div>
-                        <p className={`text-xl font-black leading-none ${isExpiringSoon ? "text-red-600" : daysLeft > 3 ? "text-emerald-600" : "text-slate-500"}`}>
-                          {daysLeft < 0 ? 0 : daysLeft}
-                          <span className="text-sm font-semibold ml-1">days</span>
+                        <p className={`text-xl font-black leading-none ${editPlan === "lifetime" ? "text-emerald-700" : isExpiringSoon ? "text-red-600" : daysLeft > 3 ? "text-emerald-600" : "text-slate-500"}`}>
+                          {editPlan === "lifetime" ? (
+                            "Unlimited"
+                          ) : (
+                            <>
+                              {daysLeft < 0 ? 0 : daysLeft}
+                              <span className="text-sm font-semibold ml-1">days</span>
+                            </>
+                          )}
                         </p>
                       </CardContent>
                     </Card>
@@ -464,55 +474,65 @@ export default function AdminRestaurantsPage() {
                 </div>
 
                 {/* Expiry Date */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-slate-600">Expiry Date</Label>
-                    {selectedSub?.startDate && (
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        Started {format(new Date(selectedSub.startDate), "dd MMM yyyy")}
-                      </span>
-                    )}
+                {editPlan === "lifetime" ? (
+                  <div className="p-4 rounded-lg bg-emerald-50 text-emerald-700 text-sm font-semibold mt-2">
+                    This plan has lifetime validity. No expiry date required.
                   </div>
-                  <DatePicker value={editExpiry} onChange={setEditExpiry} />
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold text-slate-600">Expiry Date</Label>
+                      {selectedSub?.startDate && (
+                        <span className="text-[11px] text-slate-400 font-medium">
+                          Started {format(new Date(selectedSub.startDate), "dd MMM yyyy")}
+                        </span>
+                      )}
+                    </div>
+                    <DatePicker value={editExpiry} onChange={setEditExpiry} />
 
-                  {/* Quick actions */}
-                  <div className="flex items-center gap-2 pt-1">
-                    <p className="text-xs text-slate-400 font-medium mr-1">Quick add:</p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-3 text-xs font-bold rounded-lg"
-                      onClick={() => addDays(7)}
-                    >
-                      +7 Days
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-3 text-xs font-bold rounded-lg"
-                      onClick={() => addDays(30)}
-                    >
-                      +30 Days
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-3 text-xs font-bold rounded-lg"
-                      onClick={() => addDays(365)}
-                    >
-                      +1 Year
-                    </Button>
+                    {/* Quick actions */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <p className="text-xs text-slate-400 font-medium mr-1">Quick add:</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-3 text-xs font-bold rounded-lg"
+                        onClick={() => addDays(7)}
+                      >
+                        +7 Days
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-3 text-xs font-bold rounded-lg"
+                        onClick={() => addDays(30)}
+                      >
+                        +30 Days
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-3 text-xs font-bold rounded-lg"
+                        onClick={() => addDays(365)}
+                      >
+                        +1 Year
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Plan summary chip */}
                 <div className={`flex items-center gap-2 px-3 py-2.5 rounded-xl ${planMeta.color} text-xs font-semibold`}>
                   <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
                   <span>
-                    Currently on <strong>{planMeta.label}</strong> · {daysLeft < 0 ? "Expired" : `${Math.max(0, daysLeft)} days remaining`}
+                    {editPlan === "lifetime" ? (
+                      <><strong>Lifetime Plan</strong> · Unlimited Access</>
+                    ) : (
+                      <>Currently on <strong>{planMeta.label}</strong> · {daysLeft < 0 ? "Expired" : `${Math.max(0, daysLeft)} days remaining`}</>
+                    )}
                   </span>
                 </div>
               </div>

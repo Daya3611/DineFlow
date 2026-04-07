@@ -21,7 +21,6 @@ const navItems = [
   { href: "/restaurant/tables", label: "QR Tables", icon: QrCode },
   { href: "/restaurant/orders", label: "Live Orders", icon: ClipboardList },
   { href: "/restaurant/subscription", label: "Subscription", icon: CreditCard },
-  { href: "/restaurant/settings", label: "Settings", icon: Settings },
 ];
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
