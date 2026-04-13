@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, TriangleAlert, X } from "lucide-react";
 import { useToastStore } from "@/lib/toast";
 import { useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
 
 const toastVariants = {
   hidden: { opacity: 0, y: -20, scale: 0.95 },
@@ -61,12 +62,11 @@ function ToastItem({ t, removeToast }: { t: any; removeToast: (id: string) => vo
         </span>
         <p className="font-semibold text-sm tracking-tight">{t.message}</p>
       </div>
-      <button
-        onClick={() => removeToast(t.id)}
+      <Button onClick={() => removeToast(t.id)}
         className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
       >
         <X className="h-4 w-4" />
-      </button>
+      </Button>
     </motion.div>
   );
 }
@@ -74,13 +74,26 @@ function ToastItem({ t, removeToast }: { t: any; removeToast: (id: string) => vo
 export function FramerToaster() {
   const { toasts, removeToast } = useToastStore();
 
+  const topToasts = toasts.filter(t => !t.position || t.position === "top-center" || t.position === "top-right");
+  const bottomToasts = toasts.filter(t => t.position === "bottom-center");
+
   return (
-    <div className="fixed z-[9999] top-0 left-0 right-0 md:left-auto md:right-4 p-4 flex flex-col items-center md:items-end gap-3 pointer-events-none w-full md:w-auto overflow-hidden">
-      <AnimatePresence mode="popLayout">
-        {toasts.map((t) => (
-          <ToastItem key={t.id} t={t} removeToast={removeToast} />
-        ))}
-      </AnimatePresence>
-    </div>
+    <>
+      <div className="fixed z-[9999] top-0 left-0 right-0 md:left-auto md:right-4 p-4 flex flex-col items-center md:items-end gap-3 pointer-events-none w-full md:w-auto overflow-hidden">
+        <AnimatePresence mode="popLayout">
+          {topToasts.map((t) => (
+            <ToastItem key={t.id} t={t} removeToast={removeToast} />
+          ))}
+        </AnimatePresence>
+      </div>
+
+      <div className="fixed z-[9999] bottom-0 left-0 right-0 p-4 pb-20 flex flex-col items-center justify-end gap-3 pointer-events-none w-full overflow-hidden">
+        <AnimatePresence mode="popLayout">
+          {bottomToasts.map((t) => (
+            <ToastItem key={t.id} t={t} removeToast={removeToast} />
+          ))}
+        </AnimatePresence>
+      </div>
+    </>
   );
 }

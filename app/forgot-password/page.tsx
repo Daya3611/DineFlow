@@ -128,11 +128,7 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <Button
-                    type="submit"
-                    className="w-full h-12 font-bold text-[15px] rounded-xl bg-[#16a34a] text-white hover:bg-[#15803d] hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#16a34a]/20 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100"
-                    disabled={loading || !emailValue}
-                  >
+                  <Button type="submit" className="w-full h-12 text-[15px] bg-[#16a34a] [#15803d] [1.02] [0.98] shadow-[#16a34a]/20 disabled:opacity-50 disabled:" disabled={loading || !emailValue}>
                     {loading ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
@@ -169,7 +165,7 @@ export default function ForgotPasswordPage() {
               </p>
               
               <Link href="/login">
-                <Button className="w-full h-12 font-bold text-[15px] rounded-xl bg-gray-900 text-white hover:bg-gray-800 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
+                <Button className="w-full h-12 text-[15px] hover: [1.02] [0.98]">
                   Return to login
                 </Button>
               </Link>

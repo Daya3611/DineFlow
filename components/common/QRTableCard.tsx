@@ -5,6 +5,7 @@ import QRCode from "react-qr-code";
 import { Printer, Download, FileImage, X, Loader2, Sun, Moon } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { toPng } from "html-to-image";
+import { Button } from "@/components/ui/button";
 
 interface QRTableCardProps {
   tableNumber: string;
@@ -103,42 +104,27 @@ export function QRTableCard({
           >
             <span className="text-slate-800 text-sm font-bold flex">Table {tableNumber} QR</span>
             <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
+              <Button onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
                 title="Toggle theme"
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition-colors"
               >
                 {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
                 {isDark ? "Light" : "Dark"}
-              </button>
-              <button
-                onClick={handlePrint}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition-colors"
-              >
+              </Button>
+              <Button onClick={handlePrint} className="flex items-center ga .5 .5 hover: text-slate-600 text-xs">
                 <Printer className="h-3.5 w-3.5" /> Print
-              </button>
-              <button
-                onClick={downloadPNG}
-                disabled={!!exporting}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition-colors disabled:opacity-50"
-              >
+              </Button>
+              <Button onClick={downloadPNG} disabled={!!exporting} className="flex items-center ga .5 .5 hover: text-slate-600 text-xs disabled:opacity-50">
                 {exporting === "png" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileImage className="h-3.5 w-3.5" />}
                 PNG
-              </button>
-              <button
-                onClick={downloadPDF}
-                disabled={!!exporting}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-colors shadow shadow-emerald-500/30 disabled:opacity-50"
-              >
+              </Button>
+              <Button onClick={downloadPDF} disabled={!!exporting} className="flex items-center ga .5 .5 hover: text-xs shadow /30 disabled:opacity-50">
                 {exporting === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                 PDF
-              </button>
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors"
-              >
+              </Button>
+              <Button onClick={onClose} className=".5 hover: text-red-500">
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
           </div>
 

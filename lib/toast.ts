@@ -2,10 +2,15 @@ import { create } from "zustand";
 
 type ToastType = "success" | "error" | "warning";
 
+interface ToastOptions {
+  position?: "top-center" | "bottom-center" | "top-right";
+}
+
 interface Toast {
   id: string;
   type: ToastType;
   message: string;
+  position?: "top-center" | "bottom-center" | "top-right";
 }
 
 interface ToastStore {
@@ -25,7 +30,7 @@ export const useToastStore = create<ToastStore>((set, get) => ({
 }));
 
 export const toast = {
-  success: (message: string) => useToastStore.getState().addToast({ type: "success", message }),
-  error: (message: string) => useToastStore.getState().addToast({ type: "error", message }),
-  warning: (message: string) => useToastStore.getState().addToast({ type: "warning", message }),
+  success: (message: string, options?: ToastOptions) => useToastStore.getState().addToast({ type: "success", message, ...options }),
+  error: (message: string, options?: ToastOptions) => useToastStore.getState().addToast({ type: "error", message, ...options }),
+  warning: (message: string, options?: ToastOptions) => useToastStore.getState().addToast({ type: "warning", message, ...options }),
 };

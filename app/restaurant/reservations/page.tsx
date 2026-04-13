@@ -118,9 +118,7 @@ export default function ReservationsPage() {
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
         {(["reservations", "waitlist"] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+          <Button key={tab} onClick={() => setActiveTab(tab)}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
               activeTab === tab
                 ? "bg-white text-green-700 shadow-sm shadow-gray-200/80"
@@ -131,7 +129,7 @@ export default function ReservationsPage() {
               ? <><Calendar className="h-4 w-4" /> Reservations <span className={`ml-1 rounded-full px-2 py-0.5 text-xs font-bold ${activeTab === tab ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>{activeResCount}</span></>
               : <><ListOrdered className="h-4 w-4" /> Waitlist <span className={`ml-1 rounded-full px-2 py-0.5 text-xs font-bold ${activeTab === tab ? "bg-amber-100 text-amber-700" : "bg-gray-200 text-gray-500"}`}>{activeWaitCount}</span></>
             }
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -227,48 +225,38 @@ export default function ReservationsPage() {
                           <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-50">
                             {res.status === "pending" && (
                               <>
-                                <button
-                                  disabled={isUpdating}
-                                  onClick={() => updateReservationStatus(res.id, "confirmed")}
+                                <Button disabled={isUpdating} onClick={() => updateReservationStatus(res.id, "confirmed")}
                                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
                                 >
                                   <CheckCircle2 className="h-3.5 w-3.5" /> Confirm
-                                </button>
-                                <button
-                                  disabled={isUpdating}
-                                  onClick={() => updateReservationStatus(res.id, "cancelled")}
+                                </Button>
+                                <Button disabled={isUpdating} onClick={() => updateReservationStatus(res.id, "cancelled")}
                                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-200 text-red-500 text-xs font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
                                 >
                                   <XCircle className="h-3.5 w-3.5" /> Reject
-                                </button>
+                                </Button>
                               </>
                             )}
                             {res.status === "confirmed" && (
                               <>
-                                <button
-                                  disabled={isUpdating}
-                                  onClick={() => updateReservationStatus(res.id, "arrived")}
+                                <Button disabled={isUpdating} onClick={() => updateReservationStatus(res.id, "arrived")}
                                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
                                 >
                                   <CheckCircle2 className="h-3.5 w-3.5" /> Arrived
-                                </button>
-                                <button
-                                  disabled={isUpdating}
-                                  onClick={() => updateReservationStatus(res.id, "no-show")}
+                                </Button>
+                                <Button disabled={isUpdating} onClick={() => updateReservationStatus(res.id, "no-show")}
                                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-orange-200 text-orange-500 text-xs font-semibold hover:bg-orange-50 transition-colors disabled:opacity-50"
                                 >
                                   <AlertCircle className="h-3.5 w-3.5" /> No Show
-                                </button>
+                                </Button>
                               </>
                             )}
                             {res.status === "arrived" && (
-                              <button
-                                disabled={isUpdating}
-                                onClick={() => updateReservationStatus(res.id, "completed")}
+                              <Button disabled={isUpdating} onClick={() => updateReservationStatus(res.id, "completed")}
                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
                               >
                                 <CheckCircle2 className="h-3.5 w-3.5" /> Complete
-                              </button>
+                              </Button>
                             )}
                           </div>
                         )}

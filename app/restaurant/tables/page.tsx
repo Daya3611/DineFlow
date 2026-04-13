@@ -6,7 +6,6 @@ import { db } from "@/firebase";
 import { collection, query, where, getDocs, doc, setDoc, deleteDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { Table as TableType } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/lib/toast";
@@ -14,7 +13,10 @@ import { Loader2, Plus, Trash2, Printer, QrCode, Users, Sparkles } from "lucide-
 import QRCode from "react-qr-code";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppDropdown } from "@/components/common/AppDropdown";
+import { AppSheet } from "@/components/common/AppSheet";
 import { QRTableCard } from "@/components/common/QRTableCard";
+import { getPlanLimits } from "@/lib/plans";
+import { UpgradeModal } from "@/components/common/UpgradeModal";
 
 const statusConfig = {
   free: { label: "Free", dot: "bg-green-500", badge: "bg-green-50 text-green-700 border-green-200" },
@@ -34,33 +36,41 @@ export default function TablesPage() {
 
   // Premium QR card modal state
   const [qrCardTable, setQrCardTable] = useState<TableType | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     if (!restaurant) return;
     setLoading(true);
-    const q = query(collection(db, "tables"), where("restaurantId", "==", restaurant.id));
+    
+    const fetchTables = async () => {
+      try {
+        const res = await fetch(`/api/tables?restaurantId=${restaurant.id}`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          data.sort((a: any, b: any) => {
+            const numA = parseInt(a.tableNumber), numB = parseInt(b.tableNumber);
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            return (a.tableNumber || "").localeCompare(b.tableNumber || "");
+          });
+          setTables(data);
+        }
+      } catch (error) {
+        toast.error("Failed to load tables");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const unsubscribe = onSnapshot(q, (snapshot: any) => {
-      const fetched: TableType[] = [];
-      snapshot.forEach((d: any) => fetched.push(d.data() as TableType));
-      fetched.sort((a, b) => {
-        const numA = parseInt(a.tableNumber), numB = parseInt(b.tableNumber);
-        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-        return a.tableNumber.localeCompare(b.tableNumber);
-      });
-      setTables(fetched);
-      setLoading(false);
-    }, (error: any) => {
-      toast.error("Failed to load tables");
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    fetchTables();
+    const interval = setInterval(fetchTables, 10000); // Polling every 10s
+    return () => clearInterval(interval);
   }, [restaurant]);
 
   const getMenuUrl = (tableNum: string) => {
-    if (typeof window !== "undefined" && restaurant)
-      return `${window.location.origin}/menu?restaurantId=${restaurant.id}&table=${encodeURIComponent(tableNum)}`;
+    if (typeof window !== "undefined" && restaurant) {
+      const slug = restaurant.customSlug || restaurant.id;
+      return `${window.location.origin}/@${slug}/menu?table=${encodeURIComponent(tableNum)}`;
+    }
     return "";
   };
 
@@ -81,12 +91,32 @@ export default function TablesPage() {
         qrCodeUrl: getMenuUrl(tableNumber.trim()),
         createdAt: Date.now(),
       };
+
+      const res = await fetch("/api/limits/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: restaurant.id, feature: "tables" }),
+      });
+      
+      const data = await res.json();
+      if (!res.ok || data.allowed === false) {
+        if (data.error && data.error.includes("Limit reached")) {
+          toast.error(data.error);
+          setShowUpgradeModal(true);
+          setOpen(false);
+          return;
+        }
+        throw new Error(data.error || "Failed to add table");
+      }
+
       await setDoc(doc(db, "tables", tableId), newTable);
-      setTables(prev => [...prev, newTable].sort((a, b) => {
+
+      setTables((prev: any) => [...prev, newTable].sort((a: any, b: any) => {
         const numA = parseInt(a.tableNumber), numB = parseInt(b.tableNumber);
         if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-        return a.tableNumber.localeCompare(b.tableNumber);
+        return (a.tableNumber || "").localeCompare(b.tableNumber || "");
       }));
+
       toast.success(`✅ Table ${tableNumber.trim()} added!`);
       setOpen(false);
       setTableNumber("");
@@ -146,52 +176,60 @@ export default function TablesPage() {
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">QR Tables</h1>
           <p className="text-gray-500 mt-1 text-sm">Manage seating, status, and generate QR codes for each table.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger render={
-            <Button className="rounded-xl bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-200 transition-all active:scale-[0.97] font-semibold" />
-          }>
-            <Plus className="mr-2 h-4 w-4" /> Add Table
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[400px] rounded-2xl">
-            <DialogHeader>
-              <DialogTitle className="font-bold text-gray-900">Add New Table</DialogTitle>
-              <DialogDescription className="text-gray-500">Create a table to generate a unique QR code for customers.</DialogDescription>
-            </DialogHeader>
-            <form onSubmit={onSubmit} className="space-y-5 py-2">
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="tableNum" className="text-sm font-semibold text-gray-700">Table Name / Number</Label>
-                  <Input
-                    id="tableNum" value={tableNumber}
-                    onChange={e => setTableNumber(e.target.value)}
-                    placeholder="e.g. 5, Balcony 1, VIP A"
-                    className="h-11 rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500"
-                    autoFocus
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="capacity" className="text-sm font-semibold text-gray-700">Seating Capacity</Label>
-                  <div className="relative">
-                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="capacity" type="number" min="1" value={capacity}
-                      onChange={e => setCapacity(e.target.value)}
-                      placeholder="e.g. 4"
-                      className="pl-10 h-11 rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400">Used to match guests to the right table size.</p>
-                </div>
-              </div>
-              <DialogFooter className="pt-2 gap-2">
-                <Button type="button" variant="outline" className="rounded-xl" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button type="submit" className="rounded-xl bg-green-600 text-white hover:bg-green-700 font-semibold" disabled={submitting}>
-                  {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Table"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button className="hover: [0.97]" onClick={() => {
+            const limit = getPlanLimits(restaurant?.plan || "basic").tableLimit;
+            if (tables.length >= limit) {
+              setShowUpgradeModal(true);
+            } else {
+              setOpen(true);
+            }
+          }}
+        >
+          <Plus className="mr-2 h-4 w-4" /> Add Table
+        </Button>
+
+        {/* Add Table Sheet */}
+        <AppSheet
+          open={open}
+          onOpenChange={(v) => {
+            if (!v) { setTableNumber(""); setCapacity("4"); }
+            setOpen(v);
+          }}
+          title="Add New Table"
+          description="Create a table to generate a unique QR code for customers."
+          onSubmit={onSubmit}
+          loading={submitting}
+          submitLabel="Save Table"
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="tableNum" className="text-sm font-semibold text-gray-700">Table Name / Number</Label>
+            <Input
+              id="tableNum"
+              value={tableNumber}
+              onChange={e => setTableNumber(e.target.value)}
+              placeholder="e.g. 5, Balcony 1, VIP A"
+              className="h-11 rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500"
+              autoFocus
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="capacity" className="text-sm font-semibold text-gray-700">Seating Capacity</Label>
+            <div className="relative">
+              <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                id="capacity"
+                type="number"
+                min="1"
+                value={capacity}
+                onChange={e => setCapacity(e.target.value)}
+                placeholder="e.g. 4"
+                className="pl-10 h-11 rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500"
+              />
+            </div>
+            <p className="text-xs text-gray-400">Used to match guests to the right table size.</p>
+          </div>
+        </AppSheet>
+
       </div>
 
       {/* ── Status Summary Bar ── */}
@@ -312,13 +350,12 @@ export default function TablesPage() {
                     </div>
 
                     {/* Premium card button */}
-                    <button
-                      onClick={() => setQrCardTable(table)}
+                    <Button onClick={() => setQrCardTable(table)}
                       className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 text-white text-xs font-bold tracking-wide hover:from-emerald-500 hover:to-green-400 transition-all active:scale-[0.97] shadow-md shadow-green-200"
                     >
                       <Sparkles className="h-3.5 w-3.5" />
                       Print Premium Card
-                    </button>
+                    </Button>
 
                   </div>
                 </motion.div>
@@ -327,6 +364,13 @@ export default function TablesPage() {
           </AnimatePresence>
         </div>
       )}
+
+      <UpgradeModal 
+        open={showUpgradeModal} 
+        onOpenChange={setShowUpgradeModal} 
+        featureName="tables" 
+        limit={restaurant ? getPlanLimits(restaurant.plan || "basic").tableLimit : 10} 
+      />
     </div>
   );
 }

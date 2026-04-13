@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import React from "react";
+import { Button } from "@/components/ui/button";
 
 export interface AppDropdownItem {
   label: string;
@@ -26,7 +27,7 @@ interface AppDropdownProps {
   triggerIcon?: LucideIcon;
   /**
    * Completely custom trigger content (replaces icon + label).
-   * The outer <button> styles are still applied; this is the inner content.
+   * The outer <Button> styles are still applied; this is the inner content.
    */
   triggerContent?: React.ReactNode;
   items: AppDropdownItem[];

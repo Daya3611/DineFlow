@@ -11,6 +11,25 @@ export interface User {
   createdAt: number;
 }
 
+export interface LandingPageConfig {
+  theme: {
+    primaryColor: string;
+    backgroundColor: string;
+    buttonStyle: "solid" | "gradient" | "outline";
+    cardStyle: "rounded" | "sharp";
+  };
+  layout: {
+    showTakeaway: boolean;
+    showBookTable: boolean;
+    showTrackOrder: boolean;
+  };
+  cta: {
+    takeawayText: string;
+    bookingText: string;
+    trackOrderText: string;
+  };
+}
+
 export interface Restaurant {
   id: string;
   ownerId: string;
@@ -24,6 +43,7 @@ export interface Restaurant {
   subscriptionStatus: "active" | "inactive" | "expired";
   plan: "basic" | "pro" | "premium" | "trial" | "none";
   customSlug?: string;
+  landingPageConfig?: LandingPageConfig;
   createdAt: number;
 }
 
@@ -73,17 +93,23 @@ export interface OrderItem {
 export interface Order {
   id: string;
   restaurantId: string;
+  restaurantSlug?: string;
+  type?: "dine-in" | "takeaway";
   tableNumber: string;
   tableId?: string;
   items: OrderItem[];
   totalAmount: number;
-  status: "pending" | "preparing" | "served" | "paid";
-  paymentMethod: "counter" | "upi" | "razorpay";
+  status: "pending" | "preparing" | "served" | "paid" | "ready" | "completed";
+  paymentMethod: "counter" | "upi" | "razorpay" | "cod";
   paymentStatus: "unpaid" | "partial" | "pending_verification" | "paid";
   isActive: boolean;
   sessionId: string;
   splitBill?: "equal" | "custom";
   customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  pickupTime?: string;
+  otpVerified?: boolean;
   note?: string;
   createdAt: number;
 }

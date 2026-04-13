@@ -46,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getPlanLimits } from "@/lib/plans";
 
 /* ─── animation helpers ─────────────────────────────────────────── */
 const stagger: Variants = {
@@ -162,48 +163,47 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function RestaurantDashboard() {
   const { userData, restaurant, subscription } = useAuth();
   const hasRestaurant = !!restaurant;
+  const planLimits = restaurant ? getPlanLimits(restaurant.plan || "basic") : null;
+  const isBasicAnalytics = planLimits?.analytics === "basic";
 
   const remainingDays = useMemo(() => {
     if (!subscription?.expiryDate) return null;
     return Math.ceil((subscription.expiryDate - Date.now()) / 86400000);
   }, [subscription]);
 
-  const [orders, setOrders] = useState<any[]>([]);
-  const [menuCount, setMenuCount] = useState(0);
-  const [tables, setTables] = useState<any[]>([]);
   const [timeRange, setTimeRange] = useState("7d");
   const [loadingStats, setLoadingStats] = useState(true);
   const [chartTab, setChartTab] = useState("revenue");
 
+  const [stats, setStats] = useState({
+    chartData: [],
+    totalRevenue: 0,
+    totalOrders: 0,
+    averageOrderValue: 0,
+    popularItems: [] as any[],
+    prevRevenue: 0,
+    prevOrders: 0,
+    menuCount: 0,
+    tablesSummary: { total: 0, free: 0, occupied: 0, reserved: 0 }
+  });
+
   useEffect(() => {
     if (!restaurant) return;
-    const fetchData = async () => {
+    const fetchStats = async () => {
       setLoadingStats(true);
       try {
-        const [menusSnap, ordersSnap, tablesSnap] = await Promise.all([
-          getDocs(
-            query(collection(db, "menus"), where("restaurantId", "==", restaurant.id))
-          ),
-          getDocs(
-            query(collection(db, "orders"), where("restaurantId", "==", restaurant.id))
-          ),
-          getDocs(
-            query(collection(db, "tables"), where("restaurantId", "==", restaurant.id))
-          ),
-        ]);
-        setMenuCount(menusSnap.docs.length);
-        setOrders(ordersSnap.docs.map((d) => d.data()));
-        setTables(tablesSnap.docs.map((d) => d.data()));
+        const res = await fetch(`/api/dashboard/stats?restaurantId=${restaurant.id}&timeRange=${timeRange}`);
+        const data = await res.json();
+        if (data && !data.error) setStats(data);
       } catch (e) {
-        console.error("Failed to fetch dashboard data:", e);
+        console.error("Failed to fetch dashboard stats:", e);
       } finally {
         setLoadingStats(false);
       }
     };
-    fetchData();
-  }, [restaurant]);
+    fetchStats();
+  }, [restaurant, timeRange]);
 
-  /* ── derived stats ─────────────────────────────────────────── */
   const {
     chartData,
     totalRevenue,
@@ -212,98 +212,17 @@ export default function RestaurantDashboard() {
     popularItems,
     prevRevenue,
     prevOrders,
-  } = useMemo(() => {
-    if (!orders.length)
-      return {
-        chartData: [],
-        totalRevenue: 0,
-        totalOrders: 0,
-        averageOrderValue: 0,
-        popularItems: [],
-        prevRevenue: 0,
-        prevOrders: 0,
-      };
+    menuCount,
+    tablesSummary
+  } = stats;
 
-    const now = Date.now();
-    const days = timeRange === "6m" ? 180 : timeRange === "30d" ? 30 : 7;
-    const cutoff = now - days * 86400000;
-    const prevCutoff = cutoff - days * 86400000;
+  const revTrend = prevRevenue === 0 ? null : Math.round(((totalRevenue - prevRevenue) / prevRevenue) * 100);
+  const ordTrend = prevOrders === 0 ? null : Math.round(((totalOrders - prevOrders) / prevOrders) * 100);
 
-    const current = orders.filter((o) => o.createdAt >= cutoff);
-    const previous = orders.filter(
-      (o) => o.createdAt >= prevCutoff && o.createdAt < cutoff
-    );
-
-    const totalRev = current.reduce((s, o) => s + (o.totalAmount || 0), 0);
-    const totalOrd = current.length;
-    const prevRev = previous.reduce((s, o) => s + (o.totalAmount || 0), 0);
-    const prevOrd = previous.length;
-
-    const grouped: Record<string, { rev: number; cnt: number }> = {};
-    const itemCounts: Record<
-      string,
-      { name: string; count: number; rev: number }
-    > = {};
-
-    current.forEach((o) => {
-      const date = new Date(o.createdAt);
-      const key =
-        timeRange === "6m"
-          ? date.toLocaleDateString("en-US", { month: "short", year: "2-digit" })
-          : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      if (!grouped[key]) grouped[key] = { rev: 0, cnt: 0 };
-      grouped[key].rev += o.totalAmount || 0;
-      grouped[key].cnt += 1;
-      (o.items || []).forEach((item: any) => {
-        if (!itemCounts[item.id])
-          itemCounts[item.id] = { name: item.name, count: 0, rev: 0 };
-        itemCounts[item.id].count += item.quantity;
-        itemCounts[item.id].rev += item.price * item.quantity;
-      });
-    });
-
-    const generated: { date: string; revenue: number; orders: number }[] = [];
-    if (timeRange === "6m") {
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
-        const key = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-        generated.push({ date: key, revenue: grouped[key]?.rev || 0, orders: grouped[key]?.cnt || 0 });
-      }
-    } else {
-      for (let i = days - 1; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const key = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        generated.push({ date: key, revenue: grouped[key]?.rev || 0, orders: grouped[key]?.cnt || 0 });
-      }
-    }
-
-    return {
-      chartData: generated,
-      totalRevenue: totalRev,
-      totalOrders: totalOrd,
-      averageOrderValue: totalOrd > 0 ? totalRev / totalOrd : 0,
-      popularItems: Object.values(itemCounts)
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5),
-      prevRevenue: prevRev,
-      prevOrders: prevOrd,
-    };
-  }, [orders, timeRange]);
-
-  const revTrend =
-    prevRevenue === 0
-      ? null
-      : Math.round(((totalRevenue - prevRevenue) / prevRevenue) * 100);
-  const ordTrend =
-    prevOrders === 0
-      ? null
-      : Math.round(((totalOrders - prevOrders) / prevOrders) * 100);
-
-  const freeTables = tables.filter((t) => !t.status || t.status === "free").length;
-  const occTables = tables.filter((t) => t.status === "occupied").length;
-  const resTables = tables.filter((t) => t.status === "reserved").length;
+  const freeTables = tablesSummary?.free || 0;
+  const occTables = tablesSummary?.occupied || 0;
+  const resTables = tablesSummary?.reserved || 0;
+  const totalTablesCount = tablesSummary?.total || 0;
 
   /* ── plan expiry colours ───────────────────────────────────── */
   const expiryColor =
@@ -375,7 +294,7 @@ export default function RestaurantDashboard() {
                 </p>
               </div>
               <Link href="/restaurant/settings">
-                <Button className="rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] gap-2 shrink-0">
+                <Button className="bg-[#0f9d6a] [#0c7f56] ga shrink-0">
                   Complete Setup <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -527,10 +446,7 @@ export default function RestaurantDashboard() {
 
                   {restaurant.plan === "none" && (
                     <Link href="/restaurant/subscription" className="block">
-                      <Button
-                        size="sm"
-                        className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-md shadow-emerald-200 hover:shadow-lg transition-all gap-1.5"
-                      >
+                      <Button size="sm" className="w-full ga.5">
                         <Sparkles className="h-3.5 w-3.5" />
                         Upgrade Plan
                       </Button>
@@ -550,11 +466,7 @@ export default function RestaurantDashboard() {
                       Tables Overview
                     </CardTitle>
                     <Link href="/restaurant/tables">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs text-gray-400 hover:text-gray-700 gap-1 px-2"
-                      >
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-gray-400 ga">
                         Manage <ArrowRight className="h-3 w-3" />
                       </Button>
                     </Link>
@@ -575,7 +487,7 @@ export default function RestaurantDashboard() {
                           <UtensilsCrossed className="h-4 w-4 text-gray-500" />
                         </div>
                         <span className="text-2xl font-extrabold text-gray-900">
-                          {tables.length}
+                          {totalTablesCount}
                         </span>
                         <span className="text-xs text-gray-500 font-medium">Total</span>
                       </div>
@@ -616,25 +528,25 @@ export default function RestaurantDashboard() {
                   )}
 
                   {/* Capacity bar */}
-                  {!loadingStats && tables.length > 0 && (
+                  {!loadingStats && totalTablesCount > 0 && (
                     <div className="mt-4">
                       <div className="flex justify-between text-xs text-gray-400 font-medium mb-1.5">
                         <span>Capacity Usage</span>
                         <span>
-                          {Math.round(((occTables + resTables) / tables.length) * 100)}%
+                          {Math.round(((occTables + resTables) / totalTablesCount) * 100)}%
                         </span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden flex gap-0.5">
                         {occTables > 0 && (
                           <div
                             className="h-full bg-red-400 rounded-full transition-all duration-700"
-                            style={{ width: `${(occTables / tables.length) * 100}%` }}
+                            style={{ width: `${(occTables / totalTablesCount) * 100}%` }}
                           />
                         )}
                         {resTables > 0 && (
                           <div
                             className="h-full bg-amber-400 rounded-full transition-all duration-700"
-                            style={{ width: `${(resTables / tables.length) * 100}%` }}
+                            style={{ width: `${(resTables / totalTablesCount) * 100}%` }}
                           />
                         )}
                       </div>
@@ -752,13 +664,26 @@ export default function RestaurantDashboard() {
                 </div>
 
                 {/* Chart */}
-                <div className="h-[280px] w-full">
+                <div className="h-[280px] w-full relative">
+                  {isBasicAnalytics && (
+                    <div className="absolute inset-0 z-10 backdrop-blur-md bg-white/40 flex flex-col items-center justify-center rounded-xl font-semibold gap-3">
+                      <div className="bg-white p-3 rounded-full shadow-sm">
+                        <TrendingUp className="h-6 w-6 text-emerald-500" />
+                      </div>
+                      <p className="text-gray-800">Advanced Analytics locked</p>
+                      <Link href="/restaurant/subscription">
+                        <Button size="sm" className="hover:">
+                          Upgrade to Pro
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                   {loadingStats ? (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-gray-400">
                       <Loader2 className="h-8 w-8 animate-spin text-emerald-300" />
                       <span className="text-sm font-medium">Loading chart...</span>
                     </div>
-                  ) : orders.length === 0 ? (
+                  ) : chartData.length === 0 ? (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gray-50/50 rounded-xl border border-dashed border-gray-200 text-gray-400">
                       <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
                         <TrendingUp className="h-6 w-6 text-gray-300" />
@@ -837,68 +762,83 @@ export default function RestaurantDashboard() {
                 </div>
               </CardHeader>
 
-              {loadingStats ? (
-                <div className="divide-y divide-gray-50">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-4 px-6 py-4">
-                      <Skeleton className="h-9 w-9 rounded-xl shrink-0" />
-                      <Skeleton className="h-4 flex-1 max-w-[160px]" />
-                      <Skeleton className="h-4 w-12 ml-auto" />
-                      <Skeleton className="h-4 w-16" />
+              <div className="relative">
+                {isBasicAnalytics && (
+                  <div className="absolute inset-0 z-10 backdrop-blur-[3px] bg-white/40 flex flex-col items-center justify-center font-semibold gap-3 mt-4">
+                    <div className="bg-white p-3 rounded-full shadow-sm">
+                      <ChefHat className="h-6 w-6 text-emerald-500" />
                     </div>
-                  ))}
-                </div>
-              ) : popularItems.length === 0 ? (
-                <div className="py-12 flex flex-col items-center gap-2 text-gray-400">
-                  <UtensilsCrossed className="h-8 w-8 text-gray-200" />
-                  <p className="text-sm font-medium">No item data for this period</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-50">
-                  {popularItems.map((item, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.38 + idx * 0.05 }}
-                      className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/60 transition-colors group"
-                    >
-                      {/* Rank badge */}
-                      <div
-                        className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm ${idx === 0
-                          ? "bg-amber-100 text-amber-600"
-                          : idx === 1
-                            ? "bg-gray-100 text-gray-500"
-                            : idx === 2
-                              ? "bg-orange-100 text-orange-500"
-                              : "bg-gray-50 text-gray-400"
-                          }`}
+                    <p className="text-gray-800">Popular items insights locked</p>
+                    <Link href="/restaurant/subscription">
+                      <Button size="sm" className="hover:">
+                        Upgrade to Pro
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+                {loadingStats ? (
+                  <div className="divide-y divide-gray-50">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-4 px-6 py-4">
+                        <Skeleton className="h-9 w-9 rounded-xl shrink-0" />
+                        <Skeleton className="h-4 flex-1 max-w-[160px]" />
+                        <Skeleton className="h-4 w-12 ml-auto" />
+                        <Skeleton className="h-4 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                ) : popularItems.length === 0 ? (
+                  <div className="py-12 flex flex-col items-center gap-2 text-gray-400">
+                    <UtensilsCrossed className="h-8 w-8 text-gray-200" />
+                    <p className="text-sm font-medium">No item data for this period</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-50">
+                    {popularItems.map((item, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.38 + idx * 0.05 }}
+                        className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/60 transition-colors group"
                       >
-                        {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`}
-                      </div>
+                        {/* Rank badge */}
+                        <div
+                          className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm ${idx === 0
+                            ? "bg-amber-100 text-amber-600"
+                            : idx === 1
+                              ? "bg-gray-100 text-gray-500"
+                              : idx === 2
+                                ? "bg-orange-100 text-orange-500"
+                                : "bg-gray-50 text-gray-400"
+                            }`}
+                        >
+                          {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`}
+                        </div>
 
-                      {/* Name */}
-                      <p className="flex-1 font-semibold text-gray-900 text-sm group-hover:text-[#0f9d6a] transition-colors truncate">
-                        {item.name}
-                      </p>
-
-                      {/* Units */}
-                      <div className="text-right shrink-0">
-                        <p className="text-xs text-gray-400 font-medium">Units</p>
-                        <p className="text-sm font-bold text-gray-700">{item.count}</p>
-                      </div>
-
-                      {/* Revenue */}
-                      <div className="text-right shrink-0 min-w-[72px]">
-                        <p className="text-xs text-gray-400 font-medium">Revenue</p>
-                        <p className="text-sm font-extrabold text-emerald-600">
-                          ₹{item.rev.toLocaleString()}
+                        {/* Name */}
+                        <p className="flex-1 font-semibold text-gray-900 text-sm group-hover:text-[#0f9d6a] transition-colors truncate">
+                          {item.name}
                         </p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
+
+                        {/* Units */}
+                        <div className="text-right shrink-0">
+                          <p className="text-xs text-gray-400 font-medium">Units</p>
+                          <p className="text-sm font-bold text-gray-700">{item.count}</p>
+                        </div>
+
+                        {/* Revenue */}
+                        <div className="text-right shrink-0 min-w-[72px]">
+                          <p className="text-xs text-gray-400 font-medium">Revenue</p>
+                          <p className="text-sm font-extrabold text-emerald-600">
+                            ₹{item.rev.toLocaleString()}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </Card>
           </motion.div>
         </>

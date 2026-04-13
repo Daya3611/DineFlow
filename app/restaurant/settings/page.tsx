@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { db, auth } from "@/firebase";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, setDoc, updateDoc, collection, query, where, getDocs, getDoc, runTransaction } from "firebase/firestore";
 import { updatePassword, updateProfile } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ import {
   Camera,
   Trash2,
   Globe,
+  ShoppingBag,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/ui/image-upload";
@@ -93,6 +94,9 @@ export default function SettingsPage() {
   const [restaurantLoading, setRestaurantLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
+
+  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const [slugAlternatives, setSlugAlternatives] = useState<string[]>([]);
 
   const [logoUrl, setLogoUrl] = useState<string>(restaurant?.logo || "");
   const [photoUrl, setPhotoUrl] = useState<string>(
@@ -155,11 +159,75 @@ export default function SettingsPage() {
   const watchedSlug = restaurantForm.watch("customSlug");
   const origin =
     typeof window !== "undefined" ? window.location.origin : "https://dineflow.pro";
-  const bookingUrl = `${origin}/book/${
+
+  useEffect(() => {
+    if (!watchedSlug || !restaurant) {
+      setSlugStatus("idle");
+      setSlugAlternatives([]);
+      return;
+    }
+    if (watchedSlug === restaurant?.customSlug && restaurant?.customSlug !== "") {
+      setSlugStatus("available");
+      return;
+    }
+    // Set to idle when user types new slug
+    setSlugStatus("idle");
+    setSlugAlternatives([]);
+  }, [watchedSlug, restaurant]);
+
+  const checkSlug = async () => {
+    if (!watchedSlug || watchedSlug === restaurant?.customSlug) return;
+    setSlugStatus("checking");
+    try {
+      let isTaken = false;
+      const slugQuery = query(collection(db, 'restaurants'), where('customSlug', '==', watchedSlug));
+      const querySnap = await getDocs(slugQuery);
+      isTaken = querySnap.docs.some(d => d.id !== restaurant?.id);
+
+      if (!isTaken) {
+        const slugDoc = await getDoc(doc(db, 'slugConstraints', watchedSlug));
+        isTaken = slugDoc.exists() && slugDoc.data()?.restaurantId !== restaurant?.id;
+      }
+
+      if (!isTaken) {
+        setSlugStatus("available");
+        setSlugAlternatives([]);
+      } else {
+        setSlugStatus("taken");
+        
+        let checkIndex = 1;
+        let alternatives = [];
+        while (alternatives.length < 3 && checkIndex < 20) {
+          const option = `${watchedSlug}-${checkIndex}`;
+          const altQuery = query(collection(db, 'restaurants'), where('customSlug', '==', option));
+          const altSnap = await getDocs(altQuery);
+          let altTaken = altSnap.docs.some(d => d.id !== restaurant?.id);
+          if (!altTaken) {
+            const altDoc = await getDoc(doc(db, 'slugConstraints', option));
+            altTaken = altDoc.exists() && altDoc.data()?.restaurantId !== restaurant?.id;
+          }
+          if (!altTaken) {
+            alternatives.push(option);
+          }
+          checkIndex++;
+        }
+        setSlugAlternatives(alternatives);
+      }
+    } catch (e) {
+      setSlugStatus("idle");
+    }
+  };
+  const bookingUrl = `${origin}/@${
     restaurant?.plan === "premium" && restaurant.customSlug
       ? restaurant.customSlug
       : restaurant?.id || ""
-  }`;
+  }/booking`;
+
+  const takeawayUrl = `${origin}/@${
+    restaurant?.plan === "premium" && restaurant.customSlug
+      ? restaurant.customSlug
+      : restaurant?.id || ""
+  }/takeaway`;
 
   const onRestaurantSubmit = async (
     values: z.infer<typeof restaurantSchema>
@@ -170,27 +238,8 @@ export default function SettingsPage() {
     try {
       const restaurantId = restaurant?.id || `rest_${user.uid}`;
 
-      if (
-        values.customSlug &&
-        values.customSlug !== restaurant?.customSlug &&
-        restaurant?.plan === "premium"
-      ) {
-        const { query, collection, where, getDocs } = await import(
-          "firebase/firestore"
-        );
-        const checkQ = query(
-          collection(db, "restaurants"),
-          where("customSlug", "==", values.customSlug)
-        );
-        const checkSnap = await getDocs(checkQ);
-        if (!checkSnap.empty) {
-          toast.error("This custom URL is already taken by another restaurant.");
-          setRestaurantLoading(false);
-          return;
-        }
-      }
-
-      const restaurantData = {
+      const customSlugToSave = restaurant?.plan === "premium" ? values.customSlug || "" : restaurant?.customSlug || "";
+      const updateData = {
         id: restaurantId,
         ownerId: user.uid,
         name: values.name,
@@ -202,15 +251,34 @@ export default function SettingsPage() {
         logo: logoUrl,
         subscriptionStatus: restaurant?.subscriptionStatus || "inactive",
         plan: restaurant?.plan || "none",
-        customSlug:
-          restaurant?.plan === "premium"
-            ? values.customSlug || ""
-            : restaurant?.customSlug || "",
-        createdAt: restaurant?.createdAt || Date.now(),
+        customSlug: customSlugToSave,
       };
 
-      await setDoc(doc(db, "restaurants", restaurantId), restaurantData, {
-        merge: true,
+      await runTransaction(db, async (transaction) => {
+        if (customSlugToSave) {
+          const slugRef = doc(db, 'slugConstraints', customSlugToSave);
+          const docSnap = await transaction.get(slugRef);
+          if (docSnap.exists() && docSnap.data()?.restaurantId !== restaurantId) {
+            throw new Error('Slug already in use by another restaurant');
+          }
+        }
+        
+        const restRef = doc(db, 'restaurants', restaurantId);
+        const currentRestSnap = await transaction.get(restRef);
+        const oldSlug = currentRestSnap.data()?.customSlug;
+
+        if (oldSlug && oldSlug !== customSlugToSave) {
+          transaction.delete(doc(db, 'slugConstraints', oldSlug));
+        }
+
+        if (customSlugToSave) {
+          transaction.set(doc(db, 'slugConstraints', customSlugToSave), { 
+            restaurantId, 
+            updatedAt: Date.now() 
+          });
+        }
+        
+        transaction.set(restRef, updateData, { merge: true });
       });
 
       if (!restaurant) {
@@ -218,7 +286,7 @@ export default function SettingsPage() {
         setUserData({ ...userData, restaurantId });
       }
 
-      setRestaurant(restaurantData as any);
+      setRestaurant({ ...(restaurant as any), ...values, customSlug: restaurant?.plan === "premium" ? values.customSlug || "" : restaurant?.customSlug || "", logo: logoUrl });
       restaurantForm.reset(values);
       toast.success("Settings updated successfully!");
     } catch (error: any) {
@@ -616,22 +684,46 @@ export default function SettingsPage() {
                         {bookingUrl}
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 h-9 rounded-lg text-xs gap-1.5 border-gray-200"
-                          onClick={() => copyToClipboard(bookingUrl)}
+                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs ga.5" onClick={() => copyToClipboard(bookingUrl)}
                         >
                           <Copy className="h-3.5 w-3.5" />
                           Copy Link
                         </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 h-9 rounded-lg text-xs gap-1.5 border-gray-200"
-                          onClick={() => window.open(bookingUrl, "_blank")}
+                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs ga.5" onClick={() => window.open(bookingUrl, "_blank")}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          Preview
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Takeaway link quick-access */}
+                <motion.div
+                  custom={4}
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden mt-6">
+                    <CardHeader className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                      <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                        <ShoppingBag className="h-4 w-4 text-[#0f9d6a]" />
+                        Your Takeaway URL
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-3">
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-600 font-mono break-all select-all leading-relaxed">
+                        {takeawayUrl}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs ga.5" onClick={() => copyToClipboard(takeawayUrl)}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                          Copy Link
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs ga.5" onClick={() => window.open(takeawayUrl, "_blank")}
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                           Preview
@@ -645,12 +737,7 @@ export default function SettingsPage() {
 
             {/* Sticky Save — General */}
             <div className="mt-8 flex justify-end">
-              <Button
-                type="submit"
-                size="lg"
-                className="h-12 px-8 rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none gap-2"
-                disabled={restaurantLoading || !isRestaurantDirty}
-              >
+              <Button type="submit" size="lg" className="h-12 bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 /20 [0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled: disabled: ga" disabled={restaurantLoading || !isRestaurantDirty}>
                 {restaurantLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -821,12 +908,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <Button
-                type="submit"
-                size="lg"
-                className="h-12 px-8 rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed gap-2"
-                disabled={restaurantLoading || !isRestaurantDirty}
-              >
+              <Button type="submit" size="lg" className="h-12 bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 /20 [0.98] disabled:opacity-50 disabled:cursor-not-allowed ga" disabled={restaurantLoading || !isRestaurantDirty}>
                 {restaurantLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -879,20 +961,12 @@ export default function SettingsPage() {
                         {bookingUrl}
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex-1 h-11 rounded-xl gap-2 border-gray-200 hover:border-emerald-300 hover:text-emerald-700 transition-all"
-                          onClick={() => copyToClipboard(bookingUrl)}
+                        <Button type="button" variant="outline" className="flex-1 h-11 ga" onClick={() => copyToClipboard(bookingUrl)}
                         >
                           <Copy className="h-4 w-4" />
                           Copy Link
                         </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex-1 h-11 rounded-xl gap-2 border-gray-200 hover:border-violet-300 hover:text-violet-700 transition-all"
-                          onClick={() => window.open(bookingUrl, "_blank")}
+                        <Button type="button" variant="outline" className="flex-1 h-11 ga" onClick={() => window.open(bookingUrl, "_blank")}
                         >
                           <ExternalLink className="h-4 w-4" />
                           Open Page
@@ -974,25 +1048,38 @@ export default function SettingsPage() {
                             >
                               Custom Slug
                             </Label>
-                            <div className="flex items-center gap-0 rounded-xl border border-gray-200 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-500/20 overflow-hidden transition-all h-12">
+                            <div className={`flex items-center gap-0 rounded-xl border focus-within:ring-2 overflow-hidden transition-all h-12 relative ${
+                              slugStatus === "available" ? "border-emerald-400 focus-within:ring-emerald-500/20" :
+                              slugStatus === "taken" ? "border-red-400 focus-within:ring-red-500/20" :
+                              "border-gray-200 focus-within:border-emerald-400 focus-within:ring-emerald-500/20"
+                            }`}>
                               <span className="pl-4 pr-2 text-sm text-gray-400 whitespace-nowrap shrink-0 bg-gray-50 h-full flex items-center border-r border-gray-200">
-                                dineflow.pro/book/
+                                dineflow.pro/@
                               </span>
                               <input
                                 id="customSlug"
                                 placeholder="spice-garden"
-                                className="flex-1 h-full px-3 text-sm font-semibold text-emerald-700 bg-white focus:outline-none"
+                                className="w-full h-full px-3 pr-24 text-sm font-semibold text-emerald-700 bg-white focus:outline-none"
                                 {...restaurantForm.register("customSlug", {
                                   onChange: (e) => {
                                     e.target.value = e.target.value
                                       .toLowerCase()
+                                      .replace(/\s+/g, "-")
                                       .replace(/[^a-z0-9-]/g, "");
+                                    restaurantForm.setValue("customSlug", e.target.value, { shouldValidate: true, shouldDirty: true });
                                   },
                                 })}
                               />
+                              <Button type="button" variant="outline" onClick={checkSlug} disabled={slugStatus === "checking" || !watchedSlug || watchedSlug === restaurant?.customSlug} className="absolute right-1 to bottom-1 h-10 hover: text-xs ga.5">
+                                {slugStatus === "checking" ? (
+                                  <><Loader2 className="h-3 w-3 animate-spin"/> Checking</>
+                                ) : (
+                                  'Check'
+                                )}
+                              </Button>
                             </div>
                             {restaurantForm.formState.errors.customSlug && (
-                              <p className="text-xs text-red-500 font-medium">
+                              <p className="text-xs text-red-500 font-medium mt-1">
                                 {
                                   restaurantForm.formState.errors.customSlug
                                     .message
@@ -1001,21 +1088,60 @@ export default function SettingsPage() {
                             )}
                           </div>
 
-                          {/* Live Preview badge */}
+                          {/* Live Preview badge & Results */}
                           <AnimatePresence>
                             {watchedSlug && (
                               <motion.div
                                 initial={{ opacity: 0, y: 4 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0 }}
-                                className="flex items-center gap-2"
+                                className="flex flex-col gap-2"
                               >
-                                <span className="text-xs text-gray-500 font-medium">
-                                  Preview:
-                                </span>
-                                <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono text-xs px-2.5 py-0.5">
-                                  dineflow.pro/book/{watchedSlug}
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-500 font-medium">
+                                    Preview:
+                                  </span>
+                                  <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono text-xs px-2.5 py-0.5">
+                                    dineflow.pro/@{watchedSlug}
+                                  </Badge>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          <AnimatePresence>
+                            {watchedSlug && slugStatus !== "idle" && (
+                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                                <div className={`text-xs font-semibold p-2.5 rounded-lg border mt-2 flex flex-col gap-1.5 ${
+                                  slugStatus === "checking" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                                  slugStatus === "available" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                  "bg-red-50 text-red-700 border-red-200"
+                                }`}>
+                                  <div className="flex items-center gap-1.5">
+                                    {slugStatus === "checking" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                    {slugStatus === "available" && <span className="text-base leading-none">✅</span>}
+                                    {slugStatus === "taken" && <span className="text-base leading-none">❌</span>}
+                                    <span>
+                                      {slugStatus === "checking" && "Checking availability..."}
+                                      {slugStatus === "available" && "Slug is available"}
+                                      {slugStatus === "taken" && "Slug already taken"}
+                                    </span>
+                                  </div>
+                                  {slugStatus === "taken" && slugAlternatives.length > 0 && (
+                                    <div className="pt-2 border-t border-red-200/50 mt-1">
+                                      <p className="text-red-900/80 mb-1.5 text-[10px] uppercase tracking-wider">Try these instead:</p>
+                                      <div className="flex gap-2 flex-wrap">
+                                        {slugAlternatives.map(alt => (
+                                          <Button key={alt} type="button" onClick={() => restaurantForm.setValue("customSlug", alt, { shouldValidate: true, shouldDirty: true })}
+                                            className="bg-white/80 hover:bg-white text-red-900 border border-red-200/60 rounded px-2 py-0.5"
+                                          >
+                                            {alt}
+                                          </Button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -1042,15 +1168,11 @@ export default function SettingsPage() {
                               Upgrade to Premium to create a branded booking link
                               like{" "}
                               <span className="font-medium text-emerald-600">
-                                dineflow.pro/book/spice-garden
+                                dineflow.pro/@spice-garden
                               </span>
                             </p>
                           </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="mt-1 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white border-0 shadow-md shadow-amber-200 gap-1.5"
-                            onClick={() =>
+                          <Button type="button" size="sm" className="mt-1 ga.5" onClick={() =>
                               (window.location.href =
                                 "/restaurant/subscription")
                             }
@@ -1103,12 +1225,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <Button
-                type="submit"
-                size="lg"
-                className="h-12 px-8 rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed gap-2"
-                disabled={restaurantLoading || !isRestaurantDirty}
-              >
+              <Button type="submit" size="lg" className="h-12 bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 /20 [0.98] disabled:opacity-50 disabled:cursor-not-allowed ga" disabled={restaurantLoading || !isRestaurantDirty || slugStatus === "checking" || slugStatus === "taken"}>
                 {restaurantLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1272,12 +1389,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <Button
-                type="submit"
-                size="lg"
-                className="h-12 px-8 rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed gap-2"
-                disabled={profileLoading || !isProfileDirty}
-              >
+              <Button type="submit" size="lg" className="h-12 bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 /20 [0.98] disabled:opacity-50 disabled:cursor-not-allowed ga" disabled={profileLoading || !isProfileDirty}>
                 {profileLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />

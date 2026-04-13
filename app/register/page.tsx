@@ -195,11 +195,7 @@ export default function RegisterPage() {
               {errors.password && <p className="text-sm text-red-500 font-medium animate-in fade-in slide-in-from-top-1">{errors.password.message}</p>}
             </div>
 
-            <Button
-              type="submit"
-              className="w-full h-12 mt-6 font-bold text-[15px] rounded-xl bg-[#0f9d6a] text-white hover:bg-[#0c7f56] hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#0f9d6a]/20 transition-all duration-200"
-              disabled={loading || googleLoading}
-            >
+            <Button type="submit" className="w-full h-12 mt-6 text-[15px] bg-[#0f9d6a] [#0c7f56] [1.02] [0.98] shadow-[#0f9d6a]/20" disabled={loading || googleLoading}>
               {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Create free account"}
             </Button>
           </form>
@@ -213,13 +209,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full h-12 mb-4 font-bold text-[15px] rounded-xl border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98] shadow-sm transition-all duration-200"
-            onClick={handleGoogleSignIn}
-            disabled={loading || googleLoading}
-          >
+          <Button type="button" variant="outline" className="w-full h-12 mb-4 text-[15px] text-gray-700 hover: [1.02] [0.98]" onClick={handleGoogleSignIn} disabled={loading || googleLoading}>
             {googleLoading ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             ) : (

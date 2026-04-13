@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { UploadCloud, X, Loader2, ImagePlus } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface ImageUploadProps {
   value?: string;
@@ -116,14 +117,11 @@ export function ImageUpload({ value, onChange, folder, disabled }: ImageUploadPr
          <img src={value} alt="Upload" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             {!disabled && (
-              <button
-                type="button"
-                className="bg-white/90 hover:bg-white text-red-600 rounded-full p-2.5 shadow-lg transform transition-all hover:scale-110 hover:text-red-700 active:scale-95"
-                onClick={(e) => { e.stopPropagation(); onChange(""); }}
+              <Button type="button" className="/90 hover: text-red-600 .5 transform" onClick={(e) => { e.stopPropagation(); onChange(""); }}
                 title="Remove image"
               >
                 <X className="h-5 w-5" />
-              </button>
+              </Button>
             )}
          </div>
          <div className="absolute bottom-2 left-2 right-2 flex justify-between px-2">

@@ -13,6 +13,7 @@ import { auth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppDropdown } from "@/components/common/AppDropdown";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -107,9 +108,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="text-[15px] font-extrabold tracking-tight text-slate-800">Dineflow</span>
             <span className="text-[10px] font-semibold text-slate-500 bg-slate-200 border border-slate-300 px-2 py-0.5 rounded-full">ADMIN</span>
           </div>
-          <button className="md:hidden text-slate-400 hover:text-slate-600 transition-colors" onClick={() => setSidebarOpen(false)}>
+          <Button className="md:hidden text-slate-400" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
         {/* Nav */}
@@ -163,12 +164,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
         <header className="md:hidden h-16 flex items-center px-4 bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
-          <button
-            className="mr-3 p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
-            onClick={() => setSidebarOpen(true)}
+          <Button className="mr-3 text-slate-500 hover:" onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-5 w-5" />
-          </button>
+          </Button>
           <div className="font-bold text-slate-900 capitalize text-lg">{pageLabel}</div>
           <div className="ml-auto">
             <div className="flex items-center gap-2 bg-[#0f9d6a]/10 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-slate-200">

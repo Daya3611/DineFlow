@@ -222,9 +222,9 @@ export default function Home() {
               <div className="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                 <Image src="/logo.png" alt="Dineflow Icon" width={32} height={32} className="object-contain" priority />
               </div>
-              <span className="text-[17px] font-extrabold tracking-tight text-gray-900 leading-none">
+              <strong className="text-[17px] font-extrabold tracking-tight text-gray-900 leading-none">
                 Dineflow<span className="text-[#0f9d6a]">.pro</span>
-              </span>
+              </strong>
             </Link>
 
             {/* Desktop Nav */}
@@ -238,7 +238,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               {isLoggedIn ? (
                 <Link href={dashboardLink} className="hidden md:block shrink-0">
-                  <Button className="h-9 px-5 rounded-xl text-[13px] font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all duration-200">
+                  <Button className="h-9 text-[13px] bg-[#0f9d6a] [#0c7f56] [1.03] [0.98]">
                     Dashboard →
                   </Button>
                 </Link>
@@ -248,18 +248,16 @@ export default function Home() {
                     Log in
                   </Link>
                   <Link href="/register" className="hidden md:block shrink-0">
-                    <Button className="h-9 px-5 rounded-xl text-[13px] font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all duration-200">
+                    <Button className="h-9 text-[13px] bg-[#0f9d6a] [#0c7f56] [1.03] [0.98]">
                       Start Free Trial
                     </Button>
                   </Link>
                 </>
               )}
-              <button
-                className="md:hidden p-1.5 text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors shrink-0"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              <Button className="md:hidden .5 text-gray-600 hover: shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
+              </Button>
             </div>
           </motion.div>
 
@@ -280,7 +278,7 @@ export default function Home() {
                   <div className="h-px bg-gray-100 my-1" />
                   {isLoggedIn ? (
                     <Link href={dashboardLink} onClick={() => setMobileMenuOpen(false)} className="mt-1">
-                      <Button className="w-full h-11 rounded-xl font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56]">
+                      <Button className="w-full h-11 bg-[#0f9d6a] [#0c7f56]">
                         Go to Dashboard
                       </Button>
                     </Link>
@@ -288,7 +286,7 @@ export default function Home() {
                     <>
                       <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 hover:text-[#0f9d6a] transition-colors">Log in</Link>
                       <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="mt-1">
-                        <Button className="w-full h-11 rounded-xl font-bold bg-[#0f9d6a] text-white hover:bg-[#0c7f56]">
+                        <Button className="w-full h-11 bg-[#0f9d6a] [#0c7f56]">
                           Start Free Trial
                         </Button>
                       </Link>
@@ -383,14 +381,14 @@ export default function Home() {
               >
                 <Link href={isLoggedIn ? dashboardLink : "/register"}>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300 }}>
-                    <Button size="lg" className="h-14 px-10 text-base rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200 shadow-[0_4px_14px_rgba(15,157,106,0.25)]">
+                    <Button size="lg" className="h-14 text-base bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 shadow-[0_4px_14px_rgba(15,157,106,0.25)]">
                       {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </motion.div>
                 </Link>
                 <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')}>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300 }}>
-                    <Button size="lg" variant="outline" className="h-14 px-10 text-base rounded-full bg-white border border-[#e5e7eb] text-[#0f172a] hover:bg-[#f1f5f9] font-semibold transition-all">
+                    <Button size="lg" variant="outline" className="h-14 text-base border border-[#e5e7eb] text-[#0f172a] [#f1f5f9]">
                       See How It Works
                     </Button>
                   </motion.div>
@@ -594,13 +592,7 @@ export default function Home() {
                     </ul>
 
                     <Link href="/register">
-                      <Button
-                        size="lg"
-                        className={`w-full font-medium rounded-full h-12 transition duration-200 ${plan.highlighted
-                          ? "bg-white text-[#0f9d6a] hover:bg-slate-50"
-                          : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30"
-                          }`}
-                      >
+                      <Button size="lg" className={`w-full font-medium rounded-full h-12 transition duration-200 ${plan.highlighted ? "bg-white text-[#0f9d6a] hover:bg-slate-50" : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30" }`}>
                         {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </Link>
@@ -651,6 +643,7 @@ export default function Home() {
             </div>
           </section>
 
+
           {/* ── Final CTA Banner ── */}
           <section className="py-24 bg-gradient-to-br from-green-600 via-green-500 to-emerald-500  relative overflow-hidden">
             <div className="absolute inset-0 opacity-[0.08]">
@@ -666,7 +659,7 @@ export default function Home() {
               </motion.p>
               <motion.div {...fadeUp(0.14)} className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link href={isLoggedIn ? dashboardLink : "/register"}>
-                  <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold px-10 h-14 text-base rounded-2xl shadow-xl transition-all hover:scale-105">
+                  <Button size="lg" className="text-emerald-700 hover: h-14 text-base">
                     {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
@@ -686,7 +679,7 @@ export default function Home() {
               <div className="col-span-2 md:col-span-1">
                 <Link href="/" className="flex items-center gap-2 mb-4">
                   <Image src="/logo.png" alt="Dineflow Icon" width={32} height={32} className="h-8 w-8 object-contain" priority />
-                  <span className="text-lg font-extrabold tracking-tight text-gray-900">Dineflow</span>
+                  <strong className="text-lg font-extrabold tracking-tight text-gray-900">Dineflow</strong>
                 </Link>
                 <p className="text-sm text-gray-500 leading-relaxed max-w-[220px]">
                   The all-in-one restaurant management platform built for modern India.
@@ -736,7 +729,7 @@ export default function Home() {
             </div>
 
             <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-              <p>© {new Date().getFullYear()} DINEFLOW TECHNOLOGIES PRIVATE LIMITED . All rights reserved.</p>
+              <strong>© {new Date().getFullYear()} DINEFLOW TECHNOLOGIES PRIVATE LIMITED . All rights reserved.</strong>
               <div className="flex gap-6">
                 <Link href="#" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
                 <Link href="#" className="hover:text-gray-600 transition-colors">Terms of Service</Link>

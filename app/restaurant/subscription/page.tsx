@@ -10,52 +10,7 @@ import { db } from "@/firebase";
 import { doc, updateDoc, setDoc } from "firebase/firestore";
 import Script from "next/script";
 
-const plans = [
-  {
-    id: "basic",
-    name: "Basic Plan",
-    monthlyPrice: 499,
-    yearlyPrice: 4999,
-    setupFee: 2999,
-    features: ["Up to 10 tables", "Up to 50 menu items", "QR code ordering", "Basic analytics", "Standard support"],
-    tableLimit: 10,
-    menuLimit: 50,
-    supportType: "standard",
-  },
-  {
-    id: "pro",
-    name: "Pro Plan",
-    monthlyPrice: 999,
-    yearlyPrice: 9999,
-    setupFee: 4999,
-    features: ["Up to 25 tables", "Unlimited menu items", "Advanced analytics", "Priority support", "Custom branding"],
-    tableLimit: 25,
-    menuLimit: 999999,
-    supportType: "priority",
-  },
-  {
-    id: "premium",
-    name: "Premium Plan",
-    monthlyPrice: 1999,
-    yearlyPrice: 19999,
-    setupFee: 7999,
-    features: ["Up to 100 tables", "Full analytics dashboard", "Multi-outlet support", "Custom branding", "Dedicated support"],
-    tableLimit: 100,
-    menuLimit: 999999,
-    supportType: "dedicated",
-  }
-];
-
-const lifetimePlan = {
-  id: "lifetime",
-  name: "Lifetime Plan",
-  price: 24999,
-  setupFee: 0,
-  features: ["Core features only", "No free future updates", "Limited support (6 months)", "Paid upgrades required"],
-  tableLimit: 50,
-  menuLimit: 999999,
-  supportType: "limited",
-};
+import { plans, lifetimePlan } from "@/lib/plans";
 
 export default function SubscriptionPage() {
   const { user, restaurant, setRestaurant } = useAuth();
@@ -198,20 +153,18 @@ export default function SubscriptionPage() {
 
           {!showLifetime && (
             <div className="flex justify-center items-center gap-4 bg-slate-100/50 p-2 rounded-full inline-flex mx-auto border border-slate-200 mb-6">
-              <button
-                onClick={() => setBillingCycle("monthly")}
+              <Button onClick={() => setBillingCycle("monthly")}
                 className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${billingCycle === "monthly" ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-900"
                   }`}
               >
                 Monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle("yearly")}
+              </Button>
+              <Button onClick={() => setBillingCycle("yearly")}
                 className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billingCycle === "yearly" ? "bg-[#0f9d6a] shadow-sm text-white" : "text-slate-500 hover:text-slate-900"
                   }`}
               >
                 Yearly <span className={billingCycle === "yearly" ? "text-green-200" : "text-[#0f9d6a]"}>Save 20%</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -231,10 +184,7 @@ export default function SubscriptionPage() {
                 Get full access to all features for 7 days. See how DineFlow can transform your restaurant.
               </p>
             </div>
-            <Button
-              size="lg"
-              className="bg-white text-[#0f9d6a] hover:bg-slate-100 font-bold whitespace-nowrap rounded-xl shadow-sm px-8 relative z-10"
-              onClick={() => handleSubscribe({ id: "trial", name: "7 Day Trial", price: 49 }, "trial" as any)}
+            <Button size="lg" className="text-[#0f9d6a] hover: whitespace-nowrap relative z-10" onClick={() => handleSubscribe({ id: "trial", name: "7 Day Trial", price: 49 }, "trial" as any)}
               disabled={loadingPlan !== null}
             >
               {loadingPlan === "trial" ? (
@@ -273,22 +223,18 @@ export default function SubscriptionPage() {
                 </ul>
               </CardContent>
               <CardFooter className="pt-6 pb-8 px-6">
-                <Button
-                  className="w-full rounded-xl font-bold text-base h-14 transition-all duration-200 bg-white text-slate-900 hover:bg-slate-200 shadow-md"
-                  disabled={loadingPlan !== null}
-                  onClick={() => handleSubscribe(lifetimePlan, "lifetime")}
+                <Button className="w-full text-base h-14 text-slate-900 hover:" disabled={loadingPlan !== null} onClick={() => handleSubscribe(lifetimePlan, "lifetime")}
                 >
                   {loadingPlan === lifetimePlan.id ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : "Buy Once"}
                 </Button>
               </CardFooter>
             </Card>
             <div className="text-center mt-6">
-              <button
-                onClick={() => setShowLifetime(false)}
+              <Button onClick={() => setShowLifetime(false)}
                 className="text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
               >
                 ← Back to regular plans
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -347,15 +293,7 @@ export default function SubscriptionPage() {
                     </CardContent>
 
                     <CardFooter className="pt-6 pb-8 px-6">
-                      <Button
-                        className={`w-full rounded-xl font-bold text-base h-14 transition-all duration-200 ${isCurrentPlan
-                          ? "bg-slate-100 border border-slate-200 text-slate-500 cursor-not-allowed hover:bg-slate-100"
-                          : isPro
-                            ? "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-md hover:shadow-lg shadow-[#0f9d6a]/30"
-                            : "bg-slate-900 text-white hover:bg-slate-800 shadow-md"
-                          }`}
-                        disabled={isCurrentPlan || loadingPlan !== null}
-                        onClick={() => handleSubscribe(plan, billingCycle)}
+                      <Button className={`w-full rounded-xl font-bold text-base h-14 transition-all duration-200 ${isCurrentPlan ? "bg-slate-100 border border-slate-200 text-slate-500 cursor-not-allowed hover:bg-slate-100" : isPro ? "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-md hover:shadow-lg shadow-[#0f9d6a]/30" : "bg-slate-900 text-white hover:bg-slate-800 shadow-md" }`} disabled={isCurrentPlan || loadingPlan !== null} onClick={() => handleSubscribe(plan, billingCycle)}
                       >
                         {loadingPlan === plan.id ? (
                           <Loader2 className="h-6 w-6 animate-spin mx-auto" />
@@ -372,12 +310,11 @@ export default function SubscriptionPage() {
             </div>
 
             <div className="text-center mt-12 mb-8">
-              <button
-                onClick={() => setShowLifetime(true)}
+              <Button onClick={() => setShowLifetime(true)}
                 className="text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-wider"
               >
                 Looking for a one-time payment option?
-              </button>
+              </Button>
             </div>
           </>
         )}

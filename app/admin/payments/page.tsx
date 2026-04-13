@@ -88,7 +88,7 @@ export default function AdminPaymentsPage() {
                       {new Date(payment.createdAt).toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Copy ID" onClick={() => {
+                      <Button variant="ghost" size="sm" className="h-8 w-8" title="Copy ID" onClick={() => {
                         navigator.clipboard.writeText(payment.razorpayPaymentId);
                         toast.success("Payment ID copied to clipboard");
                       }}>

@@ -87,16 +87,14 @@ function DatePicker({
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
+      <Button type="button" onClick={() => setOpen(o => !o)}
         className="flex h-10 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className={value ? "text-foreground" : "text-muted-foreground"}>
           {value ? format(value, "dd MMM yyyy") : "Pick a date"}
         </span>
         <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-      </button>
+      </Button>
       {open && (
         <div className="absolute top-full left-0 z-50 mt-2 rounded-xl border bg-background shadow-xl">
           <Calendar
@@ -303,15 +301,15 @@ export default function AdminRestaurantsPage() {
                         <img src={r.logo} alt={r.name} className="h-11 w-11 rounded-full object-cover ring-2 ring-white shadow-sm" />
                       ) : (
                         <div className="h-11 w-11 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
-                          {r.name.charAt(0).toUpperCase()}
+                          {(r.name || 'U').charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900 text-sm truncate">{r.name}</p>
-                      <p className="text-xs text-slate-400 mt-0.5 truncate">{r.ownerId}</p>
+                      <p className="font-semibold text-slate-900 text-sm truncate">{r.name || "Unnamed Restaurant"}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">{r.ownerId || "Unknown Owner"}</p>
                     </div>
 
                     {/* Plan badge */}
@@ -363,7 +361,7 @@ export default function AdminRestaurantsPage() {
                         />
                       ) : (
                         <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-2xl font-black shadow-md">
-                          {selected.name.charAt(0).toUpperCase()}
+                          {(selected.name || 'U').charAt(0).toUpperCase()}
                         </div>
                       )}
                       {/* Status dot */}
@@ -371,7 +369,7 @@ export default function AdminRestaurantsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <DialogTitle className="text-lg font-bold text-slate-900 truncate">
-                        {selected.name}
+                        {selected.name || "Unnamed Restaurant"}
                       </DialogTitle>
                       <DialogDescription className="text-sm text-slate-400 mt-0.5 truncate">
                         {ownerInfo?.email || "No email on record"}
@@ -493,30 +491,15 @@ export default function AdminRestaurantsPage() {
                     {/* Quick actions */}
                     <div className="flex items-center gap-2 pt-1">
                       <p className="text-xs text-slate-400 font-medium mr-1">Quick add:</p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-3 text-xs font-bold rounded-lg"
-                        onClick={() => addDays(7)}
+                      <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => addDays(7)}
                       >
                         +7 Days
                       </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-3 text-xs font-bold rounded-lg"
-                        onClick={() => addDays(30)}
+                      <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => addDays(30)}
                       >
                         +30 Days
                       </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-3 text-xs font-bold rounded-lg"
-                        onClick={() => addDays(365)}
+                      <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => addDays(365)}
                       >
                         +1 Year
                       </Button>
@@ -539,17 +522,10 @@ export default function AdminRestaurantsPage() {
 
               {/* ── Footer ── */}
               <DialogFooter className="-mx-0 rounded-b-2xl">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors rounded-lg hover:bg-slate-100"
-                >
+                <Button onClick={closeModal} className="text-sm text-slate-500 hover:">
                   Cancel
-                </button>
-                <Button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 shadow-sm shadow-emerald-500/20 rounded-xl"
-                >
+                </Button>
+                <Button onClick={handleSave} disabled={saving} className="hover: /20">
                   {saving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

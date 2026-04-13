@@ -6,7 +6,6 @@ import { db } from "@/firebase";
 import { collection, query, where, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Menu } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
@@ -17,6 +16,9 @@ import { Loader2, Plus, UtensilsCrossed, ImageIcon, Search, Edit2, Trash2 } from
 import { motion, AnimatePresence } from "framer-motion";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { AppDropdown } from "@/components/common/AppDropdown";
+import { AppSheet } from "@/components/common/AppSheet";
+import { getPlanLimits } from "@/lib/plans";
+import { UpgradeModal } from "@/components/common/UpgradeModal";
 
 const menuItemSchema = z.object({
   name: z.string().min(2, "Item name required"),
@@ -35,6 +37,7 @@ export default function MenuPage() {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [editingItem, setEditingItem] = useState<Menu | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof menuItemSchema>>({
     resolver: zodResolver(menuItemSchema) as any,
@@ -48,13 +51,14 @@ export default function MenuPage() {
 
   const fetchMenus = async () => {
     try {
-      const q = query(collection(db, "menus"), where("restaurantId", "==", restaurant?.id));
-      const querySnapshot = await getDocs(q);
-      const fetchedMenus: Menu[] = [];
-      querySnapshot.forEach((doc) => {
-        fetchedMenus.push(doc.data() as Menu);
-      });
-      setMenus(fetchedMenus);
+      const slug = restaurant?.customSlug || restaurant?.id;
+      const res = await fetch(`/api/menu/${slug}?page=1&limit=50`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setMenus(data);
+      } else {
+        throw new Error("Failed to fetch");
+      }
     } catch (error) {
       toast.error("Failed to load menus");
     } finally {
@@ -107,34 +111,43 @@ export default function MenuPage() {
 
     setSubmitting(true);
     try {
+      if (!editingItem) {
+         const limitsRes = await fetch("/api/limits/validate", {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({ restaurantId: restaurant.id, feature: "menus" }),
+         });
+         const limitsData = await limitsRes.json();
+         if (!limitsRes.ok || limitsData.allowed === false) {
+            if (limitsData.error && limitsData.error.includes("limit reached")) {
+              toast.error(limitsData.error);
+              setShowUpgradeModal(true);
+              handleCloseModal();
+              return;
+            }
+            throw new Error(limitsData.error || "Failed capability check");
+         }
+      }
+
+      const itemId = editingItem ? editingItem.id : `menu_${Date.now()}`;
+      const menuData: Menu = {
+        id: itemId,
+        restaurantId: restaurant.id,
+        name: values.name,
+        price: values.price,
+        category: values.category || "",
+        image: imageUrl || "",
+        dietaryTags: values.dietaryTags || [],
+        highlight: (values.highlight as any) || "none"
+      };
+
+      await setDoc(doc(db, "menus", itemId), menuData);
+
       if (editingItem) {
-        const updatedMenu: Menu = {
-          ...editingItem,
-          name: values.name,
-          price: values.price,
-          category: values.category,
-          image: imageUrl,
-          dietaryTags: values.dietaryTags || [],
-          highlight: (values.highlight as any) || "none",
-        };
-        await setDoc(doc(db, "menus", editingItem.id), updatedMenu);
-        setMenus(menus.map(m => m.id === editingItem.id ? updatedMenu : m));
+        setMenus(menus.map(m => m.id === itemId ? menuData : m));
         toast.success("Menu item updated successfully");
       } else {
-        const menuId = `menu_${Date.now()}`;
-        const newMenu: Menu = {
-          id: menuId,
-          restaurantId: restaurant.id,
-          name: values.name,
-          price: values.price,
-          category: values.category,
-          image: imageUrl,
-          dietaryTags: values.dietaryTags || [],
-          highlight: (values.highlight as any) || "none",
-        };
-
-        await setDoc(doc(db, "menus", menuId), newMenu);
-        setMenus([...menus, newMenu]);
+        setMenus([...menus, menuData]);
         toast.success("Menu item added successfully");
       }
 
@@ -180,90 +193,94 @@ export default function MenuPage() {
           <p className="text-sm sm:text-base text-slate-500 mt-1">Manage your digital menu catalog.</p>
         </div>
 
-        <Dialog open={open} onOpenChange={(isOpen) => isOpen ? setOpen(true) : handleCloseModal()}>
-          <DialogTrigger render={
-            <Button className="bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 font-bold h-11 px-5 rounded-full transition-all" />
-          }>
-            <Plus className="mr-2 h-5 w-5" /> Add Item
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-2xl w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="font-bold text-xl">{editingItem ? "Edit Menu Item" : "Add New Menu Item"}</DialogTitle>
-              <DialogDescription>
-                {editingItem ? "Update details for this digital menu item." : "Create a new digital menu item with image and price."}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2 sm:py-4">
-              <div className="space-y-4">
-                <div className="flex flex-col gap-2">
-                  <Label className="font-semibold text-gray-700">Item Image</Label>
-                  <ImageUpload
-                    value={imageUrl}
-                    onChange={setImageUrl}
-                    folder={`restaurants/${restaurant.id}/menu`}
-                    disabled={submitting}
-                  />
-                </div>
+        <Button className="bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 h-11" onClick={() => {
+            const limit = getPlanLimits(restaurant?.plan || "basic").menuLimit;
+            if (menus.length >= limit) {
+              setShowUpgradeModal(true);
+            } else {
+              setEditingItem(null);
+              reset({ name: "", price: undefined, category: "" });
+              setImageUrl("");
+              setOpen(true);
+            }
+          }}
+        >
+          <Plus className="mr-2 h-5 w-5" /> Add Item
+        </Button>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="name" className="font-semibold text-gray-700">Item Name</Label>
-                  <Input id="name" placeholder="Margherita Pizza" {...register("name")} className="h-11 rounded-xl border-gray-200 focus-visible:ring-emerald-500" />
-                  {errors.name && <p className="text-xs font-semibold text-red-500">{errors.name.message}</p>}
-                </div>
+        {/* Add / Edit Sheet */}
+        <AppSheet
+          open={open}
+          onOpenChange={(isOpen) => isOpen ? setOpen(true) : handleCloseModal()}
+          title={editingItem ? "Edit Menu Item" : "Add New Menu Item"}
+          description={editingItem ? "Update details for this digital menu item." : "Create a new digital menu item with image and price."}
+          onSubmit={handleSubmit(onSubmit)}
+          loading={submitting}
+          submitLabel={editingItem ? "Save Changes" : "Add Item"}
+        >
+          <div className="flex flex-col gap-2">
+            <Label className="font-semibold text-gray-700">Item Image</Label>
+            <ImageUpload
+              value={imageUrl}
+              onChange={setImageUrl}
+              folder={`restaurants/${restaurant.id}/menu`}
+              disabled={submitting}
+            />
+          </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="price" className="font-semibold text-gray-700">Price (₹)</Label>
-                    <Input id="price" type="number" placeholder="299" {...register("price")} className="h-11 rounded-xl border-gray-200 focus-visible:ring-emerald-500" />
-                    {errors.price && <p className="text-xs font-semibold text-red-500">{errors.price.message}</p>}
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="category" className="font-semibold text-gray-700">Category</Label>
-                    <Input
-                      id="category"
-                      placeholder="Italian"
-                      list="category-options"
-                      {...register("category")}
-                      className="h-11 rounded-xl border-gray-200 focus-visible:ring-emerald-500"
-                    />
-                    <datalist id="category-options">
-                      {Array.from(new Set(menus.map(m => m.category))).filter(Boolean).map(cat => (
-                        <option key={cat} value={cat} />
-                      ))}
-                    </datalist>
-                    {errors.category && <p className="text-xs font-semibold text-red-500">{errors.category.message}</p>}
-                  </div>
-                  <div className="space-y-1.5 col-span-2">
-                    <Label className="font-semibold text-gray-700">Dietary Tags</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {["veg", "non-veg", "vegan", "spicy"].map(tag => (
-                        <label key={tag} className="flex items-center gap-1.5 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-                          <input type="checkbox" value={tag} {...register("dietaryTags")} className="accent-emerald-500 rounded-sm" />
-                          <span className="text-sm font-medium capitalize text-slate-700">{tag}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-1.5 col-span-2">
-                    <Label className="font-semibold text-gray-700">Highlight</Label>
-                    <select {...register("highlight")} className="h-11 w-full rounded-xl border-gray-200 outline-none border px-3 bg-white text-sm">
-                      <option value="none">None</option>
-                      <option value="popular">Popular</option>
-                      <option value="chef special">Chef Special</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter className="pt-4 sm:pt-2">
-                <Button type="button" variant="outline" className="rounded-xl font-semibold border-gray-200 text-gray-600 w-full sm:w-auto mb-2 sm:mb-0" onClick={handleCloseModal}>Cancel</Button>
-                <Button type="submit" className="rounded-full bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30 transition duration-200 w-full sm:w-auto" disabled={submitting}>
-                  {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Changes"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+          <div className="space-y-1.5">
+            <Label htmlFor="name" className="font-semibold text-gray-700">Item Name</Label>
+            <Input id="name" placeholder="Margherita Pizza" {...register("name")} className="h-11 rounded-xl border-gray-200 focus-visible:ring-emerald-500" />
+            {errors.name && <p className="text-xs font-semibold text-red-500">{errors.name.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="price" className="font-semibold text-gray-700">Price (₹)</Label>
+              <Input id="price" type="number" placeholder="299" {...register("price")} className="h-11 rounded-xl border-gray-200 focus-visible:ring-emerald-500" />
+              {errors.price && <p className="text-xs font-semibold text-red-500">{errors.price.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="category" className="font-semibold text-gray-700">Category</Label>
+              <Input
+                id="category"
+                placeholder="Italian"
+                list="category-options"
+                {...register("category")}
+                className="h-11 rounded-xl border-gray-200 focus-visible:ring-emerald-500"
+              />
+              <datalist id="category-options">
+                {Array.from(new Set(menus.map(m => m.category))).filter(Boolean).map(cat => (
+                  <option key={cat} value={cat} />
+                ))}
+              </datalist>
+              {errors.category && <p className="text-xs font-semibold text-red-500">{errors.category.message}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-semibold text-gray-700">Dietary Tags</Label>
+            <div className="flex flex-wrap gap-2">
+              {["veg", "non-veg", "vegan", "spicy"].map(tag => (
+                <label key={tag} className="flex items-center gap-1.5 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+                  <input type="checkbox" value={tag} {...register("dietaryTags")} className="accent-emerald-500 rounded-sm" />
+                  <span className="text-sm font-medium capitalize text-slate-700">{tag}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-semibold text-gray-700">Highlight</Label>
+            <select {...register("highlight")} className="h-11 w-full rounded-xl border-gray-200 outline-none border px-3 bg-white text-sm">
+              <option value="none">None</option>
+              <option value="popular">Popular</option>
+              <option value="chef special">Chef Special</option>
+            </select>
+          </div>
+        </AppSheet>
       </div>
+
 
       {/* Search Bar */}
       {menus.length > 0 && (
@@ -318,7 +335,7 @@ export default function MenuPage() {
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">No items found</h3>
           <p className="text-gray-500 text-sm">We couldn't find anything matching "{searchQuery}"</p>
-          <Button variant="outline" className="mt-6 rounded-xl font-medium" onClick={() => setSearchQuery("")}>Clear Search</Button>
+          <Button variant="outline" className="mt-6" onClick={() => setSearchQuery("")}>Clear Search</Button>
         </div>
       ) : (
         <div className="space-y-10">
@@ -408,6 +425,13 @@ export default function MenuPage() {
           ))}
         </div>
       )}
+
+      <UpgradeModal 
+        open={showUpgradeModal} 
+        onOpenChange={setShowUpgradeModal} 
+        featureName="menu items" 
+        limit={restaurant ? getPlanLimits(restaurant.plan || "basic").menuLimit : 50} 
+      />
     </div>
   );
 }

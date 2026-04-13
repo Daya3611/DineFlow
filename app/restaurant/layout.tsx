@@ -7,20 +7,22 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   LayoutDashboard, Menu as MenuIcon, Settings, CreditCard,
-  LogOut, Loader2, Utensils, QrCode, ClipboardList, ChefHat, X, Calendar
+  LogOut, Loader2, Utensils, QrCode, ClipboardList, ChefHat, X, Calendar, Activity, Zap, ShoppingBag, Smartphone
 } from "lucide-react";
 import { auth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppDropdown } from "@/components/common/AppDropdown";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/restaurant/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/restaurant/reservations", label: "Reservations", icon: Calendar },
-  { href: "/restaurant/menu", label: "Menu Items", icon: Utensils },
-  { href: "/restaurant/tables", label: "QR Tables", icon: QrCode },
-  { href: "/restaurant/orders", label: "Live Orders", icon: ClipboardList },
-  { href: "/restaurant/subscription", label: "Subscription", icon: CreditCard },
+  { href: "/restaurant/orders", label: "Orders", icon: ClipboardList },
+  { href: "/restaurant/menu", label: "Menu", icon: ChefHat },
+  { href: "/restaurant/tables", label: "Tables", icon: QrCode },
+  { href: "/restaurant/landing-page", label: "Branding", icon: Smartphone },
+  { href: "/restaurant/settings", label: "Settings", icon: Settings },
+
 ];
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
@@ -83,9 +85,9 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
               Your subscription is inactive or has ended. Please choose a plan or renew to continue using Dineflow.pro features.
             </p>
             <Link href="/restaurant/subscription" className="w-full">
-              <button className="w-full bg-[#0f9d6a] hover:bg-[#0c7f56] active:scale-[0.98] text-white font-bold h-14 rounded-xl transition-all shadow-md hover:shadow-lg">
+              <Button className="w-full bg-[#0f9d6a] [#0c7f56] [0.98] h-14">
                 Renew Now
-              </button>
+              </Button>
             </Link>
           </div>
         </div>
@@ -104,57 +106,101 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 flex flex-col
-        bg-[#f8fafc] border-r border-slate-200
+        fixed inset-y-0 left-0 z-50 w-[260px] flex flex-col
+        bg-white border-r border-slate-200
         transition-transform duration-300 ease-in-out
-        md:translate-x-0 md:static
+        md:translate-x-0 md:static shadow-[4px_0_24px_rgba(0,0,0,0.02)]
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
-        {/* Logo */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="Dineflow Icon" width={32} height={32} className="h-8 w-8 object-contain" priority />
-            <span className="text-[15px] font-extrabold tracking-tight text-slate-800">Dineflow</span>
+        {/* Logo & Restaurant Name */}
+        <div className="flex flex-col gap-2 px-5 py-5 border-b border-slate-100 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Image src="/logo.png" alt="Dineflow Icon" width={32} height={32} className="h-8 w-8 object-contain" priority />
+              <span className="text-[17px] font-extrabold tracking-tight text-slate-900">DineFlow</span>
+            </div>
+            <Button className="md:hidden text-slate-400" onClick={() => setSidebarOpen(false)}>
+              <X className="h-5 w-5" />
+            </Button>
           </div>
-          <button className="md:hidden text-slate-400 hover:text-slate-600 transition-colors" onClick={() => setSidebarOpen(false)}>
-            <X className="h-5 w-5" />
-          </button>
+
+          {restaurant && (
+            <div className="mt-3 flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-100 bg-slate-50/50">
+              <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                <Utensils className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-bold text-slate-900 truncate">
+                  {restaurant.name}
+                </p>
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+                  {restaurant.plan === 'premium' ? 'Premium Plan' : restaurant.plan === 'pro' ? 'Pro Plan' : 'Free Plan'}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 py-5 px-4 space-y-1.5 overflow-y-auto">
-          <div className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wide px-2 mb-3">Restaurant</div>
+        <nav className="flex-1 py-4 px-4 space-y-1.5 overflow-y-auto">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-3 mt-1">Menu</div>
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             const Icon = item.icon;
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group ${isActive
-                  ? "bg-[#e2e8f0] text-[#0f172a]"
-                  : "text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group relative overflow-hidden ${isActive
+                    ? "bg-[#0f9d6a] text-white shadow-md shadow-emerald-200"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   }`}
               >
-                <Icon className={`h-4 w-4 shrink-0 transition-colors ${isActive ? "text-[#0f172a]" : "text-[#64748b] group-hover:text-[#0f172a]"}`} />
+                {isActive && (
+                  <motion.div
+                    layoutId="activeNavIndicator"
+                    className="absolute inset-0 bg-gradient-to-r from-[#0f9d6a] to-[#12b97c] opacity-100 -z-10"
+                  />
+                )}
+                <Icon className={`h-4.5 w-4.5 shrink-0 transition-colors ${isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"
+                  }`} size={18} />
                 {item.label}
-                {item.label === "Live Orders" && (
-                  <span className="ml-auto flex h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+                {item.label === "Orders" && (
+                  <span className={`ml-auto flex h-2 w-2 rounded-full ${isActive ? "bg-white" : "bg-emerald-500 animate-pulse"}`} />
                 )}
               </Link>
             );
           })}
         </nav>
 
-        {/* User footer */}
-        <div className="p-4 border-t border-slate-200 shrink-0 bg-[#f8fafc]">
+        {/* Bottom Area (Upgrade Card + User Profile) */}
+        <div className="p-4 border-t border-slate-100 shrink-0 bg-white space-y-4">
+
+          {/* Upgrade Plan Card */}
+          {restaurant?.plan !== 'premium' && (
+            <div className="bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-2xl p-4 border border-emerald-100 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-2 opacity-10 scale-150 -translate-y-4 translate-x-4">
+                <Zap className="h-16 w-16 text-emerald-600" />
+              </div>
+              <p className="text-sm font-bold text-slate-900 mb-1">Upgrade to Pro</p>
+              <p className="text-xs text-slate-500 mb-3 relative z-10">Get more table analytics and features.</p>
+              <Link href="/restaurant/subscription" onClick={() => setSidebarOpen(false)}>
+                <Button className="w-full h-8 text-[12px] text-emerald-700 hover: border">
+                  Upgrade Plan
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {/* User Footer */}
           <div className="flex items-center gap-3 px-1">
-            <div className="h-9 w-9 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-600 font-bold text-sm shrink-0">
+            <div className="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm shrink-0">
               {userData.name.charAt(0).toUpperCase()}
             </div>
             <div className="overflow-hidden flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-700 truncate">{userData.name}</p>
+              <p className="text-sm font-semibold text-slate-800 truncate">{userData.name}</p>
               <p className="text-[11px] font-medium text-slate-400 truncate">{userData.email}</p>
             </div>
             <AppDropdown
@@ -181,21 +227,17 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
         <header className="md:hidden h-16 flex items-center px-4 bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
-          <button
-            className="mr-3 p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
-            onClick={() => setSidebarOpen(true)}
+          <Button className="mr-3 text-slate-500 hover:" onClick={() => setSidebarOpen(true)}
           >
             <MenuIcon className="h-5 w-5" />
-          </button>
+          </Button>
           <div className="font-bold text-slate-900 capitalize text-lg">{pageLabel}</div>
         </header>
 
         {/* Single-scroll main */}
         <main className="flex-1 overflow-y-auto w-full md:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">
-            <div className="bg-white md:rounded-[20px] md:border border-slate-200 md:shadow-sm p-4 md:p-6 lg:p-8 min-h-[calc(100vh-4rem)]">
-              {children}
-            </div>
+            {children}
           </div>
         </main>
       </div>
