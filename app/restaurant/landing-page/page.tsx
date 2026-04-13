@@ -214,7 +214,7 @@ export default function LandingPageCustomizer() {
       </div>
 
       <Field label="Button Style">
-        <Select value={config.theme.buttonStyle} onValueChange={v => updateTheme("buttonStyle", v)}>
+        <Select value={config.theme.buttonStyle} onValueChange={v => updateTheme("buttonStyle", v ?? "")}>
           <SelectTrigger className="focus:ring-emerald-500"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="solid">Solid Block</SelectItem>
@@ -225,7 +225,7 @@ export default function LandingPageCustomizer() {
       </Field>
 
       <Field label="Card Border Style">
-        <Select value={config.theme.cardStyle} onValueChange={v => updateTheme("cardStyle", v)}>
+        <Select value={config.theme.cardStyle} onValueChange={v => updateTheme("cardStyle", v ?? "")}>
           <SelectTrigger className="focus:ring-emerald-500"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="rounded">Soft & Rounded (Modern)</SelectItem>
