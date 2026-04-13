@@ -29,7 +29,7 @@ function useIsMobile() {
 
 interface AppSheetProps {
   /** The element that opens the sheet */
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
   title: string;
   description?: string;
   /** Controlled open state */
