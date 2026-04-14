@@ -7,12 +7,18 @@ const firebaseAdminConfig = {
   private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
 }
 
-const app =
-  getApps().length === 0
-    ? initializeApp({
-        credential: cert(firebaseAdminConfig as any),
-      })
-    : getApps()[0]
+let app;
+if (getApps().length === 0) {
+  if (firebaseAdminConfig.project_id) {
+    app = initializeApp({
+      credential: cert(firebaseAdminConfig as any),
+    })
+  } else {
+    console.warn("Firebase Admin project_id is missing. Admin SDK will not be initialized.");
+  }
+} else {
+  app = getApps()[0]
+}
 
-export const adminDb = getFirestore(app);
+export const adminDb = (app ? getFirestore(app) : null) as any;
 export const db = adminDb;
