@@ -480,10 +480,10 @@ export default function ClientMenu({
                           </div>
                         ) : (
                           <div className="flex gap-3">
-                            <Button className="flex-1 hover: /50" onClick={handleUpiDeepLink}>
+                            <Button className="flex-1 bg-[#0f9d6a] hover:bg-[#0c7f56] text-white" onClick={handleUpiDeepLink}>
                               Pay Now
                             </Button>
-                            <Button variant="outline" className="flex-1 text-emerald-700 hover:" onClick={() => handleUpiPaid(order.id)} 
+                            <Button variant="outline" className="flex-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50" onClick={() => handleUpiPaid(order.id)} 
                               disabled={updatingPayment}
                             >
                               {updatingPayment ? <Loader2 className="animate-spin h-4 w-4" /> : "I Have Paid"}
@@ -520,7 +520,7 @@ export default function ClientMenu({
            <ClipboardList className="w-12 h-12 text-gray-300 mb-4" />
            <h3 className="text-xl font-bold text-gray-800">No active orders</h3>
            <p className="text-gray-500 text-sm mt-2">When you place an order, you can track its live status here.</p>
-           <Button className="mt-6 hover:" onClick={() => setActiveNav("menu")}>
+           <Button className="mt-6 bg-[#0f9d6a] hover:bg-[#0c7f56] text-white" onClick={() => setActiveNav("menu")}>
              View Menu
            </Button>
         </div>
@@ -599,7 +599,7 @@ export default function ClientMenu({
 
           <div className="flex items-center gap-3">
             <Link href={`/book/${restaurant.plan === "premium" && !!restaurant.customSlug ? restaurant.customSlug : restaurantId}`}>
-              <Button className="h-8 text-xs text-emerald-700 hover:">
+              <Button className="h-8 text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors" variant="ghost">
                 <BookOpen className="w-3 h-3 mr-1" /> Book Table
               </Button>
             </Link>
@@ -704,105 +704,128 @@ export default function ClientMenu({
             </div>
           ) : (
             Object.entries(groupedMenus).map(([category, items]) => (
-              <div key={category} className="space-y-3">
+              <div key={category} className="space-y-0">
                 {/* Category header */}
-                <div className="flex items-center gap-3 pt-2">
-                  <h2 className="text-[15px] font-medium text-[#0f172a] capitalize tracking-tight flex items-center gap-2">
+                <div className="flex items-center gap-3 pt-4 pb-2 px-4 sticky top-[52px] bg-white z-[5]">
+                  <span className="text-base">{getCategoryIcon(category)}</span>
+                  <h2 className="text-[15px] font-bold text-[#0f172a] capitalize tracking-tight">
                     {category}
                   </h2>
+                  <span className="text-[12px] text-gray-400 font-medium">({items.length})</span>
                   <div className="flex-1 h-px bg-gray-100" />
                 </div>
 
                 {/* Item cards */}
-                <div className="space-y-[12px]">
+                <div className="divide-y divide-gray-50">
                   {items.map((item) => {
                     const qty = cart[item.id]?.quantity || 0;
+                    const isBestseller = item.highlight === "bestseller";
+                    const isPopular = item.highlight === "popular";
                     return (
                       <motion.div
                         key={item.id}
                         layout
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="bg-white rounded-[16px] border border-gray-100 p-[12px] flex gap-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:border-gray-200 transition-all duration-200"
+                        transition={{ duration: 0.18 }}
+                        className="bg-white px-4 py-4 flex gap-4 active:bg-gray-50 transition-colors"
                       >
-                        {/* Thumbnail */}
-                        <div className="h-[64px] w-[64px] rounded-[12px] bg-[#f8fafc] border border-gray-50 flex-shrink-0 overflow-hidden">
-                          {item.image ? (
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center">
-                              <UtensilsCrossed className="h-5 w-5 text-gray-300" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Details */}
-                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                          <h3 className="text-[14px] font-medium text-gray-900 leading-snug line-clamp-2 max-w-[90%]">
-                            {item.name}
-                          </h3>
-                          {item.category && (
-                            <p className="text-[12px] text-gray-500 mt-0.5 mb-1.5 line-clamp-1">
-                              {item.category}
-                            </p>
-                          )}
-                          <div className="flex flex-wrap gap-1 mt-0.5 mb-1.5">
-                            {item.highlight && item.highlight !== "none" && (
-                              <span className="bg-yellow-50 text-yellow-700 border border-yellow-200 text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-sm shrink-0">
-                                *{item.highlight}
+                        {/* Details — left side */}
+                        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                          {/* Dietary dot */}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {item.dietaryTags?.includes('veg') && (
+                              <span className="inline-flex items-center justify-center w-4 h-4 border-2 border-green-600 rounded-sm shrink-0">
+                                <span className="w-2 h-2 rounded-full bg-green-600" />
                               </span>
                             )}
-                            {item.dietaryTags?.map(tag => (
-                              <span key={tag} className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-sm border shrink-0 ${tag === 'veg' ? 'bg-green-50 text-green-700 border-green-200' : tag === 'non-veg' ? 'bg-red-50 text-red-700 border-red-200' : tag === 'vegan' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
-                                {tag}
+                            {item.dietaryTags?.includes('non-veg') && (
+                              <span className="inline-flex items-center justify-center w-4 h-4 border-2 border-red-600 rounded-sm shrink-0">
+                                <span className="w-2 h-2 rounded-full bg-red-600" />
                               </span>
-                            ))}
+                            )}
+                            {(isBestseller || isPopular) && (
+                              <span className="flex items-center gap-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
+                                <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
+                                {isBestseller ? "Bestseller" : "Popular"}
+                              </span>
+                            )}
+                            {item.highlight && item.highlight !== "none" && !isBestseller && !isPopular && (
+                              <span className="bg-yellow-50 text-yellow-700 border border-yellow-200 text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
+                                {item.highlight}
+                              </span>
+                            )}
                           </div>
-                          <p className="text-[14px] font-semibold text-gray-900 mt-auto">
+
+                          <h3 className="text-[15px] font-semibold text-gray-900 leading-snug line-clamp-2">
+                            {item.name}
+                          </h3>
+
+                          {item.description && (
+                            <p className="text-[12.5px] text-gray-500 leading-relaxed line-clamp-2">
+                              {item.description}
+                            </p>
+                          )}
+
+                          <p className="text-[15px] font-bold text-gray-900 mt-1">
                             ₹{item.price}
                           </p>
                         </div>
 
-                        {/* Add / Stepper */}
-                        <div className="flex-shrink-0 flex items-center self-center">
+                        {/* Image + Add — right side */}
+                        <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                          <div className="h-[90px] w-[90px] rounded-[12px] bg-[#f8fafc] border border-gray-100 overflow-hidden shadow-sm">
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center">
+                                <UtensilsCrossed className="h-6 w-6 text-gray-300" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Add / Stepper */}
                           <AnimatePresence mode="wait">
                             {qty === 0 ? (
                               <motion.button
                                 key="add"
-                                initial={{ scale: 0.9, opacity: 0 }}
+                                initial={{ scale: 0.85, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.9, opacity: 0 }}
+                                exit={{ scale: 0.85, opacity: 0 }}
                                 transition={{ duration: 0.15 }}
                                 onClick={() => handleAddToCart(item)}
-                                className="h-[36px] px-[16px] rounded-full bg-[#f0fdf4] text-[#0f9d6a] border border-[#0f9d6a] text-[13px] font-medium shadow-none transition-all duration-200 active:bg-[#0f9d6a] active:text-white"
+                                className="w-[90px] h-[34px] rounded-lg bg-white text-[#0f9d6a] border-2 border-[#0f9d6a] text-[13px] font-bold shadow-sm hover:bg-[#0f9d6a] hover:text-white transition-all duration-200 active:scale-95"
                               >
-                                Add
+                                + ADD
                               </motion.button>
                             ) : (
                               <motion.div
                                 key="stepper"
-                                initial={{ scale: 0.9, opacity: 0 }}
+                                initial={{ scale: 0.85, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.9, opacity: 0 }}
+                                exit={{ scale: 0.85, opacity: 0 }}
                                 transition={{ duration: 0.15 }}
-                                className="flex items-center gap-1 border border-[#0f9d6a] rounded-full h-[36px] px-1 bg-[#0f9d6a]"
+                                className="flex items-center justify-between w-[90px] h-[34px] rounded-lg bg-[#0f9d6a] px-1"
                               >
-                                <Button className="h-[28px] w-[28px] flex items-center justify-center hover:/20" onClick={() => handleRemoveFromCart(item.id)}
+                                <button
+                                  className="h-[26px] w-[26px] flex items-center justify-center text-white hover:bg-white/20 rounded-md transition-colors"
+                                  onClick={() => handleRemoveFromCart(item.id)}
                                 >
                                   <Minus className="h-3.5 w-3.5" />
-                                </Button>
-                                <span className="font-semibold text-[13px] text-white w-5 text-center select-none">
+                                </button>
+                                <span className="font-bold text-[14px] text-white w-5 text-center select-none">
                                   {qty}
                                 </span>
-                                <Button className="h-[28px] w-[28px] flex items-center justify-center hover:/20" onClick={() => handleAddToCart(item)}
+                                <button
+                                  className="h-[26px] w-[26px] flex items-center justify-center text-white hover:bg-white/20 rounded-md transition-colors"
+                                  onClick={() => handleAddToCart(item)}
                                 >
                                   <Plus className="h-3.5 w-3.5" />
-                                </Button>
+                                </button>
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -923,13 +946,18 @@ export default function ClientMenu({
           </div>
 
           <DialogFooter className="px-5 pb-5 pt-4 border-t border-gray-50 bg-white sticky bottom-0">
-            <Button disabled={submitting} onClick={placeOrder} className="w-full h-[52px] bg-[#0f9d6a] [#0c7f56] text-[15px] [0.98] shadow-[0_4px_12px_rgba(22,163,74,0.2)] disabled:opacity-70 disabled: flex items-center justify-center ga">
+            <Button
+              disabled={submitting}
+              onClick={placeOrder}
+              className="w-full h-[52px] bg-[#0f9d6a] hover:bg-[#0c7f56] text-white text-[15px] font-bold rounded-[14px] shadow-[0_4px_12px_rgba(22,163,74,0.25)] active:scale-[0.98] transition-all duration-200 disabled:opacity-70 flex items-center justify-center gap-2"
+            >
               {submitting ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" /> Placing Order...
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Placing Order...</span>
                 </>
               ) : (
-                <>Place Order Now</>
+                <span>🍽️ Place Order Now</span>
               )}
             </Button>
           </DialogFooter>

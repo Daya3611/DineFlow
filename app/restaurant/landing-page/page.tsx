@@ -1,9 +1,10 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { db } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { LandingPageConfig } from "@/types";
 import { toast } from "@/lib/toast";
 import { Input } from "@/components/ui/input";
@@ -66,6 +67,7 @@ type SectionId = typeof SECTIONS[number]["id"];
 
 export default function LandingPageCustomizer() {
   const { restaurant } = useAuth();
+  const router = useRouter();
 
   const [activeSection, setActiveSection] = useState<SectionId>("branding");
   const [saving, setSaving]               = useState(false);
@@ -130,11 +132,13 @@ export default function LandingPageCustomizer() {
       await updateDoc(doc(db, "restaurants", restaurant.id), {
         name, logo, address, phoneNumber: phone,
         landingPageConfig: config,
+        updatedAt: serverTimestamp(),
       });
       originalRef.current = JSON.stringify({ name, logo, address, phone, cfg: config });
       setIsDirty(false);
       setSaved(true);
       toast.success("Landing page published!");
+      router.refresh();
       setTimeout(() => setSaved(false), 3000);
     } catch {
       toast.error("Failed to save changes.");

@@ -2,9 +2,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { MapPin, UtensilsCrossed, CalendarDays, ExternalLink, Activity } from 'lucide-react';
 
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
+
 async function getRestaurant(slug: string) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/restaurant/${slug}`, { next: { revalidate: 60 } });
+  const res = await fetch(`${baseUrl}/api/restaurant/${slug}`, { cache: 'no-store' });
   if (!res.ok) {
     if (res.status === 404 || res.status === 403) return null;
     throw new Error('Failed to fetch restaurant');

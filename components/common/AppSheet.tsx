@@ -85,7 +85,7 @@ export function AppSheet({
           }
         />
         {onSubmit && (
-          <Button type="submit" disabled={loading} className="bg-[#0f9d6a] [#0c7f56] min-w-[100px]">
+          <Button type="submit" disabled={loading} className="bg-[#0f9d6a] hover:bg-[#0c7f56] text-white min-w-[100px]">
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

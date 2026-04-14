@@ -103,26 +103,60 @@ export function QRTableCard({
             className="w-full flex items-center justify-between bg-white rounded-3xl px-4 py-2.5 shadow-xl"
           >
             <span className="text-slate-800 text-sm font-bold flex">Table {tableNumber} QR</span>
-            <div className="flex items-center gap-1.5">
-              <Button onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
+            <div className="flex items-center gap-1">
+              <Button 
+                onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
                 title="Toggle theme"
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition-colors"
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-1.5 h-8 px-2.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium rounded-md"
               >
-                {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 {isDark ? "Light" : "Dark"}
               </Button>
-              <Button onClick={handlePrint} className="flex items-center ga .5 .5 hover: text-slate-600 text-xs">
-                <Printer className="h-3.5 w-3.5" /> Print
+              
+              <div className="w-px h-4 bg-slate-200 mx-1" />
+
+              <Button 
+                onClick={handlePrint} 
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-1.5 h-8 px-2.5 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 font-medium rounded-md"
+              >
+                <Printer className="h-4 w-4" /> 
+                Print
               </Button>
-              <Button onClick={downloadPNG} disabled={!!exporting} className="flex items-center ga .5 .5 hover: text-slate-600 text-xs disabled:opacity-50">
-                {exporting === "png" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileImage className="h-3.5 w-3.5" />}
+
+              <Button 
+                onClick={downloadPNG} 
+                disabled={!!exporting} 
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-1.5 h-8 px-2.5 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 font-medium rounded-md"
+              >
+                {exporting === "png" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileImage className="h-4 w-4" />}
                 PNG
               </Button>
-              <Button onClick={downloadPDF} disabled={!!exporting} className="flex items-center ga .5 .5 hover: text-xs shadow /30 disabled:opacity-50">
-                {exporting === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+
+              <Button 
+                onClick={downloadPDF} 
+                disabled={!!exporting} 
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-1.5 h-8 px-2.5 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 font-medium rounded-md"
+              >
+                {exporting === "pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                 PDF
               </Button>
-              <Button onClick={onClose} className=".5 hover: text-red-500">
+
+              <div className="w-px h-4 bg-slate-200 mx-1" />
+
+              <Button 
+                onClick={onClose} 
+                variant="ghost"
+                size="sm"
+                className="flex items-center justify-center w-8 h-8 p-0 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-full"
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>

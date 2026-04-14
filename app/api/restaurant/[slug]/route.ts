@@ -41,7 +41,8 @@ export async function GET(request: Request, props: { params: Promise<{ slug: str
       logo: data.logo,
       plan: data.plan,
       subscriptionStatus: data.subscriptionStatus,
-      upiId: data.upiId
+      upiId: data.upiId,
+      landingPageConfig: data.landingPageConfig
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -78,8 +78,9 @@ export interface Menu {
   price: number;
   category: string;
   image: string; // Cloudinary URL
+  description?: string; // Short description of the dish
   dietaryTags?: string[]; // "veg", "non-veg", "vegan", "spicy"
-  highlight?: "popular" | "chef special" | "none";
+  highlight?: "popular" | "bestseller" | "chef special" | "none";
 }
 
 export interface OrderItem {
