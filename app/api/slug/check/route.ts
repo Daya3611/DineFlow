@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     // 1. Check legacy restaurants without constraint docs
     const slugQuery = await adminDb.collection('restaurants').where('customSlug', '==', slug).get();
-    let isTaken = slugQuery.docs.some(doc => doc.id !== restaurantId);
+    let isTaken = slugQuery.docs.some((doc: any) => doc.id !== restaurantId);
 
     // 2. Check strict constraint locks
     if (!isTaken) {
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
       const option = `${slug}-${checkIndex}`;
       
       const altQuery = await adminDb.collection('restaurants').where('customSlug', '==', option).get();
-      let altTaken = altQuery.docs.some(doc => doc.id !== restaurantId);
+      let altTaken = altQuery.docs.some((doc: any) => doc.id !== restaurantId);
 
       if (!altTaken) {
         const altDoc = await adminDb.collection('slugConstraints').doc(option).get();
