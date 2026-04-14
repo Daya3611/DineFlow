@@ -15,9 +15,8 @@ export async function POST(request: Request) {
     }
 
     if (customSlug) {
-      // Backend Validation
       const slugQuery = await adminDb.collection('restaurants').where('customSlug', '==', customSlug).get();
-      const isTaken = slugQuery.docs.some(doc => doc.id !== restaurantId);
+      const isTaken = slugQuery.docs.some((doc: any) => doc.id !== restaurantId);
 
       if (isTaken) {
         return NextResponse.json({ error: 'Slug already in use' }, { status: 409 });
@@ -27,7 +26,7 @@ export async function POST(request: Request) {
       // This helps prevent race conditions during concurrent requests.
       const slugRef = adminDb.collection('slugConstraints').doc(customSlug);
       
-      await adminDb.runTransaction(async (transaction) => {
+      await adminDb.runTransaction(async (transaction: any) => {
         const slugRef = adminDb.collection('slugConstraints').doc(customSlug);
         const docSnap = await transaction.get(slugRef);
         if (docSnap.exists && docSnap.data()?.restaurantId !== restaurantId) {
@@ -51,7 +50,7 @@ export async function POST(request: Request) {
     } else {
       // No slug provided, standard update but try to release old slug
       const restRef = adminDb.collection('restaurants').doc(restaurantId);
-      await adminDb.runTransaction(async (transaction) => {
+      await adminDb.runTransaction(async (transaction: any) => {
         const currentRestSnap = await transaction.get(restRef);
         const oldSlug = currentRestSnap.data()?.customSlug;
         if (oldSlug) {
