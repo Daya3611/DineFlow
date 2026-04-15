@@ -7,7 +7,7 @@ import { collection, query, where, doc, updateDoc, getDocs, setDoc } from "fireb
 import { Order as OrderType } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { Loader2, Printer, CheckCircle, Clock, Utensils, UtensilsCrossed, Table, Search, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +37,7 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     setLoadingId(orderId);
     try {
-      const updateData: any = { 
+      const updateData: any = {
         status: newStatus,
         updatedAt: Date.now()
       };
@@ -45,7 +45,7 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
         updateData.paymentStatus = "paid";
         updateData.isActive = false;
       }
-      
+
       await setDoc(doc(db, "orders", orderId), updateData, { merge: true });
 
       if (newStatus === "paid") {
@@ -296,7 +296,7 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
                             <Printer className="w-4 h-4 mr-1.5" /> Print Bill
                           </Button>
                           {config.nextAction && config.nextStatus && (
-                            <Button size="sm" className={`rounded-xl text-white font-semibold h-9 ${config.nextStatus === "paid" ? "bg-[#16a34a] hover:bg-[#15803d]" : "bg-slate-900 hover:bg-slate-800" }`} onClick={() => updateOrderStatus(order.id, config.nextStatus!)}
+                            <Button size="sm" className={`rounded-xl text-white font-semibold h-9 ${config.nextStatus === "paid" ? "bg-[#16a34a] hover:bg-[#15803d]" : "bg-slate-900 hover:bg-slate-800"}`} onClick={() => updateOrderStatus(order.id, config.nextStatus!)}
                               disabled={(config.nextStatus === "paid" && payStatus === "pending_verification") || loadingId === order.id}
                             >
                               {loadingId === order.id ? (

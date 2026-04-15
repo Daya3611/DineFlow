@@ -259,7 +259,7 @@ function SidebarTrigger({
   const { toggleSidebar } = useSidebar()
 
   return (
-    <Button data-sidebar="trigger" data-slot="sidebar-trigger" variant="ghost" size="icon-sm" className={cn(className)} onClick={(event) => {
+    <Button data-sidebar="trigger" data-slot="sidebar-trigger" variant="ghost" size="icon-sm" className={cn(className)} onClick={(event: any) => {
         onClick?.(event)
         toggleSidebar()
       }}

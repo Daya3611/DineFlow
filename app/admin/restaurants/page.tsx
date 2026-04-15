@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { db } from "@/firebase";
 import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
 import { Restaurant, Subscription, User } from "@/types";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   Loader2,
@@ -42,19 +42,19 @@ import {
 
 // ─── Plan metadata ───────────────────────────────────────────────────────────
 const PLANS = [
-  { value: "none",     label: "No Plan",          color: "bg-slate-100 text-slate-600" },
-  { value: "trial",    label: "Trial · ₹49/7d",   color: "bg-violet-100 text-violet-700" },
-  { value: "basic",    label: "Basic",             color: "bg-blue-100 text-blue-700" },
-  { value: "pro",      label: "Pro",               color: "bg-emerald-100 text-emerald-700" },
-  { value: "premium",  label: "Premium",           color: "bg-amber-100 text-amber-700" },
-  { value: "lifetime", label: "Lifetime",          color: "bg-pink-100 text-pink-700" },
+  { value: "none", label: "No Plan", color: "bg-slate-100 text-slate-600" },
+  { value: "trial", label: "Trial · ₹49/7d", color: "bg-violet-100 text-violet-700" },
+  { value: "basic", label: "Basic", color: "bg-blue-100 text-blue-700" },
+  { value: "pro", label: "Pro", color: "bg-emerald-100 text-emerald-700" },
+  { value: "premium", label: "Premium", color: "bg-amber-100 text-amber-700" },
+  { value: "lifetime", label: "Lifetime", color: "bg-pink-100 text-pink-700" },
 ];
 
 const STATUS_OPTIONS = [
-  { value: "active",    label: "Active",    icon: CheckCircle2,   color: "text-emerald-600" },
-  { value: "inactive",  label: "Inactive",  icon: ShieldOff,      color: "text-slate-500" },
-  { value: "expired",   label: "Expired",   icon: Clock,          color: "text-red-500" },
-  { value: "cancelled", label: "Cancelled", icon: AlertTriangle,  color: "text-orange-500" },
+  { value: "active", label: "Active", icon: CheckCircle2, color: "text-emerald-600" },
+  { value: "inactive", label: "Inactive", icon: ShieldOff, color: "text-slate-500" },
+  { value: "expired", label: "Expired", icon: Clock, color: "text-red-500" },
+  { value: "cancelled", label: "Cancelled", icon: AlertTriangle, color: "text-orange-500" },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -111,22 +111,22 @@ function DatePicker({
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function AdminRestaurantsPage() {
-  const [restaurants, setRestaurants]           = useState<Restaurant[]>([]);
-  const [filtered, setFiltered]                 = useState<Restaurant[]>([]);
-  const [loading, setLoading]                   = useState(true);
-  const [search, setSearch]                     = useState("");
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [filtered, setFiltered] = useState<Restaurant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   // Modal state
-  const [selected, setSelected]                 = useState<Restaurant | null>(null);
-  const [ownerInfo, setOwnerInfo]               = useState<User | null>(null);
-  const [selectedSub, setSelectedSub]           = useState<Subscription | null>(null);
-  const [detailsLoading, setDetailsLoading]     = useState(false);
+  const [selected, setSelected] = useState<Restaurant | null>(null);
+  const [ownerInfo, setOwnerInfo] = useState<User | null>(null);
+  const [selectedSub, setSelectedSub] = useState<Subscription | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   // Form state
-  const [editPlan, setEditPlan]                 = useState("basic");
-  const [editStatus, setEditStatus]             = useState("active");
-  const [editExpiry, setEditExpiry]             = useState<Date | undefined>(undefined);
-  const [saving, setSaving]                     = useState(false);
+  const [editPlan, setEditPlan] = useState("basic");
+  const [editStatus, setEditStatus] = useState("active");
+  const [editExpiry, setEditExpiry] = useState<Date | undefined>(undefined);
+  const [saving, setSaving] = useState(false);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => { fetchRestaurants(); }, []);

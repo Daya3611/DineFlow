@@ -248,7 +248,7 @@ export default function Home() {
                     Log in
                   </Link>
                   <Link href="/register" className="hidden md:block shrink-0">
-                    <Button className="h-9 text-[13px] bg-[#0f9d6a] [#0c7f56] [1.03] [0.98]">
+                    <Button className="h-9 text-[13px]">
                       Start Free Trial
                     </Button>
                   </Link>
@@ -592,7 +592,7 @@ export default function Home() {
                     </ul>
 
                     <Link href="/register">
-                      <Button size="lg" className={`w-full font-medium rounded-full h-12 transition duration-200 ${plan.highlighted ? "bg-white text-[#0f9d6a] hover:bg-slate-50" : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30" }`}>
+                      <Button size="lg" className={`w-full font-medium rounded-full h-12 transition duration-200 ${plan.highlighted ? "bg-white text-[#0f9d6a] hover:bg-slate-50" : "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] focus:ring-2 focus:ring-[#0f9d6a]/30"}`}>
                         {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </Link>

@@ -13,7 +13,7 @@ export default function OrderTrackingRoutePage(props: { params: Promise<{ restau
   else if (slug.startsWith('@')) slug = slug.substring(1);
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-slate-50 relative pb-[70px]">
+    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: "#f8fafc", position: "relative" }}>
        <OrderTrackingScreen 
           orderId={params.orderId} 
           table="Takeaway"

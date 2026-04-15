@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
   UtensilsCrossed, ShoppingBag, ChevronRight,
@@ -350,11 +350,10 @@ export default function ClientTakeaway({
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`shrink-0 flex items-center gap-1.5 px-3.5 h-9 rounded-full text-[13px] font-semibold transition-all active:scale-95 whitespace-nowrap border ${
-                    active
+                  className={`shrink-0 flex items-center gap-1.5 px-3.5 h-9 rounded-full text-[13px] font-semibold transition-all active:scale-95 whitespace-nowrap border ${active
                       ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
                       : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200"
-                  }`}
+                    }`}
                 >
                   <span className="text-[15px] leading-none">{catIcon(cat)}</span>
                   {cat}
@@ -468,11 +467,10 @@ export default function ClientTakeaway({
                   <button
                     key={t}
                     onClick={() => setPickupTime(t)}
-                    className={`h-10 rounded-xl text-[13px] font-semibold border transition-all ${
-                      pickupTime === t
+                    className={`h-10 rounded-xl text-[13px] font-semibold border transition-all ${pickupTime === t
                         ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
                         : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-                    }`}
+                      }`}
                   >
                     {t}
                   </button>

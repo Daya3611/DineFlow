@@ -11,7 +11,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";
 import { ChefHat, Loader2, Mail, Lock, User } from "lucide-react";

@@ -5,12 +5,11 @@ import { useState, useEffect } from "react";
 import { db } from "@/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Order as OrderType } from "@/types";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { Bell, Loader2, ClipboardList, ShoppingBag } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DineInOrders } from "./DineInOrders";
 import { TakeawayOrders } from "./TakeawayOrders";
-import { Button } from "@/components/ui/button";
 
 export default function UnifiedOrdersPage() {
   const { restaurant } = useAuth();
@@ -21,7 +20,7 @@ export default function UnifiedOrdersPage() {
 
   const playNewOrderSound = () => {
     const audio = new Audio("/new-order.mp3");
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
   };
 
   useEffect(() => {
@@ -36,7 +35,7 @@ export default function UnifiedOrdersPage() {
 
     setLoading(true);
     const q = query(
-      collection(db, "orders"), 
+      collection(db, "orders"),
       where("restaurantId", "==", restaurant.id)
     );
 
@@ -56,7 +55,7 @@ export default function UnifiedOrdersPage() {
       snapshot.forEach((d) => {
         fetchedOrders.push({ ...d.data() as OrderType, id: d.id });
       });
-      
+
       fetchedOrders.sort((a, b) => b.createdAt - a.createdAt);
 
       setOrders(fetchedOrders);
@@ -88,7 +87,8 @@ export default function UnifiedOrdersPage() {
           <p className="text-gray-500 mt-1 text-sm">Real-time live operations control center.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button onClick={() => {
+          <button
+            onClick={() => {
               if (!isSoundEnabled) {
                 const audio = new Audio("/new-order.mp3");
                 audio.volume = 0; audio.play().catch(() => { });
@@ -99,7 +99,7 @@ export default function UnifiedOrdersPage() {
           >
             <Bell className="h-4 w-4" />
             {isSoundEnabled ? "Sound On" : "Sound Off"}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export default function UnifiedOrdersPage() {
               {activeTakeaway.length > 0 && <span className="ml-2 bg-primary/10 text-primary px-1.5 rounded font-black text-xs">{activeTakeaway.length}</span>}
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="dine-in">
             <DineInOrders dineInOrders={dineInOrders} />
           </TabsContent>

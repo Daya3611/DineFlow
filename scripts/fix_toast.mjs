@@ -11,7 +11,7 @@ function replaceInDir(dir) {
     } else if (fullPath.endsWith('.tsx') && !fullPath.includes('sonner.tsx')) {
       let content = fs.readFileSync(fullPath, 'utf8');
       if (content.includes('from "sonner"')) {
-        content = content.replace(/import\s+\{\s*toast\s*\}\s*from\s*"sonner";?/g, 'import { toast } from "@/lib/toast";');
+        content = content.replace(/import\s+\{\s*toast\s*\}\s*from\s*"sonner";?/g, 'import { toast } from "sonner";');
         fs.writeFileSync(fullPath, content);
       }
     }

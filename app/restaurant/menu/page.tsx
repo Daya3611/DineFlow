@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { Loader2, Plus, UtensilsCrossed, ImageIcon, Search, Edit2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImageUpload } from "@/components/ui/image-upload";
@@ -112,21 +112,21 @@ export default function MenuPage() {
     setSubmitting(true);
     try {
       if (!editingItem) {
-         const limitsRes = await fetch("/api/limits/validate", {
-           method: "POST",
-           headers: { "Content-Type": "application/json" },
-           body: JSON.stringify({ restaurantId: restaurant.id, feature: "menus" }),
-         });
-         const limitsData = await limitsRes.json();
-         if (!limitsRes.ok || limitsData.allowed === false) {
-            if (limitsData.error && limitsData.error.includes("limit reached")) {
-              toast.error(limitsData.error);
-              setShowUpgradeModal(true);
-              handleCloseModal();
-              return;
-            }
-            throw new Error(limitsData.error || "Failed capability check");
-         }
+        const limitsRes = await fetch("/api/limits/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId: restaurant.id, feature: "menus" }),
+        });
+        const limitsData = await limitsRes.json();
+        if (!limitsRes.ok || limitsData.allowed === false) {
+          if (limitsData.error && limitsData.error.includes("limit reached")) {
+            toast.error(limitsData.error);
+            setShowUpgradeModal(true);
+            handleCloseModal();
+            return;
+          }
+          throw new Error(limitsData.error || "Failed capability check");
+        }
       }
 
       const itemId = editingItem ? editingItem.id : `menu_${Date.now()}`;
@@ -194,16 +194,16 @@ export default function MenuPage() {
         </div>
 
         <Button className="bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 h-11" onClick={() => {
-            const limit = getPlanLimits(restaurant?.plan || "basic").menuLimit;
-            if (menus.length >= limit) {
-              setShowUpgradeModal(true);
-            } else {
-              setEditingItem(null);
-              reset({ name: "", price: undefined, category: "" });
-              setImageUrl("");
-              setOpen(true);
-            }
-          }}
+          const limit = getPlanLimits(restaurant?.plan || "basic").menuLimit;
+          if (menus.length >= limit) {
+            setShowUpgradeModal(true);
+          } else {
+            setEditingItem(null);
+            reset({ name: "", price: undefined, category: "" });
+            setImageUrl("");
+            setOpen(true);
+          }
+        }}
         >
           <Plus className="mr-2 h-5 w-5" /> Add Item
         </Button>
@@ -426,11 +426,11 @@ export default function MenuPage() {
         </div>
       )}
 
-      <UpgradeModal 
-        open={showUpgradeModal} 
-        onOpenChange={setShowUpgradeModal} 
-        featureName="menu items" 
-        limit={restaurant ? getPlanLimits(restaurant.plan || "basic").menuLimit : 50} 
+      <UpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        featureName="menu items"
+        limit={restaurant ? getPlanLimits(restaurant.plan || "basic").menuLimit : 50}
       />
     </div>
   );

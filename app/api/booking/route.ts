@@ -20,14 +20,33 @@ export async function POST(request: Request) {
     const id = type === 'reservation' ? `res_${Date.now()}` : `wait_${Date.now()}`;
     const collectionName = type === 'reservation' ? 'reservations' : 'waitlist';
 
-    const newRecord = {
+    let newRecord: any = {
       id,
       restaurantId,
-      guestCount: parseInt(guestCount, 10),
-      ...rest,
-      status: type === 'reservation' ? 'pending' : 'waiting',
-      createdAt: Date.now()
+      createdAt: Date.now(),
     };
+
+    if (type === 'reservation') {
+      newRecord = {
+        ...newRecord,
+        guestCount: parseInt(guestCount, 10),
+        ...rest,
+        status: 'pending',
+      };
+    } else {
+      // mapping waitlist fields to match the Waitlist interface
+      newRecord = {
+        ...newRecord,
+        name: rest.customerName,
+        guests: parseInt(guestCount, 10),
+        phone: rest.phone,
+        date: rest.date,
+        timeSlot: rest.time,
+        time: Date.now(), // required by Waitlist interface
+        status: 'waiting',
+        ...rest, // preserve emails, notes
+      };
+    }
 
     await adminDb.collection(collectionName).doc(id).set(newRecord);
 

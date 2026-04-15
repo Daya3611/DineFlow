@@ -128,5 +128,14 @@ service cloud.firestore {
       allow update, delete: if isSuperAdmin() ||
         isRestaurantOwner(resource.data.restaurantId);
     }
+
+    // 🛎️ WAITER CALLS
+    match /waiterCalls/{callId} {
+      // ✅ Allow customers using the menu to call waiter
+      allow create: if true;
+      allow read: if true;
+      allow update, delete: if isSuperAdmin() ||
+        isRestaurantOwner(resource.data.restaurantId);
+    }
   }
 }

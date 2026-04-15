@@ -14,15 +14,16 @@ import { signOut } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppDropdown } from "@/components/common/AppDropdown";
 import { Button } from "@/components/ui/button";
+import WaiterNotificationSystem from "@/components/restaurant/WaiterNotificationSystem";
 
 const navItems = [
   { href: "/restaurant/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/restaurant/orders", label: "Orders", icon: ClipboardList },
+  { href: "/restaurant/reservations", label: "Bookings", icon: Calendar },
   { href: "/restaurant/menu", label: "Menu", icon: ChefHat },
   { href: "/restaurant/tables", label: "Tables", icon: QrCode },
   { href: "/restaurant/landing-page", label: "Branding", icon: Smartphone },
   { href: "/restaurant/settings", label: "Settings", icon: Settings },
-
 ];
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
@@ -241,6 +242,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
           </div>
         </main>
       </div>
+      {restaurant?.id && <WaiterNotificationSystem restaurantId={restaurant.id} />}
     </div>
   );
 }

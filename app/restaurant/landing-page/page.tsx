@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { db } from "@/firebase";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { LandingPageConfig } from "@/types";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -45,21 +45,21 @@ const DEFAULT_CONFIG: LandingPageConfig = {
 
 const PRESETS = [
   { name: "Emerald", primary: "#059669", bg: "#f0fdf4" },
-  { name: "Ocean",   primary: "#0284c7", bg: "#f0f9ff" },
-  { name: "Violet",  primary: "#7c3aed", bg: "#faf5ff" },
-  { name: "Rose",    primary: "#e11d48", bg: "#fff1f2" },
-  { name: "Slate",   primary: "#334155", bg: "#f8fafc" },
-  { name: "Amber",   primary: "#d97706", bg: "#fffbeb" },
+  { name: "Ocean", primary: "#0284c7", bg: "#f0f9ff" },
+  { name: "Violet", primary: "#7c3aed", bg: "#faf5ff" },
+  { name: "Rose", primary: "#e11d48", bg: "#fff1f2" },
+  { name: "Slate", primary: "#334155", bg: "#f8fafc" },
+  { name: "Amber", primary: "#d97706", bg: "#fffbeb" },
 ];
 
 // ─── Sidebar sections ────────────────────────────────────────────────────────
 
 const SECTIONS = [
-  { id: "branding",  label: "Branding",       icon: Store },
-  { id: "theme",     label: "Theme",           icon: Palette },
-  { id: "layout",    label: "Layout",          icon: Layers },
-  { id: "cta",       label: "Buttons & CTA",  icon: Type },
-  { id: "advanced",  label: "Advanced",        icon: Settings2 },
+  { id: "branding", label: "Branding", icon: Store },
+  { id: "theme", label: "Theme", icon: Palette },
+  { id: "layout", label: "Layout", icon: Layers },
+  { id: "cta", label: "Buttons & CTA", icon: Type },
+  { id: "advanced", label: "Advanced", icon: Settings2 },
 ] as const;
 type SectionId = typeof SECTIONS[number]["id"];
 
@@ -70,16 +70,16 @@ export default function LandingPageCustomizer() {
   const router = useRouter();
 
   const [activeSection, setActiveSection] = useState<SectionId>("branding");
-  const [saving, setSaving]               = useState(false);
-  const [saved, setSaved]                 = useState(false);
-  const [isDirty, setIsDirty]             = useState(false);
-  const [previewScale, setPreviewScale]   = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [previewScale, setPreviewScale] = useState(1);
 
   // Branding
-  const [name, setName]       = useState("");
-  const [logo, setLogo]       = useState("");
+  const [name, setName] = useState("");
+  const [logo, setLogo] = useState("");
   const [address, setAddress] = useState("");
-  const [phone, setPhone]     = useState("");
+  const [phone, setPhone] = useState("");
 
   // Config
   const [config, setConfig] = useState<LandingPageConfig>(DEFAULT_CONFIG);
@@ -103,12 +103,12 @@ export default function LandingPageCustomizer() {
     setIsDirty(curr !== originalRef.current);
   }, [name, logo, address, phone, config]);
 
-  const updateTheme  = (k: keyof LandingPageConfig["theme"],  v: string)  => setConfig(p => ({ ...p, theme:  { ...p.theme,  [k]: v } }));
+  const updateTheme = (k: keyof LandingPageConfig["theme"], v: string) => setConfig(p => ({ ...p, theme: { ...p.theme, [k]: v } }));
   const updateLayout = (k: keyof LandingPageConfig["layout"], v: boolean) => setConfig(p => ({ ...p, layout: { ...p.layout, [k]: v } }));
-  const updateCta    = (k: keyof LandingPageConfig["cta"],    v: string)  => setConfig(p => ({ ...p, cta:   { ...p.cta,   [k]: v } }));
+  const updateCta = (k: keyof LandingPageConfig["cta"], v: string) => setConfig(p => ({ ...p, cta: { ...p.cta, [k]: v } }));
 
   const applyPreset = (preset: typeof PRESETS[number]) => {
-    updateTheme("primaryColor",  preset.primary);
+    updateTheme("primaryColor", preset.primary);
     updateTheme("backgroundColor", preset.bg);
     // micro-bounce on preview
     setPreviewScale(0.97);
@@ -149,7 +149,7 @@ export default function LandingPageCustomizer() {
 
   // ── preview helpers ─────────────────────────────────────────────────────
   const cardRadius = config.theme.cardStyle === "rounded" ? "1.5rem" : "0.25rem";
-  const btnRadius  = config.theme.cardStyle === "rounded" ? "0.875rem" : "0.125rem";
+  const btnRadius = config.theme.cardStyle === "rounded" ? "0.875rem" : "0.125rem";
 
   const btnStyle = (): React.CSSProperties => {
     if (config.theme.buttonStyle === "gradient")
@@ -325,9 +325,9 @@ export default function LandingPageCustomizer() {
 
   const activeContent: Record<SectionId, React.ReactNode> = {
     branding: <SectionBranding />,
-    theme:    <SectionTheme />,
-    layout:   <SectionLayout />,
-    cta:      <SectionCta />,
+    theme: <SectionTheme />,
+    layout: <SectionLayout />,
+    cta: <SectionCta />,
     advanced: <SectionAdvanced />,
   };
 
@@ -345,9 +345,8 @@ export default function LandingPageCustomizer() {
                 <button
                   key={id}
                   onClick={() => setActiveSection(id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                    active ? "bg-emerald-50 text-emerald-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  }`}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${active ? "bg-emerald-50 text-emerald-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
                 >
                   <Icon className={`w-4 h-4 shrink-0 ${active ? "text-emerald-600" : "text-slate-400"}`} />
                   {label}
@@ -363,13 +362,12 @@ export default function LandingPageCustomizer() {
           <Button
             onClick={handleSave}
             disabled={saving || !isDirty}
-            className={`w-full rounded-xl h-10 font-bold transition-all ${
-              saved ? "bg-emerald-500 text-white" : isDirty ? "bg-slate-900 hover:bg-slate-800 text-white" : "bg-slate-100 text-slate-400 cursor-not-allowed"
-            }`}
+            className={`w-full rounded-xl h-10 font-bold transition-all ${saved ? "bg-emerald-500 text-white" : isDirty ? "bg-slate-900 hover:bg-slate-800 text-white" : "bg-slate-100 text-slate-400 cursor-not-allowed"
+              }`}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> :
-             saved   ? <CheckCircle2 className="w-4 h-4 mr-2" /> :
-                       <Save className="w-4 h-4 mr-2" />}
+              saved ? <CheckCircle2 className="w-4 h-4 mr-2" /> :
+                <Save className="w-4 h-4 mr-2" />}
             {saving ? "Saving…" : saved ? "Published!" : "Publish"}
           </Button>
           {isDirty && !saving && <p className="text-center text-[11px] text-amber-500 mt-2 font-medium">Unsaved changes</p>}

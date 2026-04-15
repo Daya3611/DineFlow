@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
-import { FramerToaster } from "@/components/ui/framer-toaster";
 import BottomNav from "@/components/mobile/BottomNav";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,7 +36,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <BottomNav />
-          <FramerToaster />
+          <Toaster />
         </AuthProvider>
       </body>
     </html>

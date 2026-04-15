@@ -1,18 +1,91 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { onSnapshot, doc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { Order as OrderType } from "@/types";
-import { motion } from "framer-motion";
-import { ChevronLeft, CheckCircle2, Clock, Utensils, UtensilsCrossed, CheckCircle, Flame, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ChevronLeft,
+  Clock,
+  Flame,
+  CheckCircle2,
+  UtensilsCrossed,
+  Info,
+  Plus,
+  PhoneCall,
+  Receipt,
+} from "lucide-react";
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+const STEPS = [
+  {
+    id: "pending",
+    label: "Order Confirmed",
+    short: "Order Received",
+    message: "Kitchen has received your order",
+    icon: Clock,
+    color: "#16a34a",
+  },
+  {
+    id: "preparing",
+    label: "Preparing",
+    short: "In the Kitchen",
+    message: "Your food is being freshly prepared",
+    icon: Flame,
+    color: "#f59e0b",
+  },
+  {
+    id: "served",
+    label: "Served",
+    short: "Enjoy your meal!",
+    message: "Your order has been served",
+    icon: UtensilsCrossed,
+    color: "#16a34a",
+  },
+] as const;
+
+function getStepIndex(status: string): number {
+  if (status === "paid") return 2;
+  const idx = STEPS.findIndex((s) => s.id === status);
+  return idx === -1 ? 0 : idx;
+}
+
+function PaymentBadge({
+  paymentStatus,
+  paymentMethod,
+}: {
+  paymentStatus: string;
+  paymentMethod: string;
+}) {
+  if (paymentStatus === "paid") {
+    return (
+      <span className="ots-badge ots-badge--green">
+        ✓ Paid · {paymentMethod === "upi" ? "UPI" : "Counter"}
+      </span>
+    );
+  }
+  if (paymentStatus === "pending_verification") {
+    return (
+      <span className="ots-badge ots-badge--amber">⏳ Verifying UPI Payment</span>
+    );
+  }
+  return (
+    <span className="ots-badge ots-badge--yellow">
+      💳 Payment Pending · Pay at Counter
+    </span>
+  );
+}
+
+// ─── Main Component ─────────────────────────────────────────────────────────────
 
 export default function OrderTrackingScreen({
   orderId,
   table,
   onOrderAgain,
   onViewMenu,
-  renderPaymentUI
+  renderPaymentUI,
 }: {
   orderId: string;
   table: string;
@@ -24,9 +97,9 @@ export default function OrderTrackingScreen({
 
   useEffect(() => {
     if (!orderId) return;
-    const unsub = onSnapshot(doc(db, "orders", orderId), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data() as OrderType;
+    const unsub = onSnapshot(doc(db, "orders", orderId), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as OrderType;
         setOrder((prev) => {
           if (prev && prev.status !== data.status && navigator.vibrate) {
             navigator.vibrate([100, 50, 100]);
@@ -35,178 +108,604 @@ export default function OrderTrackingScreen({
         });
       }
     });
-
     return () => unsub();
   }, [orderId]);
 
+  /* ── Loading skeleton ── */
   if (!order) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center h-full w-full bg-slate-50">
-        <Clock className="w-10 h-10 animate-spin text-emerald-500 mb-4" />
-        <p className="text-gray-500 font-medium">Fetching live order status...</p>
+      <div className="ots-loading">
+        <div className="ots-loading__spinner" />
+        <p className="ots-loading__text">Fetching live status…</p>
       </div>
     );
   }
 
-  const STEPS = [
-    { id: "pending", label: "Order Received", message: "Order received by kitchen" },
-    { id: "preparing", label: "Preparing", message: "Your food is being prepared" },
-    { id: "served", label: "Served", message: "Served to your table" },
-  ];
-
-  const currentStatus = order.status; // pending | preparing | served | paid
-  const activeStepIndex = STEPS.findIndex((s) => s.id === currentStatus);
-  const displayIndex = activeStepIndex === -1 && currentStatus === "paid" ? 2 : activeStepIndex; // paid counts as served for tracking UI
-  
-  const currentStepData = displayIndex >= 0 ? STEPS[displayIndex] : STEPS[0];
+  const displayIndex = getStepIndex(order.status);
+  const currentStep = STEPS[displayIndex];
+  const StatusIcon = currentStep.icon;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 w-full relative">
-      {/* ── HEADER ── */}
-      <header className="bg-white px-5 pt-6 pb-4 border-b border-gray-100 flex items-center justify-between shadow-sm shrink-0">
-        <div className="flex items-center gap-3">
-          {onViewMenu && (
-            <Button onClick={onViewMenu} className="-ml-1 text-gray-500">
-              <ChevronLeft className="w-6 h-6" />
-            </Button>
-          )}
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 leading-tight">Your Order</h1>
-            <p className="text-xs font-semibold text-emerald-600 mt-0.5">
-              {order.tableNumber === "Takeaway" ? "Pickup Order" : `Table ${order.tableNumber}`}
-            </p>
-          </div>
-        </div>
-        <Badge variant="outline" className="font-mono text-xs bg-slate-100 border-slate-200 text-slate-500 px-2.5">
-          #{order.id.slice(-6).toUpperCase()}
-        </Badge>
-      </header>
+    <>
+      {/* ── Injected styles ── */}
+      <style>{`
+        /* ── Reset & root ── */
+        .ots-root {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          width: 100%;
+          background: #f8fafc;
+          position: relative;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
 
-      <div className="flex-1 overflow-y-auto pb-[100px] p-4">
-        {/* ── STATUS MESSAGE BANNER ── */}
-        <motion.div
-          key={currentStatus}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-emerald-600 rounded-[20px] p-5 mb-5 shadow-[0_8px_20px_rgba(5,150,105,0.25)] text-white text-center"
-        >
-          {displayIndex === 0 && <Clock className="w-10 h-10 mx-auto mb-3 text-white/90" />}
-          {displayIndex === 1 && <Flame className="w-10 h-10 mx-auto mb-3 text-yellow-300" />}
-          {displayIndex === 2 && <UtensilsCrossed className="w-10 h-10 mx-auto mb-3 text-emerald-200" />}
-          
-          <h2 className="text-2xl font-extrabold tracking-tight mb-1">{currentStepData.label}</h2>
-          <p className="text-emerald-100 text-sm font-medium">{currentStepData.message}</p>
-        </motion.div>
+        /* ── Loading ── */
+        .ots-loading {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          gap: 16px;
+          background: #f8fafc;
+        }
+        .ots-loading__spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid #d1fae5;
+          border-top-color: #16a34a;
+          border-radius: 50%;
+          animation: ots-spin 0.8s linear infinite;
+        }
+        .ots-loading__text {
+          font-size: 14px;
+          color: #64748b;
+          font-weight: 500;
+        }
+        @keyframes ots-spin { to { transform: rotate(360deg); } }
 
-        {/* ── STEPPER TRACKER ── */}
-        <div className="bg-white rounded-2xl p-5 mb-5 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-900 mb-5 text-[15px]">Live Status</h3>
-          <div className="relative pl-3">
-            {/* Vertical Line */}
-            <div className="absolute left-[26px] top-[24px] bottom-[24px] w-0.5 bg-gray-100 rounded-full" />
-            <div 
-               className="absolute left-[26px] w-0.5 bg-emerald-500 rounded-full transition-all duration-700 ease-out z-0"
-               style={{ 
-                 top: '24px', 
-                 height: displayIndex === 0 ? '0%' : displayIndex === 1 ? '50%' : '100%' 
-               }}
-            />
+        /* ── Header ── */
+        .ots-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 20px 20px 16px;
+          background: #fff;
+          border-bottom: 1px solid #f1f5f9;
+          flex-shrink: 0;
+        }
+        .ots-header__left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .ots-back-btn {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: #f1f5f9;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.15s;
+          color: #374151;
+        }
+        .ots-back-btn:hover { background: #e2e8f0; }
+        .ots-header__title {
+          font-size: 18px;
+          font-weight: 800;
+          color: #0f172a;
+          line-height: 1.2;
+        }
+        .ots-header__sub {
+          font-size: 12px;
+          font-weight: 600;
+          color: #16a34a;
+          margin-top: 2px;
+        }
+        .ots-order-id {
+          font-size: 11px;
+          font-family: 'SF Mono', 'Fira Code', monospace;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          color: #64748b;
+          padding: 4px 10px;
+          border-radius: 100px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+        }
 
-            <ul className="space-y-6 relative z-10">
-              {STEPS.map((step, index) => {
-                const isActive = index === displayIndex;
-                const isCompleted = index < displayIndex;
-                const isPending = index > displayIndex;
+        /* ── Scrollable body ── */
+        .ots-body {
+          flex: 1;
+          overflow-y: auto;
+          padding: 20px 16px 120px;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
 
-                return (
-                  <li key={step.id} className="flex items-start gap-4">
-                    <div
-                      className={`relative flex items-center justify-center w-7 h-7 rounded-full shrink-0 transition-all duration-500 ${
-                        isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-white border-[3px] border-emerald-500 shadow-sm" : "bg-gray-100 text-gray-300"
-                      }`}
-                    >
-                      {isCompleted && <CheckCircle2 className="w-4 h-4" />}
-                      {isActive && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
-                    </div>
-                    <div className="flex flex-col pt-1">
-                      <span className={`text-[15px] font-bold leading-none ${isActive ? "text-emerald-700" : isCompleted ? "text-gray-900" : "text-gray-400"}`}>
-                        {step.label}
-                      </span>
-                      {isActive && (
-                        <motion.span 
-                          initial={{ opacity: 0, height: 0 }} 
-                          animate={{ opacity: 1, height: 'auto' }} 
-                          className="text-xs text-gray-500 mt-1.5 font-medium"
-                        >
-                          {step.message}...
-                        </motion.span>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
+        /* ── Status Hero ── */
+        .ots-hero {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 18px 20px;
+          border-radius: 20px;
+          margin-bottom: 8px;
+          position: relative;
+          overflow: hidden;
+        }
+        .ots-hero--pending {
+          background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+          border: 1.5px solid #86efac;
+        }
+        .ots-hero--preparing {
+          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+          border: 1.5px solid #fcd34d;
+        }
+        .ots-hero--served {
+          background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+          border: 1.5px solid #6ee7b7;
+        }
+        .ots-hero__icon-wrap {
+          width: 48px;
+          height: 48px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .ots-hero__icon-wrap--pending { background: #16a34a; }
+        .ots-hero__icon-wrap--preparing { background: #d97706; }
+        .ots-hero__icon-wrap--served { background: #059669; }
+        .ots-hero__icon { color: #fff; }
+        .ots-hero__label {
+          font-size: 18px;
+          font-weight: 800;
+          color: #0f172a;
+          line-height: 1.2;
+        }
+        .ots-hero__msg {
+          font-size: 13px;
+          color: #374151;
+          font-weight: 500;
+          margin-top: 3px;
+        }
+        .ots-hero__pulse {
+          position: absolute;
+          top: 14px;
+          right: 14px;
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #16a34a;
+          animation: ots-pulse 2s ease-in-out infinite;
+        }
+        .ots-hero__pulse--amber { background: #f59e0b; }
+        @keyframes ots-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(22,163,74,0.4); }
+          50% { opacity: 0.8; transform: scale(1.15); box-shadow: 0 0 0 6px rgba(22,163,74,0); }
+        }
 
-        {/* ── ORDER SUMMARY CARD ── */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-900 mb-4 text-[15px] flex justify-between items-center">
-            Bill Details
-            {order.paymentStatus === "paid" ? (
-              <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm pointer-events-none">
-                Payment: Paid via {order.paymentMethod === 'upi' ? 'UPI' : 'Counter'}
-              </Badge>
-            ) : order.paymentStatus === "pending_verification" ? (
-              <Badge className="bg-amber-50 text-amber-700 border-amber-200 shadow-sm pointer-events-none">
-                Payment: Verifying UPI
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-gray-600 bg-gray-50 border-gray-200 shadow-sm pointer-events-none">
-                Payment: Pending ({order.paymentMethod === 'upi' ? 'UPI' : 'Counter'})
-              </Badge>
+        /* ── Section label ── */
+        .ots-section-label {
+          font-size: 11px;
+          font-weight: 700;
+          color: #94a3b8;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          padding: 20px 4px 10px;
+        }
+
+        /* ── Timeline ── */
+        .ots-timeline {
+          display: flex;
+          flex-direction: column;
+          padding: 4px 0 4px 4px;
+          margin-bottom: 4px;
+        }
+        .ots-timeline__item {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          position: relative;
+        }
+        .ots-timeline__track {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          flex-shrink: 0;
+          width: 28px;
+        }
+        .ots-timeline__dot {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: all 0.4s ease;
+          z-index: 1;
+        }
+        .ots-timeline__dot--done {
+          background: #16a34a;
+          color: #fff;
+        }
+        .ots-timeline__dot--active {
+          background: #fff;
+          border: 3px solid #16a34a;
+          box-shadow: 0 0 0 4px rgba(22,163,74,0.15);
+        }
+        .ots-timeline__dot--active-inner {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #16a34a;
+          animation: ots-dot-pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes ots-dot-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.3); }
+        }
+        .ots-timeline__dot--pending {
+          background: #f1f5f9;
+          border: 2px solid #e2e8f0;
+        }
+        .ots-timeline__connector {
+          width: 2px;
+          height: 32px;
+          border-radius: 2px;
+          margin: 3px 0;
+          transition: background 0.5s ease;
+        }
+        .ots-timeline__connector--done { background: #16a34a; }
+        .ots-timeline__connector--pending { background: #e2e8f0; }
+        .ots-timeline__content {
+          padding: 3px 0 28px;
+          flex: 1;
+        }
+        .ots-timeline__item:last-child .ots-timeline__content { padding-bottom: 4px; }
+        .ots-tl-label {
+          font-size: 15px;
+          font-weight: 700;
+          line-height: 1;
+        }
+        .ots-tl-label--done { color: #0f172a; }
+        .ots-tl-label--active { color: #15803d; }
+        .ots-tl-label--pending { color: #94a3b8; }
+        .ots-tl-msg {
+          font-size: 12px;
+          color: #6b7280;
+          font-weight: 500;
+          margin-top: 5px;
+        }
+
+        /* ── Divider ── */
+        .ots-divider {
+          height: 1px;
+          background: #f1f5f9;
+          margin: 4px 0 8px;
+        }
+
+        /* ── Bill ── */
+        .ots-bill {
+          padding: 4px 0;
+        }
+        .ots-bill__row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding: 10px 0;
+          border-bottom: 1px solid #f8fafc;
+        }
+        .ots-bill__row:last-child { border-bottom: none; }
+        .ots-bill__item-name {
+          font-size: 14px;
+          color: #374151;
+          font-weight: 500;
+          flex: 1;
+          padding-right: 12px;
+        }
+        .ots-bill__qty {
+          font-size: 11px;
+          font-weight: 700;
+          color: #64748b;
+          background: #f1f5f9;
+          padding: 2px 6px;
+          border-radius: 6px;
+          display: inline-block;
+          margin-right: 8px;
+          vertical-align: middle;
+        }
+        .ots-bill__price {
+          font-size: 14px;
+          font-weight: 700;
+          color: #1e293b;
+          flex-shrink: 0;
+        }
+        .ots-bill__total-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 14px 0 6px;
+          border-top: 1.5px dashed #e2e8f0;
+          margin-top: 4px;
+        }
+        .ots-bill__total-label {
+          font-size: 15px;
+          font-weight: 800;
+          color: #0f172a;
+        }
+        .ots-bill__total-amount {
+          font-size: 22px;
+          font-weight: 900;
+          color: #16a34a;
+          letter-spacing: -0.5px;
+        }
+
+        /* ── Payment badge ── */
+        .ots-payment-wrap {
+          padding: 4px 0 8px;
+        }
+        .ots-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          font-weight: 700;
+          padding: 6px 14px;
+          border-radius: 100px;
+        }
+        .ots-badge--green {
+          background: #dcfce7;
+          color: #15803d;
+          border: 1px solid #86efac;
+        }
+        .ots-badge--amber {
+          background: #fef3c7;
+          color: #b45309;
+          border: 1px solid #fcd34d;
+        }
+        .ots-badge--yellow {
+          background: #fff7ed;
+          color: #c2410c;
+          border: 1px solid #fed7aa;
+        }
+
+        /* ── Notes ── */
+        .ots-note {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          background: #f0f9ff;
+          border: 1px solid #bae6fd;
+          border-radius: 12px;
+          padding: 12px 14px;
+          margin-top: 8px;
+        }
+        .ots-note__icon { color: #0284c7; flex-shrink: 0; margin-top: 1px; }
+        .ots-note__label {
+          font-size: 11px;
+          font-weight: 700;
+          color: #0369a1;
+          display: block;
+          margin-bottom: 3px;
+        }
+        .ots-note__text {
+          font-size: 13px;
+          color: #0c4a6e;
+          font-weight: 500;
+          line-height: 1.5;
+        }
+
+        /* ── Bottom actions ── */
+        .ots-actions {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: rgba(255,255,255,0.96);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-top: 1px solid #f1f5f9;
+          padding: 12px 16px 20px;
+          z-index: 20;
+          box-shadow: 0 -8px 24px rgba(0,0,0,0.04);
+        }
+        .ots-actions__row { display: flex; gap: 10px; }
+        .ots-btn {
+          flex: 1;
+          height: 48px;
+          border-radius: 14px;
+          border: none;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          transition: all 0.15s;
+        }
+        .ots-btn:active { transform: scale(0.97); }
+        .ots-btn--primary {
+          background: #16a34a;
+          color: #fff;
+          box-shadow: 0 4px 14px rgba(22,163,74,0.25);
+        }
+        .ots-btn--primary:hover { background: #15803d; }
+        .ots-btn--outline {
+          background: #f8fafc;
+          color: #374151;
+          border: 1.5px solid #e2e8f0;
+        }
+        .ots-btn--outline:hover { background: #f1f5f9; }
+      `}</style>
+
+      <div className="ots-root">
+        {/* ── HEADER ── */}
+        <header className="ots-header">
+          <div className="ots-header__left">
+            {onViewMenu && (
+              <button className="ots-back-btn" onClick={onViewMenu} aria-label="Go back">
+                <ChevronLeft size={18} />
+              </button>
             )}
-          </h3>
-          <ul className="space-y-3 mb-4">
-            {order.items.map((item, idx) => (
-              <li key={idx} className="flex justify-between items-start text-sm border-b border-gray-50 pb-3 last:border-0 last:pb-0">
-                <span className="text-gray-700 flex items-start gap-3 flex-1 pr-3">
-                  <span className="font-extrabold text-[12px] bg-slate-100 text-slate-700 py-0.5 px-1.5 rounded-md min-w-[24px] text-center shrink-0">
-                    {item.quantity}x
-                  </span>
-                  <span className="font-medium">{item.name}</span>
-                </span>
-                <span className="font-bold text-gray-800 shrink-0">₹{item.price * item.quantity}</span>
-              </li>
-            ))}
-          </ul>
-          
-          <div className="flex items-center justify-between pt-4 border-t border-dashed border-gray-200">
-            <span className="font-extrabold text-gray-900">Total Bill</span>
-            <span className="text-xl font-extrabold text-emerald-600">₹{order.totalAmount}</span>
+            <div>
+              <p className="ots-header__title">Your Order</p>
+              <p className="ots-header__sub">
+                {order.tableNumber === "Takeaway" ? "Pickup" : `Table ${order.tableNumber}`}
+              </p>
+            </div>
           </div>
-          
+          <span className="ots-order-id">#{order.id.slice(-6).toUpperCase()}</span>
+        </header>
+
+        {/* ── SCROLLABLE BODY ── */}
+        <div className="ots-body">
+
+          {/* ── STATUS HERO ── */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={order.status}
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.98 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className={`ots-hero ots-hero--${displayIndex === 1 ? "preparing" : displayIndex === 2 ? "served" : "pending"}`}
+            >
+              <div className={`ots-hero__icon-wrap ots-hero__icon-wrap--${displayIndex === 1 ? "preparing" : displayIndex === 2 ? "served" : "pending"}`}>
+                <StatusIcon size={22} className="ots-hero__icon" />
+              </div>
+              <div>
+                <p className="ots-hero__label">{currentStep.label}</p>
+                <p className="ots-hero__msg">{currentStep.message}</p>
+              </div>
+              <div className={`ots-hero__pulse${displayIndex === 1 ? " ots-hero__pulse--amber" : ""}`} />
+            </motion.div>
+          </AnimatePresence>
+
+          {/* ── TIMELINE ── */}
+          <p className="ots-section-label">Live Progress</p>
+          <div className="ots-timeline">
+            {STEPS.map((step, idx) => {
+              const isDone = idx < displayIndex;
+              const isActive = idx === displayIndex;
+              const isPending = idx > displayIndex;
+
+              return (
+                <div key={step.id} className="ots-timeline__item">
+                  <div className="ots-timeline__track">
+                    <motion.div
+                      initial={false}
+                      animate={{ scale: isActive ? 1.08 : 1 }}
+                      className={`ots-timeline__dot ${isDone ? "ots-timeline__dot--done" : isActive ? "ots-timeline__dot--active" : "ots-timeline__dot--pending"}`}
+                    >
+                      {isDone && <CheckCircle2 size={14} />}
+                      {isActive && <div className="ots-timeline__dot--active-inner" />}
+                    </motion.div>
+
+                    {idx < STEPS.length - 1 && (
+                      <motion.div
+                        className={`ots-timeline__connector ${isDone ? "ots-timeline__connector--done" : "ots-timeline__connector--pending"}`}
+                        initial={false}
+                        animate={{ scaleY: 1 }}
+                        style={{ transformOrigin: "top" }}
+                      />
+                    )}
+                  </div>
+
+                  <div className="ots-timeline__content">
+                    <p className={`ots-tl-label ots-tl-label--${isDone ? "done" : isActive ? "active" : "pending"}`}>
+                      {step.short}
+                    </p>
+                    {isActive && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="ots-tl-msg"
+                      >
+                        {step.message}
+                      </motion.p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── BILL ── */}
+          <div className="ots-divider" />
+          <p className="ots-section-label">Bill Details</p>
+
+          <div className="ots-bill">
+            {order.items.map((item, idx) => (
+              <div key={idx} className="ots-bill__row">
+                <span className="ots-bill__item-name">
+                  <span className="ots-bill__qty">{item.quantity}×</span>
+                  {item.name}
+                </span>
+                <span className="ots-bill__price">₹{item.price * item.quantity}</span>
+              </div>
+            ))}
+
+            <div className="ots-bill__total-row">
+              <span className="ots-bill__total-label">Total</span>
+              <span className="ots-bill__total-amount">₹{order.totalAmount}</span>
+            </div>
+          </div>
+
+          {/* ── PAYMENT STATUS ── */}
+          <div className="ots-payment-wrap">
+            <PaymentBadge
+              paymentStatus={order.paymentStatus}
+              paymentMethod={order.paymentMethod}
+            />
+          </div>
+
+          {/* ── NOTES ── */}
           {order.note && (
-             <div className="mt-4 p-3 bg-blue-50/50 rounded-xl border border-blue-100">
-               <span className="text-xs font-bold text-blue-700 block mb-1 flex items-center"><Info className="w-3 h-3 mr-1"/> Your Note</span>
-               <span className="text-xs text-blue-900 font-medium">{order.note}</span>
-             </div>
+            <div className="ots-note">
+              <Info size={14} className="ots-note__icon" />
+              <div>
+                <span className="ots-note__label">Your Note</span>
+                <span className="ots-note__text">{order.note}</span>
+              </div>
+            </div>
           )}
+
+          {/* ── PAYMENT UI (Injected from parent) ── */}
+          {renderPaymentUI && renderPaymentUI(order)}
+        </div>
+
+        {/* ── BOTTOM ACTION BUTTONS ── */}
+        <div className="ots-actions">
+          <div className="ots-actions__row">
+            <button
+              className="ots-btn ots-btn--outline"
+              onClick={() => alert("Waiter has been called! 🛎")}
+            >
+              <PhoneCall size={16} />
+              Call Waiter
+            </button>
+            {(onOrderAgain || onViewMenu) && (
+              <button
+                className="ots-btn ots-btn--primary"
+                onClick={onOrderAgain || onViewMenu}
+              >
+                <Plus size={16} />
+                Order More
+              </button>
+            )}
+          </div>
         </div>
       </div>
-
-      {renderPaymentUI && renderPaymentUI(order)}
-
-      {/* ── BOTTOM ACTIONS ── */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-6 z-20 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
-        <div className="flex gap-3 max-w-sm mx-auto">
-           {(onViewMenu || onOrderAgain) && (
-             <Button variant="outline" className="flex-1 h-12 text-sm text-gray-700 hover:" onClick={onOrderAgain || onViewMenu}>
-                {onViewMenu ? "View Menu" : "Order Again"}
-             </Button>
-           )}
-        </div>
-      </div>
-    </div>
+    </>
   );
 }

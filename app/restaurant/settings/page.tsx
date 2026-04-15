@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import {
   Loader2,
   Store,
@@ -194,7 +194,7 @@ export default function SettingsPage() {
         setSlugAlternatives([]);
       } else {
         setSlugStatus("taken");
-        
+
         let checkIndex = 1;
         let alternatives = [];
         while (alternatives.length < 3 && checkIndex < 20) {
@@ -217,17 +217,15 @@ export default function SettingsPage() {
       setSlugStatus("idle");
     }
   };
-  const bookingUrl = `${origin}/@${
-    restaurant?.plan === "premium" && restaurant.customSlug
+  const bookingUrl = `${origin}/@${restaurant?.plan === "premium" && restaurant.customSlug
       ? restaurant.customSlug
       : restaurant?.id || ""
-  }/booking`;
+    }/booking`;
 
-  const takeawayUrl = `${origin}/@${
-    restaurant?.plan === "premium" && restaurant.customSlug
+  const takeawayUrl = `${origin}/@${restaurant?.plan === "premium" && restaurant.customSlug
       ? restaurant.customSlug
       : restaurant?.id || ""
-  }/takeaway`;
+    }/takeaway`;
 
   const onRestaurantSubmit = async (
     values: z.infer<typeof restaurantSchema>
@@ -262,7 +260,7 @@ export default function SettingsPage() {
             throw new Error('Slug already in use by another restaurant');
           }
         }
-        
+
         const restRef = doc(db, 'restaurants', restaurantId);
         const currentRestSnap = await transaction.get(restRef);
         const oldSlug = currentRestSnap.data()?.customSlug;
@@ -272,12 +270,12 @@ export default function SettingsPage() {
         }
 
         if (customSlugToSave) {
-          transaction.set(doc(db, 'slugConstraints', customSlugToSave), { 
-            restaurantId, 
-            updatedAt: Date.now() 
+          transaction.set(doc(db, 'slugConstraints', customSlugToSave), {
+            restaurantId,
+            updatedAt: Date.now()
           });
         }
-        
+
         transaction.set(restRef, updateData, { merge: true });
       });
 
@@ -638,24 +636,21 @@ export default function SettingsPage() {
                           className="flex items-center gap-3"
                         >
                           <div
-                            className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                              item.done
+                            className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 transition-all ${item.done
                                 ? "bg-emerald-500"
                                 : "bg-gray-200"
-                            }`}
+                              }`}
                           >
                             <CheckCircle2
-                              className={`h-3 w-3 ${
-                                item.done ? "text-white" : "text-gray-400"
-                              }`}
+                              className={`h-3 w-3 ${item.done ? "text-white" : "text-gray-400"
+                                }`}
                             />
                           </div>
                           <span
-                            className={`text-sm font-medium ${
-                              item.done
+                            className={`text-sm font-medium ${item.done
                                 ? "line-through text-gray-400"
                                 : "text-gray-700"
-                            }`}
+                              }`}
                           >
                             {item.label}
                           </span>
@@ -984,34 +979,30 @@ export default function SettingsPage() {
                   animate="visible"
                 >
                   <Card
-                    className={`rounded-2xl shadow-sm overflow-hidden ${
-                      restaurant?.plan === "premium"
+                    className={`rounded-2xl shadow-sm overflow-hidden ${restaurant?.plan === "premium"
                         ? "border-emerald-100"
                         : "border-gray-100 opacity-80"
-                    }`}
+                      }`}
                   >
                     <CardHeader
-                      className={`border-b px-6 py-4 ${
-                        restaurant?.plan === "premium"
+                      className={`border-b px-6 py-4 ${restaurant?.plan === "premium"
                           ? "bg-gradient-to-r from-emerald-50 to-white border-emerald-100"
                           : "bg-gray-50/50 border-gray-100"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div
-                            className={`h-8 w-8 rounded-xl flex items-center justify-center ${
-                              restaurant?.plan === "premium"
+                            className={`h-8 w-8 rounded-xl flex items-center justify-center ${restaurant?.plan === "premium"
                                 ? "bg-amber-50"
                                 : "bg-gray-100"
-                            }`}
+                              }`}
                           >
                             <LinkIcon
-                              className={`h-4 w-4 ${
-                                restaurant?.plan === "premium"
+                              className={`h-4 w-4 ${restaurant?.plan === "premium"
                                   ? "text-amber-500"
                                   : "text-gray-400"
-                              }`}
+                                }`}
                             />
                           </div>
                           <div>
@@ -1048,11 +1039,10 @@ export default function SettingsPage() {
                             >
                               Custom Slug
                             </Label>
-                            <div className={`flex items-center gap-0 rounded-xl border focus-within:ring-2 overflow-hidden transition-all h-12 relative ${
-                              slugStatus === "available" ? "border-emerald-400 focus-within:ring-emerald-500/20" :
-                              slugStatus === "taken" ? "border-red-400 focus-within:ring-red-500/20" :
-                              "border-gray-200 focus-within:border-emerald-400 focus-within:ring-emerald-500/20"
-                            }`}>
+                            <div className={`flex items-center gap-0 rounded-xl border focus-within:ring-2 overflow-hidden transition-all h-12 relative ${slugStatus === "available" ? "border-emerald-400 focus-within:ring-emerald-500/20" :
+                                slugStatus === "taken" ? "border-red-400 focus-within:ring-red-500/20" :
+                                  "border-gray-200 focus-within:border-emerald-400 focus-within:ring-emerald-500/20"
+                              }`}>
                               <span className="pl-4 pr-2 text-sm text-gray-400 whitespace-nowrap shrink-0 bg-gray-50 h-full flex items-center border-r border-gray-200">
                                 dineflow.pro/@
                               </span>
@@ -1072,7 +1062,7 @@ export default function SettingsPage() {
                               />
                               <Button type="button" variant="outline" onClick={checkSlug} disabled={slugStatus === "checking" || !watchedSlug || watchedSlug === restaurant?.customSlug} className="absolute right-1 to bottom-1 h-10 hover: text-xs ga.5">
                                 {slugStatus === "checking" ? (
-                                  <><Loader2 className="h-3 w-3 animate-spin"/> Checking</>
+                                  <><Loader2 className="h-3 w-3 animate-spin" /> Checking</>
                                 ) : (
                                   'Check'
                                 )}
@@ -1112,11 +1102,10 @@ export default function SettingsPage() {
                           <AnimatePresence>
                             {watchedSlug && slugStatus !== "idle" && (
                               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                                <div className={`text-xs font-semibold p-2.5 rounded-lg border mt-2 flex flex-col gap-1.5 ${
-                                  slugStatus === "checking" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                                  slugStatus === "available" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                                  "bg-red-50 text-red-700 border-red-200"
-                                }`}>
+                                <div className={`text-xs font-semibold p-2.5 rounded-lg border mt-2 flex flex-col gap-1.5 ${slugStatus === "checking" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                                    slugStatus === "available" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                      "bg-red-50 text-red-700 border-red-200"
+                                  }`}>
                                   <div className="flex items-center gap-1.5">
                                     {slugStatus === "checking" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                                     {slugStatus === "available" && <span className="text-base leading-none">✅</span>}
@@ -1173,9 +1162,9 @@ export default function SettingsPage() {
                             </p>
                           </div>
                           <Button type="button" size="sm" className="mt-1 ga.5" onClick={() =>
-                              (window.location.href =
-                                "/restaurant/subscription")
-                            }
+                          (window.location.href =
+                            "/restaurant/subscription")
+                          }
                           >
                             <Sparkles className="h-3.5 w-3.5" />
                             Upgrade to Premium

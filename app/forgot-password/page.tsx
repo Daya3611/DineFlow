@@ -9,7 +9,7 @@ import { auth } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";
 import { Loader2, Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
@@ -163,7 +163,7 @@ export default function ForgotPasswordPage() {
                 We've sent a password reset link to <br />
                 <span className="font-bold text-gray-900">{emailValue}</span>
               </p>
-              
+
               <Link href="/login">
                 <Button className="w-full h-12 text-[15px] hover: [1.02] [0.98]">
                   Return to login

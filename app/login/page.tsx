@@ -11,7 +11,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";
 import { ChefHat, Loader2, Mail, Lock } from "lucide-react";
@@ -50,7 +50,7 @@ export default function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
-      
+
       const token = await user.getIdToken();
       localStorage.setItem("token", token);
 
@@ -76,7 +76,7 @@ export default function LoginPage() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      
+
       const token = await user.getIdToken();
       localStorage.setItem("token", token);
 

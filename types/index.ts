@@ -131,6 +131,7 @@ export interface Reservation {
   guestCount: number;
   status: "pending" | "confirmed" | "arrived" | "no-show" | "completed" | "cancelled";
   notes?: string;
+  otpVerified?: boolean;
   createdAt: number;
 }
 

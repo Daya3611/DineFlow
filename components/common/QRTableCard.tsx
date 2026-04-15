@@ -3,7 +3,7 @@
 import { useState } from "react";
 import QRCode from "react-qr-code";
 import { Printer, Download, FileImage, X, Loader2, Sun, Moon } from "lucide-react";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { toPng } from "html-to-image";
 import { Button } from "@/components/ui/button";
 
@@ -104,7 +104,7 @@ export function QRTableCard({
           >
             <span className="text-slate-800 text-sm font-bold flex">Table {tableNumber} QR</span>
             <div className="flex items-center gap-1">
-              <Button 
+              <Button
                 onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
                 title="Toggle theme"
                 variant="ghost"
@@ -114,22 +114,22 @@ export function QRTableCard({
                 {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 {isDark ? "Light" : "Dark"}
               </Button>
-              
+
               <div className="w-px h-4 bg-slate-200 mx-1" />
 
-              <Button 
-                onClick={handlePrint} 
+              <Button
+                onClick={handlePrint}
                 variant="ghost"
                 size="sm"
                 className="flex items-center gap-1.5 h-8 px-2.5 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 font-medium rounded-md"
               >
-                <Printer className="h-4 w-4" /> 
+                <Printer className="h-4 w-4" />
                 Print
               </Button>
 
-              <Button 
-                onClick={downloadPNG} 
-                disabled={!!exporting} 
+              <Button
+                onClick={downloadPNG}
+                disabled={!!exporting}
                 variant="ghost"
                 size="sm"
                 className="flex items-center gap-1.5 h-8 px-2.5 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 font-medium rounded-md"
@@ -138,9 +138,9 @@ export function QRTableCard({
                 PNG
               </Button>
 
-              <Button 
-                onClick={downloadPDF} 
-                disabled={!!exporting} 
+              <Button
+                onClick={downloadPDF}
+                disabled={!!exporting}
                 variant="ghost"
                 size="sm"
                 className="flex items-center gap-1.5 h-8 px-2.5 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 font-medium rounded-md"
@@ -151,8 +151,8 @@ export function QRTableCard({
 
               <div className="w-px h-4 bg-slate-200 mx-1" />
 
-              <Button 
-                onClick={onClose} 
+              <Button
+                onClick={onClose}
                 variant="ghost"
                 size="sm"
                 className="flex items-center justify-center w-8 h-8 p-0 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-full"

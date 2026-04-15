@@ -8,7 +8,7 @@ import { Table as TableType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Printer, QrCode, Users, Sparkles } from "lucide-react";
 import QRCode from "react-qr-code";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,7 +41,7 @@ export default function TablesPage() {
   useEffect(() => {
     if (!restaurant) return;
     setLoading(true);
-    
+
     const fetchTables = async () => {
       try {
         const res = await fetch(`/api/tables?restaurantId=${restaurant.id}`);
@@ -97,7 +97,7 @@ export default function TablesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ restaurantId: restaurant.id, feature: "tables" }),
       });
-      
+
       const data = await res.json();
       if (!res.ok || data.allowed === false) {
         if (data.error && data.error.includes("Limit reached")) {
@@ -177,13 +177,13 @@ export default function TablesPage() {
           <p className="text-gray-500 mt-1 text-sm">Manage seating, status, and generate QR codes for each table.</p>
         </div>
         <Button className="hover: [0.97]" onClick={() => {
-            const limit = getPlanLimits(restaurant?.plan || "basic").tableLimit;
-            if (tables.length >= limit) {
-              setShowUpgradeModal(true);
-            } else {
-              setOpen(true);
-            }
-          }}
+          const limit = getPlanLimits(restaurant?.plan || "basic").tableLimit;
+          if (tables.length >= limit) {
+            setShowUpgradeModal(true);
+          } else {
+            setOpen(true);
+          }
+        }}
         >
           <Plus className="mr-2 h-4 w-4" /> Add Table
         </Button>
@@ -365,11 +365,11 @@ export default function TablesPage() {
         </div>
       )}
 
-      <UpgradeModal 
-        open={showUpgradeModal} 
-        onOpenChange={setShowUpgradeModal} 
-        featureName="tables" 
-        limit={restaurant ? getPlanLimits(restaurant.plan || "basic").tableLimit : 10} 
+      <UpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        featureName="tables"
+        limit={restaurant ? getPlanLimits(restaurant.plan || "basic").tableLimit : 10}
       />
     </div>
   );

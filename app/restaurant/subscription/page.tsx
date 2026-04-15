@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Check, Loader2, Sparkles, Zap, Play } from "lucide-react";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { db } from "@/firebase";
 import { doc, updateDoc, setDoc } from "firebase/firestore";
 import Script from "next/script";
@@ -293,7 +293,7 @@ export default function SubscriptionPage() {
                     </CardContent>
 
                     <CardFooter className="pt-6 pb-8 px-6">
-                      <Button className={`w-full rounded-xl font-bold text-base h-14 transition-all duration-200 ${isCurrentPlan ? "bg-slate-100 border border-slate-200 text-slate-500 cursor-not-allowed hover:bg-slate-100" : isPro ? "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-md hover:shadow-lg shadow-[#0f9d6a]/30" : "bg-slate-900 text-white hover:bg-slate-800 shadow-md" }`} disabled={isCurrentPlan || loadingPlan !== null} onClick={() => handleSubscribe(plan, billingCycle)}
+                      <Button className={`w-full rounded-xl font-bold text-base h-14 transition-all duration-200 ${isCurrentPlan ? "bg-slate-100 border border-slate-200 text-slate-500 cursor-not-allowed hover:bg-slate-100" : isPro ? "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-md hover:shadow-lg shadow-[#0f9d6a]/30" : "bg-slate-900 text-white hover:bg-slate-800 shadow-md"}`} disabled={isCurrentPlan || loadingPlan !== null} onClick={() => handleSubscribe(plan, billingCycle)}
                       >
                         {loadingPlan === plan.id ? (
                           <Loader2 className="h-6 w-6 animate-spin mx-auto" />
