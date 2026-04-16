@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { db } from "@/firebase";
-import { collection, query, where, doc, updateDoc, onSnapshot } from "firebase/firestore";
+import { collection, query, where, doc, updateDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { Reservation, Waitlist } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -130,12 +130,23 @@ export default function ReservationsPage() {
   const updateReservationStatus = async (id: string, status: Reservation["status"]) => {
     setUpdatingId(id);
     try {
-      await updateDoc(doc(db, "reservations", id), { status });
+      const updateData: any = { status };
+      if (status === "confirmed") {
+        updateData.confirmedAt = serverTimestamp();
+      }
+      
+      const docRef = doc(db, "reservations", id);
+      await updateDoc(docRef, updateData);
+      
       setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r));
       if (selectedRes?.id === id) setSelectedRes(prev => prev ? { ...prev, status } : null);
       toast.success(`Marked as ${status}`);
-    } catch { toast.error("Failed to update"); }
-    finally { setUpdatingId(null); }
+    } catch (err: any) { 
+      console.error("Firebase update error:", err);
+      toast.error(`Update failed: ${err.message || "Check permissions or network."}`); 
+    } finally { 
+      setUpdatingId(null); 
+    }
   };
 
   const updateWaitlistStatus = async (id: string, status: Waitlist["status"]) => {
@@ -144,8 +155,12 @@ export default function ReservationsPage() {
       await updateDoc(doc(db, "waitlist", id), { status });
       setWaitlist(prev => prev.map(w => w.id === id ? { ...w, status } : w));
       toast.success(`Marked as ${status}`);
-    } catch { toast.error("Failed to update"); }
-    finally { setUpdatingId(null); }
+    } catch (err: any) { 
+      console.error("Firebase update error:", err);
+      toast.error(`Update failed: ${err.message || "Check permissions or network."}`); 
+    } finally { 
+      setUpdatingId(null); 
+    }
   };
 
   const activeResCount = reservations.filter(r => ["pending", "confirmed"].includes(r.status)).length;
@@ -514,14 +529,14 @@ export default function ReservationsPage() {
                         disabled={updatingId === selectedRes.id}
                         onClick={() => updateReservationStatus(selectedRes.id, "confirmed")}
                       >
-                        {updatingId === selectedRes.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-4 w-4 mr-1.5" /> Confirm</>}
+                        {updatingId === selectedRes.id ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <CheckCircle2 className="h-4 w-4 mr-1.5" />} Confirm
                       </Button>
                       <Button
                         className="flex-1 h-11 border border-red-200 text-red-500 hover:bg-red-50 font-bold rounded-xl"
                         disabled={updatingId === selectedRes.id}
                         onClick={() => updateReservationStatus(selectedRes.id, "cancelled")}
                       >
-                        <XCircle className="h-4 w-4 mr-1.5" /> Reject
+                        {updatingId === selectedRes.id ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <XCircle className="h-4 w-4 mr-1.5" />} Reject
                       </Button>
                     </div>
                   )}
@@ -532,14 +547,14 @@ export default function ReservationsPage() {
                         disabled={updatingId === selectedRes.id}
                         onClick={() => updateReservationStatus(selectedRes.id, "arrived")}
                       >
-                        <CheckCircle2 className="h-4 w-4 mr-1.5" /> Mark Arrived
+                        {updatingId === selectedRes.id ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <CheckCircle2 className="h-4 w-4 mr-1.5" />} Mark Arrived
                       </Button>
                       <Button
                         className="flex-1 h-11 border border-orange-200 text-orange-500 hover:bg-orange-50 font-bold rounded-xl"
                         disabled={updatingId === selectedRes.id}
                         onClick={() => updateReservationStatus(selectedRes.id, "no-show")}
                       >
-                        <AlertCircle className="h-4 w-4 mr-1.5" /> No Show
+                        {updatingId === selectedRes.id ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <AlertCircle className="h-4 w-4 mr-1.5" />} No Show
                       </Button>
                     </div>
                   )}

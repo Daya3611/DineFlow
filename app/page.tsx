@@ -238,17 +238,17 @@ export default function Home() {
             <div className="flex items-center gap-2">
               {isLoggedIn ? (
                 <Link href={dashboardLink} className="hidden md:block shrink-0">
-                  <Button className="h-9 text-[13px] bg-[#0f9d6a] [#0c7f56] [1.03] [0.98]">
+                  <Button className="h-9 text-[13px] bg-[#0f9d6a] [#0c7f56] [1.03] [0.98] rounded-full hover:bg-white hover:text-emerald-700">
                     Dashboard →
                   </Button>
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" className="hidden md:block text-[14px] font-semibold text-gray-500 hover:text-gray-900 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100">
+                  <Link href="/login" className="hidden md:block text-[14px] font-semibold text-gray-500 hover:text-gray-900 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-100">
                     Log in
                   </Link>
                   <Link href="/register" className="hidden md:block shrink-0">
-                    <Button className="h-9 text-[13px]">
+                    <Button className="h-9 text-[13px] rounded-full hover:bg-white hover:text-emerald-700">
                       Start Free Trial
                     </Button>
                   </Link>
@@ -659,7 +659,7 @@ export default function Home() {
               </motion.p>
               <motion.div {...fadeUp(0.14)} className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link href={isLoggedIn ? dashboardLink : "/register"}>
-                  <Button size="lg" className="text-emerald-700 hover: h-14 text-base">
+                  <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 shadow-lg shadow-black/10 h-14 text-base font-semibold px-8 rounded-full">
                     {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>

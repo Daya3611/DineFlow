@@ -98,10 +98,10 @@ service cloud.firestore {
       // ✅ Anyone can read (QR flow)
       allow read: if true;
 
-      // Owner/admin OR limited updates by customer
+      // Owner/admin OR authenticated user
       allow update: if isSuperAdmin() ||
         isRestaurantOwner(resource.data.restaurantId) ||
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'paymentMethod', 'paymentStatus', 'isActive', 'updatedAt']));
+        isAuthenticated();
 
       allow delete: if isSuperAdmin() ||
         isRestaurantOwner(resource.data.restaurantId);
@@ -114,7 +114,11 @@ service cloud.firestore {
 
       allow read: if true;
 
-      allow update, delete: if isSuperAdmin() ||
+      allow update: if isSuperAdmin() ||
+        isRestaurantOwner(resource.data.restaurantId) ||
+        isAuthenticated();
+
+      allow delete: if isSuperAdmin() ||
         isRestaurantOwner(resource.data.restaurantId);
     }
 
@@ -125,7 +129,11 @@ service cloud.firestore {
 
       allow read: if true;
 
-      allow update, delete: if isSuperAdmin() ||
+      allow update: if isSuperAdmin() ||
+        isRestaurantOwner(resource.data.restaurantId) ||
+        isAuthenticated();
+
+      allow delete: if isSuperAdmin() ||
         isRestaurantOwner(resource.data.restaurantId);
     }
 
@@ -135,7 +143,8 @@ service cloud.firestore {
       allow create: if true;
       allow read: if true;
       allow update, delete: if isSuperAdmin() ||
-        isRestaurantOwner(resource.data.restaurantId);
+        isRestaurantOwner(resource.data.restaurantId) ||
+        isAuthenticated();
     }
   }
 }
