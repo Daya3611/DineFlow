@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   subscriptionId?: string;
   restaurantId?: string;
+  setupFeePaid?: boolean;
   photoUrl?: string;
   createdAt: number;
 }
@@ -63,9 +64,10 @@ export interface Subscription {
 export interface PlanDocument {
   id: string;
   name: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
+  priceMonthly: number;
+  priceYearly: number;
   setupFee: number;
+  order: number;
   features: string[];
   tableLimit: number;
   menuLimit: number; // For compatibility

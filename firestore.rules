@@ -74,6 +74,18 @@ service cloud.firestore {
       allow update, delete: if isSuperAdmin();
     }
 
+    // 📦 PLANS
+    match /plans/{planId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // 📢 UPDATES
+    match /updates/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
     // 🪑 TABLES
     match /tables/{tableId} {
       allow read: if true;

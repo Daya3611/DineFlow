@@ -163,8 +163,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function RestaurantDashboard() {
   const { userData, restaurant, subscription } = useAuth();
   const hasRestaurant = !!restaurant;
-  const planLimits = restaurant ? getPlanLimits(restaurant.plan || "basic") : null;
-  const isBasicAnalytics = planLimits?.analytics === "basic";
+  const currentPlan = (subscription?.plan || restaurant?.plan || "basic").toLowerCase();
+  const planLimits = restaurant ? getPlanLimits(currentPlan) : null;
+  const isBasicAnalytics = !currentPlan.includes("pro") && !currentPlan.includes("premium");
 
   const remainingDays = useMemo(() => {
     if (!subscription?.expiryDate) return null;
@@ -401,15 +402,17 @@ export default function RestaurantDashboard() {
                         Current Plan
                       </div>
                       <Badge
-                        className={`border-0 text-xs font-bold px-2 capitalize ${restaurant.plan === "premium"
+                        className={`border-0 text-xs font-bold px-2 capitalize ${currentPlan.includes("premium")
                           ? "bg-amber-100 text-amber-700"
-                          : "bg-gray-100 text-gray-600"
+                          : currentPlan.includes("pro")
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-gray-100 text-gray-600"
                           }`}
                       >
-                        {restaurant.plan === "premium" && (
+                        {(currentPlan.includes("premium") || currentPlan.includes("pro")) && (
                           <Sparkles className="h-3 w-3 mr-1" />
                         )}
-                        {restaurant.plan} Plan
+                        {currentPlan} Plan
                       </Badge>
                     </div>
 
@@ -431,7 +434,7 @@ export default function RestaurantDashboard() {
                     )}
 
                     {/* Lifetime badge */}
-                    {restaurant.plan !== "none" && !subscription?.expiryDate && (
+                    {currentPlan !== "none" && !subscription?.expiryDate && (
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
@@ -444,9 +447,9 @@ export default function RestaurantDashboard() {
                     )}
                   </div>
 
-                  {restaurant.plan === "none" && (
+                  {currentPlan === "none" && (
                     <Link href="/restaurant/subscription" className="block">
-                      <Button size="sm" className="w-full ga.5">
+                      <Button size="sm" className="w-full gap-1.5">
                         <Sparkles className="h-3.5 w-3.5" />
                         Upgrade Plan
                       </Button>

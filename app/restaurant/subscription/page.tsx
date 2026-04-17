@@ -13,7 +13,7 @@ import Script from "next/script";
 import { plans, lifetimePlan } from "@/lib/plans";
 
 export default function SubscriptionPage() {
-  const { user, restaurant, setRestaurant } = useAuth();
+  const { user, userData, restaurant, setRestaurant, subscription } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
   const [showLifetime, setShowLifetime] = useState(false);
@@ -25,7 +25,7 @@ export default function SubscriptionPage() {
         const snap = await getDocs(query(collection(db, "plans"), where("isActive", "==", true)));
         if (!snap.empty) {
           const fetchedPlans = snap.docs.map(doc => doc.data());
-          setDbPlans(fetchedPlans.sort((a, b) => (a.monthlyPrice || 0) - (b.monthlyPrice || 0)));
+          setDbPlans(fetchedPlans.sort((a, b) => (a.order || 0) - (b.order || 0)));
         }
       } catch (e) {
         console.error("Failed to fetch DB plans, using local fallback", e);
@@ -43,46 +43,30 @@ export default function SubscriptionPage() {
     setLoadingPlan(planData.id);
 
     try {
-      let finalAmount = 0;
-      let setupFee = 0;
+      const isSamePlan = restaurant.plan === planData.id;
+      const daysLeft = subscription?.expiryDate ? Math.ceil((subscription.expiryDate - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
 
-      const hasPaidSetupFee = restaurant.setupFeePaid === true;
-      const lastEndDate = restaurant.lastSubscriptionEndDate || 0;
-      const currentDate = Date.now();
-      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
-      
-      const isPlanSwitch = restaurant.subscriptionStatus === "active" && 
-                           restaurant.plan !== "none" && 
-                           restaurant.plan !== "trial";
-
-      if (cycle === "yearly" || cycle === "lifetime" || cycle === ("trial" as any) || planData.id === "trial") {
-        setupFee = 0;
-      } else {
-        if (!hasPaidSetupFee) {
-          setupFee = planData.setupFee || 0;
-        } else {
-          if (isPlanSwitch) {
-            setupFee = 0; // Never charge setup fee on active plan switch
-          } else {
-            // Cancelled/Expired scenario
-            if (lastEndDate > 0 && (currentDate - lastEndDate) <= thirtyDaysInMs) {
-              setupFee = 0; // Within 30 days grace period
-            } else {
-              setupFee = planData.setupFee || 0; // Charge again
-            }
-          }
+      if (isSamePlan && subscription?.status === "active") {
+        if (daysLeft > 3) {
+          toast.error("Renewal allowed only in the last 3 days.");
+          setLoadingPlan(null);
+          return;
         }
       }
 
-      if (cycle === "monthly") {
-        finalAmount = planData.monthlyPrice + setupFee;
-      } else if (cycle === "yearly") {
-        finalAmount = planData.yearlyPrice;
-      } else if (cycle === "lifetime") {
-        finalAmount = planData.price;
-      } else if (cycle === ("trial" as any)) {
-        finalAmount = 49;
-      }
+      const hasPaidSetupFee = userData?.setupFeePaid || restaurant.setupFeePaid === true;
+
+      const calculateAmount = () => {
+        if (cycle === "yearly") return planData.priceYearly;
+        if (cycle === "lifetime") return planData.price;
+        if (cycle === ("trial" as any)) return 49;
+
+        if (!hasPaidSetupFee) return planData.priceMonthly + planData.setupFee;
+        return planData.priceMonthly;
+      };
+
+      const finalAmount = calculateAmount();
+      const setupFeeCharged = (cycle === "monthly" && !hasPaidSetupFee) ? planData.setupFee : 0;
 
       const response = await fetch("/api/razorpay/order", {
         method: "POST",
@@ -130,7 +114,7 @@ export default function SubscriptionPage() {
               userId: user.uid,
               plan: planData.id,
               billingCycle: cycle,
-              setupFee,
+              setupFee: setupFeeCharged,
               status: "active",
               razorpayPaymentId: response.razorpay_payment_id,
               startDate,
@@ -142,9 +126,9 @@ export default function SubscriptionPage() {
               createdAt: Date.now(),
             });
 
-            const newSetupFeePaid = hasPaidSetupFee || setupFee > 0;
+            const newSetupFeePaid = hasPaidSetupFee || setupFeeCharged > 0;
 
-            await updateDoc(doc(db, "users", user.uid), { subscriptionId });
+            await updateDoc(doc(db, "users", user.uid), { subscriptionId, setupFeePaid: newSetupFeePaid });
             await updateDoc(doc(db, "restaurants", restaurant.id), {
               subscriptionStatus: "active",
               plan: planData.id,
@@ -322,11 +306,29 @@ export default function SubscriptionPage() {
           <>
             {/* ── Pricing Cards Grid ── */}
             <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-end pt-6">
-              {dbPlans.map((plan) => {
-                const isCurrentPlan = restaurant?.plan === plan.id;
+              {dbPlans.filter(p => p.isActive).map((plan) => {
+                const isSamePlan = restaurant?.plan === plan.id;
+                const daysLeft = subscription?.expiryDate ? Math.ceil((subscription.expiryDate - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+                const disableSamePlan = isSamePlan && subscription?.status === "active" && daysLeft > 3;
+
+                const getButtonState = () => {
+                  if (subscription?.status === "expired") {
+                    return { label: "Subscribe now", disabled: false };
+                  }
+                  if (isSamePlan) {
+                    if (subscription?.status === "active" && daysLeft > 3) {
+                      return { label: "Renew in last 3 days", disabled: true };
+                    } else {
+                      return { label: "Renew now", disabled: false };
+                    }
+                  }
+                  return { label: billingCycle === "yearly" ? "Save & Subscribe" : "Get Started", disabled: false };
+                };
+
+                const { label, disabled: isBtnDisabled } = getButtonState();
+
                 const isPro = Boolean(plan.isPopular) || plan.id === "pro";
-                const displayPrice = billingCycle === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
-                const ctaText = billingCycle === "yearly" ? "Save & Subscribe" : "Get Started";
+                const displayPrice = billingCycle === "monthly" ? plan.priceMonthly : plan.priceYearly;
 
                 return isPro ? (
                   /* ── Featured (Pro) Card ── dark emerald */
@@ -349,10 +351,10 @@ export default function SubscriptionPage() {
                               <span className="text-5xl font-extrabold tracking-tight text-white">₹{displayPrice}</span>
                               <span className="text-base text-emerald-400 font-medium ml-1.5">/{billingCycle === "yearly" ? "year" : "month"}</span>
                             </div>
-                            {billingCycle === "monthly" ? (
-                              <span className="text-xs font-medium text-emerald-400 mt-2">+ ₹{plan.setupFee} setup fee</span>
-                            ) : (
+                            {billingCycle === "yearly" || plan.setupFee === 0 ? (
                               <span className="text-xs font-semibold text-emerald-300 mt-2 bg-emerald-800/60 border border-emerald-700/50 px-3 py-1 rounded-full">₹0 Setup Fee</span>
+                            ) : (
+                              <span className="text-xs font-medium text-emerald-400 mt-2">+ ₹{plan.setupFee} setup fee</span>
                             )}
                           </div>
                         </div>
@@ -374,21 +376,24 @@ export default function SubscriptionPage() {
                         <div className="pt-6 pb-8 px-7">
                           <Button
                             className={`w-full rounded-full font-bold text-base h-12 transition-all duration-200 ${
-                              isCurrentPlan
+                              isBtnDisabled
                                 ? "bg-emerald-700 border border-emerald-600 text-emerald-300 cursor-not-allowed"
                                 : "bg-white text-emerald-900 hover:bg-emerald-50 shadow-lg"
                             }`}
-                            disabled={isCurrentPlan || loadingPlan !== null}
+                            disabled={isBtnDisabled || loadingPlan !== null}
                             onClick={() => handleSubscribe(plan, billingCycle)}
                           >
                             {loadingPlan === plan.id ? (
                               <Loader2 className="h-5 w-5 animate-spin mx-auto" />
-                            ) : isCurrentPlan ? (
-                              "Current Plan"
                             ) : (
-                              ctaText
+                              label
                             )}
                           </Button>
+                          {disableSamePlan && (
+                            <p className="text-xs text-center text-emerald-200/80 mt-3">
+                              You can renew in last 3 days
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -405,10 +410,10 @@ export default function SubscriptionPage() {
                             <span className="text-5xl font-extrabold tracking-tight text-slate-900">₹{displayPrice}</span>
                             <span className="text-base text-slate-500 font-medium ml-1.5">/{billingCycle === "yearly" ? "year" : "month"}</span>
                           </div>
-                          {billingCycle === "monthly" ? (
-                            <span className="text-xs font-medium text-slate-400 mt-2">+ ₹{plan.setupFee} setup fee</span>
-                          ) : (
+                          {billingCycle === "yearly" || plan.setupFee === 0 ? (
                             <span className="text-xs font-semibold text-emerald-600 mt-2 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">₹0 Setup Fee</span>
+                          ) : (
+                            <span className="text-xs font-medium text-slate-400 mt-2">+ ₹{plan.setupFee} setup fee</span>
                           )}
                         </div>
                       </div>
@@ -429,22 +434,25 @@ export default function SubscriptionPage() {
 
                       <div className="pt-6 pb-8 px-7">
                         <Button
-                          className={`w-full rounded-full font-bold text-sm h-12 transition-all duration-200 ${
-                            isCurrentPlan
-                              ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
-                              : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm hover:shadow-md"
+                          className={`w-full rounded-full font-semibold text-base h-12 transition-all duration-200 ${
+                            isBtnDisabled
+                              ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                              : "bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg"
                           }`}
-                          disabled={isCurrentPlan || loadingPlan !== null}
+                          disabled={isBtnDisabled || loadingPlan !== null}
                           onClick={() => handleSubscribe(plan, billingCycle)}
                         >
                           {loadingPlan === plan.id ? (
                             <Loader2 className="h-5 w-5 animate-spin mx-auto" />
-                          ) : isCurrentPlan ? (
-                            "Current Plan"
                           ) : (
-                            ctaText
+                            label
                           )}
                         </Button>
+                        {disableSamePlan && (
+                          <p className="text-xs text-center text-slate-500 mt-3">
+                            You can renew in last 3 days
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

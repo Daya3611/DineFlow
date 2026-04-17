@@ -72,6 +72,24 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
     (subscription?.expiryDate && subscription.expiryDate < Date.now())
   );
 
+  const planSlug = (subscription?.plan || restaurant?.plan || "none").toLowerCase();
+  
+  const getPlanBadge = () => {
+    if (planSlug.includes("premium")) return { text: "PREMIUM PLAN", colorClass: "text-purple-600 bg-purple-100" };
+    if (planSlug.includes("pro")) return { text: "PRO PLAN", colorClass: "text-emerald-600 bg-emerald-100" };
+    if (planSlug.includes("basic")) return { text: "BASIC PLAN", colorClass: "text-blue-600 bg-blue-100" };
+    return { text: "FREE / TRIAL PLAN", colorClass: "text-slate-500 bg-slate-100" };
+  };
+  const planBadge = getPlanBadge();
+
+  const getUpgradeCardDetails = () => {
+    if (planSlug.includes("pro")) return { title: "Upgrade to Premium", desc: "Get multi-outlet and full control", btn: "Upgrade to Premium", action: () => router.push("/restaurant/subscription") };
+    if (planSlug.includes("basic")) return { title: "Upgrade to Pro", desc: "Unlock analytics and advanced features", btn: "Upgrade to Pro", action: () => router.push("/restaurant/subscription") };
+    if (planSlug.includes("premium")) return { title: "Latest Updates", desc: "See what's new in Dineflow", btn: "View Updates", action: () => router.push("/restaurant/updates") };
+    return { title: "Upgrade to Basic", desc: "Start using core features for your restaurant", btn: "Upgrade to Basic", action: () => router.push("/restaurant/subscription") };
+  };
+  const upgradeCard = getUpgradeCardDetails();
+
   return (
     <div className="h-screen overflow-hidden flex bg-[#f8fafc] relative">
       {/* Subscription Blocking Overlay */}
@@ -134,9 +152,11 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
                 <p className="text-[13px] font-bold text-slate-900 truncate">
                   {restaurant.name}
                 </p>
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
-                  {restaurant.plan === 'premium' ? 'Premium Plan' : restaurant.plan === 'pro' ? 'Pro Plan' : 'Free Plan'}
-                </p>
+                <div className="mt-1 flex items-center">
+                   <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-md ${planBadge.colorClass}`}>
+                     {planBadge.text}
+                   </span>
+                </div>
               </div>
             </div>
           )}
@@ -179,21 +199,17 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         {/* Bottom Area (Upgrade Card + User Profile) */}
         <div className="p-4 border-t border-slate-100 shrink-0 bg-white space-y-4">
 
-          {/* Upgrade Plan Card */}
-          {restaurant?.plan !== 'premium' && (
-            <div className="bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-2xl p-4 border border-emerald-100 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-2 opacity-10 scale-150 -translate-y-4 translate-x-4">
-                <Zap className="h-16 w-16 text-emerald-600" />
-              </div>
-              <p className="text-sm font-bold text-slate-900 mb-1">Upgrade to Pro</p>
-              <p className="text-xs text-slate-500 mb-3 relative z-10">Get more table analytics and features.</p>
-              <Link href="/restaurant/subscription" onClick={() => setSidebarOpen(false)}>
-                <Button className="w-full h-8 text-[12px] text-emerald-700 hover: border">
-                  Upgrade Plan
-                </Button>
-              </Link>
+          {/* Upgrade Plan Card / Updates Card */}
+          <div className="bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-2xl p-4 border border-emerald-100 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-2 opacity-10 scale-150 -translate-y-4 translate-x-4">
+               <Zap className="h-16 w-16 text-emerald-600" />
             </div>
-          )}
+            <p className="text-sm font-bold text-slate-900 mb-1">{upgradeCard.title}</p>
+            <p className="text-xs text-slate-500 mb-3 relative z-10">{upgradeCard.desc}</p>
+            <Button onClick={() => { setSidebarOpen(false); upgradeCard.action(); }} className="w-full h-8 text-[12px] text-emerald-700 hover: bg-white border border-emerald-200">
+              {upgradeCard.btn}
+            </Button>
+          </div>
 
           {/* User Footer */}
           <div className="flex items-center gap-3 px-1">

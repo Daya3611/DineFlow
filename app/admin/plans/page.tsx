@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { db } from "@/firebase";
 import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
-import { Plus, Edit2, Package, Tag, AlertTriangle, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Edit2, Package, Tag, AlertTriangle, AlertCircle, CheckCircle2, X } from "lucide-react";
 import { PlanDocument } from "@/types";
 
 export default function AdminPlansPage() {
@@ -26,9 +26,10 @@ export default function AdminPlansPage() {
   const [formData, setFormData] = useState<Partial<PlanDocument>>({
     name: "",
     id: "",
-    monthlyPrice: 0,
-    yearlyPrice: 0,
+    priceMonthly: 0,
+    priceYearly: 0,
     setupFee: 0,
+    order: 0,
     tableLimit: 10,
     menuLimit: 999999,
     supportType: "standard",
@@ -38,7 +39,7 @@ export default function AdminPlansPage() {
     isActive: true,
   });
 
-  const [featuresInput, setFeaturesInput] = useState("");
+  const [featuresList, setFeaturesList] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export default function AdminPlansPage() {
       setLoading(true);
       const snap = await getDocs(collection(db, "plans"));
       const fetched = snap.docs.map((doc) => doc.data() as PlanDocument);
-      setPlans(fetched.sort((a, b) => (a.monthlyPrice || 0) - (b.monthlyPrice || 0)));
+      setPlans(fetched.sort((a, b) => (a.order || 0) - (b.order || 0)));
     } catch (err) {
       toast.error("Failed to fetch plans");
     } finally {
@@ -62,15 +63,16 @@ export default function AdminPlansPage() {
     if (plan) {
       setEditingPlan(plan);
       setFormData(plan);
-      setFeaturesInput((plan.features || []).join("\n"));
+      setFeaturesList(plan.features || []);
     } else {
       setEditingPlan(null);
       setFormData({
         name: "",
         id: "",
-        monthlyPrice: 0,
-        yearlyPrice: 0,
+        priceMonthly: 0,
+        priceYearly: 0,
         setupFee: 0,
+        order: plans.length > 0 ? Math.max(...plans.map(p => p.order || 0)) + 1 : 1,
         tableLimit: 10,
         menuLimit: 999999,
         supportType: "standard",
@@ -79,7 +81,7 @@ export default function AdminPlansPage() {
         isPopular: false,
         isActive: true,
       });
-      setFeaturesInput("");
+      setFeaturesList([]);
     }
     setSheetOpen(true);
   };
@@ -92,7 +94,7 @@ export default function AdminPlansPage() {
     }
     // Lifetime plan might not have monthly
     if (formData.id !== "trial" && formData.id !== "lifetime") {
-        if ((formData.monthlyPrice || 0) <= 0 || (formData.yearlyPrice || 0) <= 0) {
+        if ((formData.priceMonthly || 0) <= 0 || (formData.priceYearly || 0) <= 0) {
         toast.error("Price must be greater than 0.");
         return;
         }
@@ -105,10 +107,7 @@ export default function AdminPlansPage() {
     try {
       setSaving(true);
 
-      const features = featuresInput
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const features = featuresList.map((s) => s.trim()).filter(Boolean);
 
       const planData: PlanDocument = {
         ...(formData as PlanDocument),
@@ -212,8 +211,8 @@ export default function AdminPlansPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col text-sm">
-                        <span className="font-medium text-slate-700">₹{plan.monthlyPrice}/mo</span>
-                        <span className="text-slate-500">₹{plan.yearlyPrice}/yr</span>
+                        <span className="font-medium text-slate-700">₹{plan.priceMonthly}/mo</span>
+                        <span className="text-slate-500">₹{plan.priceYearly}/yr</span>
                         <span className="text-xs text-slate-400 mt-0.5">Setup: ₹{plan.setupFee}</span>
                       </div>
                     </TableCell>
@@ -305,8 +304,8 @@ export default function AdminPlansPage() {
                 required
                 type="number"
                 min="0"
-                value={formData.monthlyPrice || ""}
-                onChange={(e) => setFormData({ ...formData, monthlyPrice: Number(e.target.value) })}
+                value={formData.priceMonthly || ""}
+                onChange={(e) => setFormData({ ...formData, priceMonthly: Number(e.target.value) })}
                 className="h-11 rounded-xl"
               />
             </div>
@@ -316,8 +315,8 @@ export default function AdminPlansPage() {
                 required
                 type="number"
                 min="0"
-                value={formData.yearlyPrice || ""}
-                onChange={(e) => setFormData({ ...formData, yearlyPrice: Number(e.target.value) })}
+                value={formData.priceYearly || ""}
+                onChange={(e) => setFormData({ ...formData, priceYearly: Number(e.target.value) })}
                 className="h-11 rounded-xl"
               />
             </div>
@@ -334,16 +333,30 @@ export default function AdminPlansPage() {
             </div>
           </div>
 
-          <div className="space-y-1.5 flex flex-col">
-            <Label className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Table Limit *</Label>
-            <Input
-              required
-              type="number"
-              min="1"
-              value={formData.tableLimit || ""}
-              onChange={(e) => setFormData({ ...formData, tableLimit: Number(e.target.value) })}
-              className="h-11 rounded-xl"
-            />
+          <div className="grid grid-cols-2 gap-4 pt-1">
+             <div className="space-y-1.5 flex flex-col">
+               <Label className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Order *</Label>
+               <Input
+                 required
+                 type="number"
+                 min="0"
+                 value={formData.order || 0}
+                 onChange={(e) => setFormData({ ...formData, order: Number(e.target.value) })}
+                 className="h-11 rounded-xl"
+               />
+               <p className="text-[10px] text-slate-400">Lower numbers appear first.</p>
+             </div>
+             <div className="space-y-1.5 flex flex-col">
+               <Label className="uppercase text-[11px] font-bold text-slate-500 tracking-wider">Table Limit *</Label>
+               <Input
+                 required
+                 type="number"
+                 min="1"
+                 value={formData.tableLimit || ""}
+                 onChange={(e) => setFormData({ ...formData, tableLimit: Number(e.target.value) })}
+                 className="h-11 rounded-xl"
+               />
+             </div>
           </div>
 
           <div className="space-y-1.5 flex flex-col pt-1">
@@ -359,15 +372,41 @@ export default function AdminPlansPage() {
              </div>
           </div>
 
-          <div className="space-y-1.5 flex flex-col pt-2">
+          <div className="space-y-2 flex flex-col pt-2">
             <Label className="uppercase text-xs font-bold text-slate-500 tracking-wider">Features List</Label>
-            <Textarea
-              className="min-h-[140px] rounded-xl text-sm leading-relaxed"
-              placeholder="Up to 25 tables&#10;Unlimited menu items&#10;Advanced analytics"
-              value={featuresInput}
-              onChange={(e) => setFeaturesInput(e.target.value)}
-            />
-            <p className="text-[11px] text-slate-400">Put each feature on a new line. Standard bullet points will magically appear.</p>
+            {featuresList.map((feature, i) => (
+              <div key={i} className="flex items-center gap-2">
+                 <Input
+                   value={feature}
+                   onChange={(e) => {
+                     const newFeatures = [...featuresList];
+                     newFeatures[i] = e.target.value;
+                     setFeaturesList(newFeatures);
+                   }}
+                   className="h-11 rounded-xl"
+                   placeholder="e.g. Advanced analytics"
+                 />
+                 <Button
+                   type="button"
+                   variant="ghost"
+                   className="h-11 w-11 px-0 text-slate-400 hover:text-red-500 hover:bg-red-50 shrink-0"
+                   onClick={() => {
+                     setFeaturesList(featuresList.filter((_, index) => index !== i));
+                   }}
+                 >
+                   <X className="h-5 w-5" />
+                 </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFeaturesList([...featuresList, ""])}
+              className="mt-2 h-11 border-dashed border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-emerald-600 rounded-xl"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Feature
+            </Button>
           </div>
         </div>
       </AppSheet>
