@@ -1,13 +1,13 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Check, Loader2, Sparkles, Zap, Play } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/firebase";
-import { doc, updateDoc, setDoc } from "firebase/firestore";
+import { doc, updateDoc, setDoc, collection, getDocs, query, where } from "firebase/firestore";
 import Script from "next/script";
 
 import { plans, lifetimePlan } from "@/lib/plans";
@@ -17,6 +17,22 @@ export default function SubscriptionPage() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
   const [showLifetime, setShowLifetime] = useState(false);
+  const [dbPlans, setDbPlans] = useState<any[]>(plans);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const snap = await getDocs(query(collection(db, "plans"), where("isActive", "==", true)));
+        if (!snap.empty) {
+          const fetchedPlans = snap.docs.map(doc => doc.data());
+          setDbPlans(fetchedPlans.sort((a, b) => (a.monthlyPrice || 0) - (b.monthlyPrice || 0)));
+        }
+      } catch (e) {
+        console.error("Failed to fetch DB plans, using local fallback", e);
+      }
+    };
+    fetchPlans();
+  }, []);
 
   const handleSubscribe = async (planData: any, cycle: "monthly" | "yearly" | "lifetime") => {
     if (!user || !restaurant) {
@@ -30,18 +46,42 @@ export default function SubscriptionPage() {
       let finalAmount = 0;
       let setupFee = 0;
 
+      const hasPaidSetupFee = restaurant.setupFeePaid === true;
+      const lastEndDate = restaurant.lastSubscriptionEndDate || 0;
+      const currentDate = Date.now();
+      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+      
+      const isPlanSwitch = restaurant.subscriptionStatus === "active" && 
+                           restaurant.plan !== "none" && 
+                           restaurant.plan !== "trial";
+
+      if (cycle === "yearly" || cycle === "lifetime" || cycle === ("trial" as any) || planData.id === "trial") {
+        setupFee = 0;
+      } else {
+        if (!hasPaidSetupFee) {
+          setupFee = planData.setupFee || 0;
+        } else {
+          if (isPlanSwitch) {
+            setupFee = 0; // Never charge setup fee on active plan switch
+          } else {
+            // Cancelled/Expired scenario
+            if (lastEndDate > 0 && (currentDate - lastEndDate) <= thirtyDaysInMs) {
+              setupFee = 0; // Within 30 days grace period
+            } else {
+              setupFee = planData.setupFee || 0; // Charge again
+            }
+          }
+        }
+      }
+
       if (cycle === "monthly") {
-        finalAmount = planData.monthlyPrice + planData.setupFee;
-        setupFee = planData.setupFee;
+        finalAmount = planData.monthlyPrice + setupFee;
       } else if (cycle === "yearly") {
         finalAmount = planData.yearlyPrice;
-        setupFee = 0;
       } else if (cycle === "lifetime") {
         finalAmount = planData.price;
-        setupFee = 0;
       } else if (cycle === ("trial" as any)) {
         finalAmount = 49;
-        setupFee = 0;
       }
 
       const response = await fetch("/api/razorpay/order", {
@@ -102,12 +142,15 @@ export default function SubscriptionPage() {
               createdAt: Date.now(),
             });
 
+            const newSetupFeePaid = hasPaidSetupFee || setupFee > 0;
+
             await updateDoc(doc(db, "users", user.uid), { subscriptionId });
             await updateDoc(doc(db, "restaurants", restaurant.id), {
               subscriptionStatus: "active",
               plan: planData.id,
+              setupFeePaid: newSetupFeePaid
             });
-            setRestaurant({ ...restaurant, plan: planData.id, subscriptionStatus: "active" });
+            setRestaurant({ ...restaurant, plan: planData.id, subscriptionStatus: "active", setupFeePaid: newSetupFeePaid });
 
             toast.success("Subscription activated successfully!");
             window.location.href = "/restaurant/dashboard";
@@ -145,26 +188,51 @@ export default function SubscriptionPage() {
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
       <div className="max-w-6xl mx-auto space-y-8 pb-10 px-4 md:px-0">
-        <div className="text-center mb-10 pt-4">
+        <div className="text-center mb-17 pt-4">
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-4">Pricing that scales with you</h1>
           <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-8">
             Current Plan: <span className="font-semibold text-[#0f9d6a] capitalize">{restaurant?.plan || "None"}</span>
           </p>
 
           {!showLifetime && (
-            <div className="flex justify-center items-center gap-4 bg-slate-100/50 p-2 rounded-full inline-flex mx-auto border border-slate-200 mb-6">
-              <Button onClick={() => setBillingCycle("monthly")}
-                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${billingCycle === "monthly" ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-900"
-                  }`}
-              >
-                Monthly
-              </Button>
-              <Button onClick={() => setBillingCycle("yearly")}
-                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billingCycle === "yearly" ? "bg-[#0f9d6a] shadow-sm text-white" : "text-slate-500 hover:text-slate-900"
-                  }`}
-              >
-                Yearly <span className={billingCycle === "yearly" ? "text-green-200" : "text-[#0f9d6a]"}>Save 20%</span>
-              </Button>
+            <div className="flex justify-center mb-8">
+              <div className="flex items-center bg-slate-100 p-1 rounded-full border border-slate-200 shadow-sm">
+
+                {/* Monthly */}
+                <button
+                  onClick={() => setBillingCycle("monthly")}
+                  className={`relative px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200
+      ${billingCycle === "monthly"
+                      ? "bg-white text-slate-900 shadow"
+                      : "text-slate-500 hover:text-slate-900"
+                    }`}
+                >
+                  Monthly
+                </button>
+
+                {/* Yearly */}
+                <button
+                  onClick={() => setBillingCycle("yearly")}
+                  className={`relative px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2
+      ${billingCycle === "yearly"
+                      ? "bg-emerald-600 text-white shadow"
+                      : "text-slate-500 hover:text-slate-900"
+                    }`}
+                >
+                  Yearly
+
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap
+        ${billingCycle === "yearly"
+                        ? "bg-white/20 text-white"
+                        : "bg-emerald-100 text-emerald-600"
+                      }`}
+                  >
+                    Save 20%
+                  </span>
+                </button>
+
+              </div>
             </div>
           )}
         </div>
@@ -197,41 +265,54 @@ export default function SubscriptionPage() {
         )}
 
         {showLifetime ? (
-          <div className="max-w-md mx-auto">
-            <Card className="relative flex flex-col bg-slate-900 border-0 rounded-2xl shadow-xl overflow-hidden text-white">
-              <CardHeader className="text-center pb-6 pt-8 px-6">
-                <CardTitle className="text-2xl font-bold">{lifetimePlan.name}</CardTitle>
-                <CardDescription className="mt-4 flex flex-col items-center">
-                  <div className="flex items-baseline text-white">
-                    <span className="text-5xl font-extrabold">₹{lifetimePlan.price}</span>
-                    <span className="text-lg text-slate-400 font-medium ml-1">/one-time</span>
+          <div className="max-w-sm mx-auto">
+            {/* Gradient border wrapper */}
+            <div className="p-[2px] rounded-3xl bg-gradient-to-b from-emerald-400 via-emerald-600 to-emerald-900 shadow-2xl shadow-emerald-900/30">
+              <Card className="relative flex flex-col bg-emerald-950 border-0 rounded-3xl overflow-hidden text-white">
+                <CardHeader className="text-center pb-4 pt-10 px-8">
+                  <div className="flex justify-center mb-3">
+                    <span className="inline-flex items-center gap-1.5 bg-amber-400/15 text-amber-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                      <Zap className="h-3 w-3 fill-current" /> One-time Deal
+                    </span>
                   </div>
-                  <span className="text-sm font-medium text-emerald-400 mt-2 bg-emerald-400/10 px-3 py-1 rounded-full">
-                    No Setup Fee
-                  </span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 px-6">
-                <div className="h-px w-full bg-slate-700 mb-6" />
-                <ul className="space-y-4">
-                  {lifetimePlan.features.map((feature, i) => (
-                    <li key={i} className="flex text-slate-300">
-                      <Check className="h-5 w-5 mr-3 shrink-0 text-amber-500" />
-                      <span className="font-medium text-[15px]">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter className="pt-6 pb-8 px-6">
-                <Button className="w-full text-base h-14 text-slate-900 hover:" disabled={loadingPlan !== null} onClick={() => handleSubscribe(lifetimePlan, "lifetime")}
-                >
-                  {loadingPlan === lifetimePlan.id ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : "Buy Once"}
-                </Button>
-              </CardFooter>
-            </Card>
+                  <CardTitle className="text-2xl font-bold text-white">{lifetimePlan.name}</CardTitle>
+                  <CardDescription className="mt-5 flex flex-col items-center">
+                    <div className="flex items-baseline text-white">
+                      <span className="text-5xl font-extrabold tracking-tight">₹{lifetimePlan.price}</span>
+                      <span className="text-base text-emerald-400 font-semibold ml-2">/one-time</span>
+                    </div>
+                    <span className="text-xs font-semibold text-emerald-400 mt-3 bg-emerald-400/10 border border-emerald-400/20 px-3 py-1 rounded-full">
+                      No Setup Fee · No Renewals
+                    </span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 px-8 pb-2">
+                  <div className="h-px w-full bg-emerald-800/60 mb-6" />
+                  <ul className="space-y-3">
+                    {lifetimePlan.features.map((feature, i) => (
+                      <li key={i} className="flex items-start text-emerald-100">
+                        <span className="mt-0.5 mr-3 shrink-0 h-5 w-5 rounded-full bg-emerald-700/50 flex items-center justify-center">
+                          <Check className="h-3 w-3 text-emerald-300" />
+                        </span>
+                        <span className="text-sm font-medium">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter className="pt-6 pb-8 px-8">
+                  <Button
+                    className="w-full rounded-full font-bold text-base h-13 bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-900/40 transition-all duration-200"
+                    disabled={loadingPlan !== null}
+                    onClick={() => handleSubscribe(lifetimePlan, "lifetime")}
+                  >
+                    {loadingPlan === lifetimePlan.id ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : "Buy Once — Lifetime Access"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
             <div className="text-center mt-6">
               <Button onClick={() => setShowLifetime(false)}
-                className="text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+                className="text-sm font-semibold text-slate-400 hover:text-slate-700 transition-colors"
               >
                 ← Back to regular plans
               </Button>
@@ -239,79 +320,141 @@ export default function SubscriptionPage() {
           </div>
         ) : (
           <>
-            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-start pt-2">
-              {plans.map((plan) => {
+            {/* ── Pricing Cards Grid ── */}
+            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-end pt-6">
+              {dbPlans.map((plan) => {
                 const isCurrentPlan = restaurant?.plan === plan.id;
-                const isPro = plan.id === "pro";
+                const isPro = Boolean(plan.isPopular) || plan.id === "pro";
                 const displayPrice = billingCycle === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
                 const ctaText = billingCycle === "yearly" ? "Save & Subscribe" : "Get Started";
 
-                return (
-                  <Card
-                    key={plan.id}
-                    className={`relative flex flex-col bg-white rounded-2xl transition-all duration-300 overflow-visible ${isPro
-                      ? "border-[3px] border-[#0f9d6a] shadow-[0_0_25px_rgba(15,157,106,0.25)] z-10 lg:-translate-y-4 lg:scale-105"
-                      : "border border-slate-200 shadow-sm hover:shadow-md"
-                      }`}
-                  >
-                    {isPro && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-4 py-1.5 bg-[#0f9d6a] text-white text-[12px] font-bold uppercase tracking-wider rounded-full flex items-center gap-1 shadow-md">
-                        <Zap className="h-3.5 w-3.5 fill-current" /> Most Popular
-                      </div>
-                    )}
+                return isPro ? (
+                  /* ── Featured (Pro) Card ── dark emerald */
+                  <div key={plan.id} className="relative flex flex-col z-10 lg:-translate-y-3">
+                    {/* Badge floating above card */}
+                    <div className="flex justify-center mb-0">
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-600 text-white text-[11px] font-bold px-4 py-1.5 rounded-t-2xl uppercase tracking-widest shadow-md">
+                        <Zap className="h-3 w-3 fill-current" /> Most Popular
+                      </span>
+                    </div>
 
-                    <CardHeader className={`text-center pb-6 pt-8 px-6`}>
-                      <CardTitle className="text-2xl font-bold text-slate-900">{plan.name}</CardTitle>
-                      {isPro && <p className="text-xs font-semibold text-emerald-600 mt-1">Perfect for most restaurants</p>}
-                      <CardDescription className="mt-4 flex flex-col items-center">
-                        <div className="flex items-baseline text-slate-900">
-                          <span className={`text-5xl font-extrabold ${isPro ? "text-[#0f9d6a]" : ""}`}>₹{displayPrice}</span>
-                          <span className="text-lg text-slate-500 font-medium ml-1">/{billingCycle === "yearly" ? "year" : "month"}</span>
+                    {/* Gradient border wrapper */}
+                    <div className="p-[2px] rounded-3xl bg-gradient-to-b from-emerald-400 to-emerald-800 shadow-2xl shadow-emerald-700/25">
+                      <div className="flex flex-col bg-emerald-900 rounded-3xl overflow-hidden text-white">
+                        <div className="text-center pb-4 pt-8 px-7">
+                          <p className="text-lg font-semibold text-white">{plan.name}</p>
+                          <p className="text-xs font-medium text-emerald-300 mt-1">Perfect for most restaurants</p>
+                          <div className="mt-5 flex flex-col items-center">
+                            <div className="flex items-baseline">
+                              <span className="text-5xl font-extrabold tracking-tight text-white">₹{displayPrice}</span>
+                              <span className="text-base text-emerald-400 font-medium ml-1.5">/{billingCycle === "yearly" ? "year" : "month"}</span>
+                            </div>
+                            {billingCycle === "monthly" ? (
+                              <span className="text-xs font-medium text-emerald-400 mt-2">+ ₹{plan.setupFee} setup fee</span>
+                            ) : (
+                              <span className="text-xs font-semibold text-emerald-300 mt-2 bg-emerald-800/60 border border-emerald-700/50 px-3 py-1 rounded-full">₹0 Setup Fee</span>
+                            )}
+                          </div>
                         </div>
-                        {billingCycle === "monthly" ? (
-                          <span className="text-sm font-medium text-slate-500 mt-2">
-                            + ₹{plan.setupFee} setup fee
-                          </span>
-                        ) : (
-                          <span className="text-sm font-bold text-emerald-600 mt-2 bg-emerald-50 px-3 py-1 rounded-full">
-                            ₹0 Setup Fee
-                          </span>
-                        )}
-                      </CardDescription>
-                    </CardHeader>
 
-                    <CardContent className="flex-1 px-6">
-                      <div className="h-px w-full bg-slate-100 mb-6" />
-                      <ul className="space-y-4">
-                        {plan.features.map((feature, i) => (
-                          <li key={i} className="flex text-slate-700">
-                            <Check className={`h-5 w-5 mr-3 shrink-0 ${isPro ? "text-[#0f9d6a]" : "text-emerald-500"}`} />
-                            <span className="font-medium text-[15px]">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
+                        <div className="flex-1 px-7 pb-2">
+                          <div className="h-px w-full bg-emerald-800/70 mb-5" />
+                          <ul className="space-y-3">
+                            {plan.features?.map((feature: string, i: number) => (
+                              <li key={i} className="flex items-start text-emerald-100">
+                                <span className="mt-0.5 mr-3 shrink-0 h-5 w-5 rounded-full bg-emerald-700/60 flex items-center justify-center">
+                                  <Check className="h-3 w-3 text-emerald-300" />
+                                </span>
+                                <span className="text-sm font-medium">{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
 
-                    <CardFooter className="pt-6 pb-8 px-6">
-                      <Button className={`w-full rounded-xl font-bold text-base h-14 transition-all duration-200 ${isCurrentPlan ? "bg-slate-100 border border-slate-200 text-slate-500 cursor-not-allowed hover:bg-slate-100" : isPro ? "bg-[#0f9d6a] text-white hover:bg-[#0c7f56] shadow-md hover:shadow-lg shadow-[#0f9d6a]/30" : "bg-slate-900 text-white hover:bg-slate-800 shadow-md"}`} disabled={isCurrentPlan || loadingPlan !== null} onClick={() => handleSubscribe(plan, billingCycle)}
-                      >
-                        {loadingPlan === plan.id ? (
-                          <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                        ) : isCurrentPlan ? (
-                          "Current Plan"
-                        ) : (
-                          ctaText
-                        )}
-                      </Button>
-                    </CardFooter>
-                  </Card>
+                        <div className="pt-6 pb-8 px-7">
+                          <Button
+                            className={`w-full rounded-full font-bold text-base h-12 transition-all duration-200 ${
+                              isCurrentPlan
+                                ? "bg-emerald-700 border border-emerald-600 text-emerald-300 cursor-not-allowed"
+                                : "bg-white text-emerald-900 hover:bg-emerald-50 shadow-lg"
+                            }`}
+                            disabled={isCurrentPlan || loadingPlan !== null}
+                            onClick={() => handleSubscribe(plan, billingCycle)}
+                          >
+                            {loadingPlan === plan.id ? (
+                              <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+                            ) : isCurrentPlan ? (
+                              "Current Plan"
+                            ) : (
+                              ctaText
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* ── Regular Card ── */
+                  <div key={plan.id} className="p-[1.5px] rounded-3xl bg-gradient-to-b from-slate-200 to-slate-100 hover:from-emerald-200 hover:to-slate-100 transition-all duration-300 shadow-sm hover:shadow-md">
+                    <div className="flex flex-col bg-white rounded-3xl overflow-hidden h-full">
+                      <div className="text-center pb-4 pt-8 px-7">
+                        <p className="text-lg font-semibold text-slate-900">{plan.name}</p>
+                        <p className="text-xs font-medium text-slate-400 mt-1">&nbsp;</p>
+                        <div className="mt-5 flex flex-col items-center">
+                          <div className="flex items-baseline">
+                            <span className="text-5xl font-extrabold tracking-tight text-slate-900">₹{displayPrice}</span>
+                            <span className="text-base text-slate-500 font-medium ml-1.5">/{billingCycle === "yearly" ? "year" : "month"}</span>
+                          </div>
+                          {billingCycle === "monthly" ? (
+                            <span className="text-xs font-medium text-slate-400 mt-2">+ ₹{plan.setupFee} setup fee</span>
+                          ) : (
+                            <span className="text-xs font-semibold text-emerald-600 mt-2 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">₹0 Setup Fee</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex-1 px-7 pb-2">
+                        <div className="h-px w-full bg-slate-100 mb-5" />
+                        <ul className="space-y-3">
+                          {plan.features?.map((feature: string, i: number) => (
+                            <li key={i} className="flex items-start text-slate-700">
+                              <span className="mt-0.5 mr-3 shrink-0 h-5 w-5 rounded-full bg-emerald-50 flex items-center justify-center">
+                                <Check className="h-3 w-3 text-emerald-500" />
+                              </span>
+                              <span className="text-sm font-medium">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="pt-6 pb-8 px-7">
+                        <Button
+                          className={`w-full rounded-full font-bold text-sm h-12 transition-all duration-200 ${
+                            isCurrentPlan
+                              ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
+                              : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm hover:shadow-md"
+                          }`}
+                          disabled={isCurrentPlan || loadingPlan !== null}
+                          onClick={() => handleSubscribe(plan, billingCycle)}
+                        >
+                          {loadingPlan === plan.id ? (
+                            <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+                          ) : isCurrentPlan ? (
+                            "Current Plan"
+                          ) : (
+                            ctaText
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
 
             <div className="text-center mt-12 mb-8">
               <Button onClick={() => setShowLifetime(true)}
-                className="text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-wider"
+                className="text-xs font-semibold text-slate-400 hover:text-green-600 transition-colors border-none uppercase tracking-wider"
               >
                 Looking for a one-time payment option?
               </Button>

@@ -44,6 +44,8 @@ export interface Restaurant {
   plan: "basic" | "pro" | "premium" | "trial" | "none";
   customSlug?: string;
   landingPageConfig?: LandingPageConfig;
+  setupFeePaid?: boolean;
+  lastSubscriptionEndDate?: number;
   createdAt: number;
 }
 
@@ -55,6 +57,23 @@ export interface Subscription {
   razorpayPaymentId?: string;
   startDate: number;
   expiryDate: number;
+  createdAt: number;
+}
+
+export interface PlanDocument {
+  id: string;
+  name: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  setupFee: number;
+  features: string[];
+  tableLimit: number;
+  menuLimit: number; // For compatibility
+  supportType: string;
+  analytics: string;
+  multiOutlet: boolean;
+  isPopular: boolean;
+  isActive: boolean;
   createdAt: number;
 }
 

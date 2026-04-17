@@ -155,8 +155,8 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group relative overflow-hidden ${isActive
-                    ? "bg-[#0f9d6a] text-white shadow-md shadow-emerald-200"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  ? "bg-[#0f9d6a] text-white shadow-md shadow-emerald-200"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   }`}
               >
                 {isActive && (
@@ -207,9 +207,9 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
             <AppDropdown
               items={[
                 {
-                  label: "Settings",
-                  icon: Settings,
-                  onClick: () => router.push("/restaurant/settings"),
+                  label: "Subscription",
+                  icon: Zap,
+                  onClick: () => router.push("/restaurant/subscription"),
                 },
                 {
                   label: "Sign out",

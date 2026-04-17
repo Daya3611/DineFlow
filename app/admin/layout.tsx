@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   LayoutDashboard, Users, Store, CreditCard, LogOut,
-  Loader2, Menu, Activity, ChefHat, X
+  Loader2, Menu, Activity, ChefHat, X, Package
 } from "lucide-react";
 import { auth } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -21,6 +21,7 @@ const navItems = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: Activity },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
+  { href: "/admin/plans", label: "Plans", icon: Package },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

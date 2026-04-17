@@ -8,16 +8,31 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        default:
+          "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50",
+
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-slate-200 bg-white hover:bg-slate-50 text-slate-900",
+
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-slate-100 text-slate-800 hover:bg-slate-200",
+
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "hover:bg-slate-100 text-slate-700",
+
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-red-50 text-red-600 hover:bg-red-100",
+
+        link:
+          "text-slate-900 underline-offset-4 hover:underline",
+
+        // ✅ NEW CLEAN CTA BUTTON
+        cta:
+          "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm",
+
+        // ✅ SOFT CTA (like your screenshot)
+        softCta:
+          "bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100",
       },
       size: {
         default:
