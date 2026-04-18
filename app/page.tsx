@@ -6,6 +6,7 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import { auth, db } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
+import { plans as localPlans } from "@/lib/plans";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -103,7 +104,7 @@ const testimonials = [
   {
     name: "Rahul Mehra",
     title: "Owner, Spice Garden",
-    body: "Dineflow.pro completely transformed how we handle orders. Our staff is faster and customers love scanning QR codes.",
+    body: "Dineflow completely transformed how we handle orders. Our staff is faster and customers love scanning QR codes.",
     avatar: "RM",
     color: "bg-[#0f9d6a]",
   },
@@ -171,25 +172,41 @@ export default function Home() {
           const data = doc.data();
           const pId = doc.id.toLowerCase();
 
-          let desc = "";
+          let parsedPlanId = pId;
+          if (pId.includes("basic")) parsedPlanId = "basic";
+          else if (pId.includes("pro")) parsedPlanId = "pro";
+          else if (pId.includes("premium")) parsedPlanId = "premium";
+
+          const localPlan = localPlans.find(p => p.id === parsedPlanId) || {} as any;
+
+          let price = 0;
+          if (data.monthlyPrice) {
+            price = data.monthlyPrice;
+          } else if (data.priceYearly) {
+            price = Math.floor(data.priceYearly / 12);
+          } else if (pId.includes("-")) {
+            price = Number(pId.split("-")[1]) || 0;
+          } else if (localPlan.monthlyPrice) {
+            price = localPlan.monthlyPrice;
+          }
+
+          let desc = "Best for small restaurants";
           let highlighted = false;
 
-          if (pId === "basic") {
-            desc = "Best for small restaurants";
-          } else if (pId === "pro") {
+          if (parsedPlanId === "pro") {
             desc = "Perfect for most restaurants";
             highlighted = true;
-          } else if (pId === "premium") {
+          } else if (parsedPlanId === "premium") {
             desc = "For growing businesses";
           }
 
           return {
             id: pId,
-            name: data.name || pId,
-            price: `₹${data.monthlyPrice || data.price || 0}`,
+            name: data.name || localPlan.name || pId,
+            price: `₹${price || 0}`,
             period: "/month",
             desc: desc,
-            features: data.features || [],
+            features: (data.features && data.features.length > 0) ? data.features : (localPlan.features || []),
             highlighted: highlighted,
             cta: "Get Started"
           };
@@ -541,7 +558,7 @@ export default function Home() {
                 initial="hidden"
                 whileInView="show"
                 viewport={{ once: true, margin: "-50px" }}
-                className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto"
+                className="grid md:grid-cols-3 gap-8 mx-auto"
               >
                 {loadingPlans ? (
                   <div className="col-span-1 md:col-span-2 text-center text-gray-500 py-10">Loading plans...</div>
@@ -549,6 +566,9 @@ export default function Home() {
                   <motion.div
                     key={i}
                     variants={staggerItem}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true }}
                     className={`relative rounded-2xl p-8 flex flex-col border-2 transition-all ${plan.highlighted
                       ? "border-emerald-500 bg-[#0f9d6a] text-white shadow-2xl shadow-[0_4px_14px_rgba(15,157,106,0.2)] scale-[1.02]"
                       : "border-gray-100 bg-white shadow-sm hover:shadow-lg hover:border-gray-200"
