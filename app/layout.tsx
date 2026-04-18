@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Dineflow.pro – Restaurant QR & Management Platform",
+  title: "Dineflow – Restaurant QR & Management Platform",
   description: "The modern SaaS platform for restaurant digital menus, QR ordering, and business management.",
   manifest: "/manifest.json",
   icons: {

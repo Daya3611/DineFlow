@@ -245,7 +245,7 @@ export default function Home() {
                 <Image src="/logo.png" alt="Dineflow Icon" width={32} height={32} className="object-contain" priority />
               </div>
               <strong className="text-[17px] font-extrabold tracking-tight text-gray-900 leading-none">
-                Dineflow<span className="text-[#0f9d6a]">.pro</span>
+                Dineflow
               </strong>
             </Link>
 
