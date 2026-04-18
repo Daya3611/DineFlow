@@ -8,7 +8,7 @@ import { Order as OrderType } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Printer, CheckCircle, Clock, Utensils, UtensilsCrossed, Table, Search, Eye } from "lucide-react";
+import { Loader2, Printer, CheckCircle, Clock, Utensils, UtensilsCrossed, Table, Search, Eye, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,10 +22,10 @@ const statusConfig: Record<string, {
   icon: React.ReactNode;
   borderColor: string;
 }> = {
-  pending: { label: "New", color: "bg-red-100 text-red-700 border-red-200", nextAction: "Accept & Prepare", nextStatus: "preparing", icon: <Clock className="w-3.5 h-3.5" />, borderColor: "border-t-red-500" },
-  preparing: { label: "Preparing", color: "bg-amber-100 text-amber-700 border-amber-200", nextAction: "Mark as Served", nextStatus: "served", icon: <Utensils className="w-3.5 h-3.5" />, borderColor: "border-t-amber-400" },
-  served: { label: "Served", color: "bg-sky-100 text-sky-700 border-sky-200", nextAction: "Mark as Paid", nextStatus: "paid", icon: <UtensilsCrossed className="w-3.5 h-3.5" />, borderColor: "border-t-sky-400" },
-  paid: { label: "Paid", color: "bg-emerald-100 text-emerald-700 border-emerald-200", nextAction: null, nextStatus: null, icon: <CheckCircle className="w-3.5 h-3.5" />, borderColor: "border-t-emerald-500" },
+  pending: { label: "New", color: "bg-red-100 text-red-700 border-red-200", nextAction: "Accept & Prepare", nextStatus: "preparing", icon: <Clock className="w-3.5 h-3.5" />, borderColor: "border-l-red-500" },
+  preparing: { label: "Preparing", color: "bg-amber-100 text-amber-700 border-amber-200", nextAction: "Mark as Served", nextStatus: "served", icon: <Utensils className="w-3.5 h-3.5" />, borderColor: "border-l-amber-400" },
+  served: { label: "Served", color: "bg-sky-100 text-sky-700 border-sky-200", nextAction: "Mark Complete", nextStatus: "completed", icon: <UtensilsCrossed className="w-3.5 h-3.5" />, borderColor: "border-l-sky-400" },
+  completed: { label: "Completed", color: "bg-emerald-100 text-emerald-700 border-emerald-200", nextAction: null, nextStatus: null, icon: <CheckCircle className="w-3.5 h-3.5" />, borderColor: "border-l-emerald-500" },
 };
 
 export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
@@ -33,6 +33,13 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const timeAgo = (ts: number) => {
+    const diff = Math.floor((Date.now() - ts) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    return `${Math.floor(diff / 3600)}h ago`;
+  };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     setLoadingId(orderId);
@@ -46,9 +53,13 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
         updateData.isActive = false;
       }
 
+      if (newStatus === "completed") {
+        updateData.isActive = false;
+      }
+
       await setDoc(doc(db, "orders", orderId), updateData, { merge: true });
 
-      if (newStatus === "paid") {
+      if (newStatus === "completed") {
         const order = dineInOrders.find(o => o.id === orderId);
         if (order) {
           if (order.tableId) {
@@ -75,24 +86,11 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
     try {
       const updateData = {
         paymentStatus: "paid",
-        isActive: false,
         updatedAt: Date.now()
       };
       await setDoc(doc(db, "orders", orderId), updateData, { merge: true });
 
-      const order = dineInOrders.find(o => o.id === orderId);
-      if (order) {
-        if (order.tableId) {
-          await updateDoc(doc(db, "tables", order.tableId), { status: "free" });
-        } else if (order.tableNumber && restaurant?.id) {
-          const tq = query(collection(db, "tables"), where("restaurantId", "==", restaurant.id), where("tableNumber", "==", order.tableNumber));
-          const tsnap = await getDocs(tq);
-          if (!tsnap.empty) {
-            await updateDoc(doc(db, "tables", tsnap.docs[0].id), { status: "free" });
-          }
-        }
-      }
-      toast.success("Payment verified and order closed successfully!");
+      toast.success("Payment verified! Order is ready to be marked as complete.");
     } catch (_) {
       toast.error("Failed to verify payment");
     } finally {
@@ -159,18 +157,11 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
   };
 
   const activeOrders = useMemo(() => {
-    const latestByTable: Record<string, OrderType> = {};
-    dineInOrders.forEach(o => {
-      if (o.isActive !== false && o.status !== "paid") {
-        if (!latestByTable[o.tableNumber] || o.createdAt > latestByTable[o.tableNumber].createdAt) {
-          latestByTable[o.tableNumber] = o;
-        }
-      }
-    });
-    return Object.values(latestByTable).sort((a, b) => b.createdAt - a.createdAt);
+    const active = dineInOrders.filter(o => o.isActive !== false && o.status !== "completed");
+    return active.sort((a, b) => b.createdAt - a.createdAt);
   }, [dineInOrders]);
 
-  const pastOrders = dineInOrders.filter(o => o.status === "paid");
+  const pastOrders = dineInOrders.filter(o => o.status === "completed" || (o.isActive === false && o.status === "paid"));
   const filteredPastOrders = pastOrders.filter((order) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -200,9 +191,12 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
       ) : (
         <AnimatePresence mode="popLayout">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {activeOrders.map((order) => {
+              {activeOrders.map((order) => {
               const config = statusConfig[order.status] || statusConfig.pending;
               const payStatus = order.paymentStatus || "unpaid";
+              const orderId = `#ORD-${order.id.slice(-6).toUpperCase()}`;
+              const itemCount = order.items.reduce((a, i) => a + i.quantity, 0);
+              const isTakeaway = !order.tableNumber || order.tableNumber === "takeaway";
               return (
                 <motion.div
                   key={order.id}
@@ -211,35 +205,45 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
                   exit={{ opacity: 0, scale: 0.95 }}
                   layout
                 >
-                  <Card className={`overflow-hidden border-t-4 shadow-sm hover:shadow-md transition-shadow bg-white ${config.borderColor} flex flex-col h-full`}>
+                  <Card className={`overflow-hidden border-l-4 shadow-md hover:shadow-lg transition-shadow bg-white ${config.borderColor} flex flex-col h-full rounded-2xl`}>
+                    {/* ── Header ── */}
                     <CardHeader className="pb-3 border-b bg-gray-50/80 flex flex-row items-center justify-between space-y-0 px-5 pt-4">
                       <div>
                         <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                          <Table className="h-4 w-4 text-gray-400" />
-                          Table {order.tableNumber}
+                          {isTakeaway
+                            ? <><ShoppingBag className="h-4 w-4 text-indigo-400" /> Takeaway</>
+                            : <><Table className="h-4 w-4 text-gray-400" /> Table {order.tableNumber}</>}
                         </CardTitle>
-                        <CardDescription className="text-xs mt-0.5">
-                          {order.customerName || "Guest"} · {new Date(order.createdAt).toLocaleTimeString()}
-                        </CardDescription>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs font-mono text-emerald-600 font-bold">{orderId}</span>
+                          <span className="text-gray-300">·</span>
+                          <span className="text-xs text-gray-400">{itemCount} item{itemCount !== 1 ? "s" : ""}</span>
+                          <span className="text-gray-300">·</span>
+                          <span className="text-xs text-gray-400">{timeAgo(order.createdAt)}</span>
+                        </div>
                       </div>
                       <Badge variant="outline" className={`${config.color} px-2.5 py-1 font-semibold flex items-center gap-1.5 text-xs`}>
-                        {config.icon} {config.label}
+                        {config.icon} {order.status === "served" && payStatus !== "paid" ? "Waiting Payment" : config.label}
                       </Badge>
                     </CardHeader>
 
                     <CardContent className="p-0 flex-1 flex flex-col min-h-0">
                       <div className="flex-1 min-h-0 flex flex-col">
+                        {/* Items */}
                         <ul className="px-5 py-3 space-y-2.5 flex-1 overflow-y-auto scroll-smooth scrollbar-thin">
-                          {order.items.map((item, i) => (
+                          {(order.items || []).length === 0 ? (
+                            <li className="text-sm text-gray-400 italic">No items</li>
+                          ) : order.items.map((item, i) => (
                             <li key={i} className="flex justify-between items-start text-sm py-1 border-b border-gray-50 last:border-0">
                               <span className="text-gray-700 flex items-start gap-2">
-                                <span className="inline-flex items-center justify-center h-5 w-5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-md shrink-0 mt-0.5">{item.quantity}</span>
+                                <span className="inline-flex items-center justify-center h-5 w-5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full shrink-0 mt-0.5">{item.quantity}</span>
                                 <span className="leading-tight">{item.name}</span>
                               </span>
                               <span className="text-gray-500 font-medium whitespace-nowrap ml-3">₹{item.price * item.quantity}</span>
                             </li>
                           ))}
                         </ul>
+
                         {order.note && (
                           <div className="px-5 pb-3 shrink-0">
                             <div className="bg-green-50 border border-green-200 p-2.5 rounded-lg">
@@ -250,60 +254,56 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
                         )}
                       </div>
 
-                      <div className="px-5 pb-5 space-y-4 border-t border-dashed pt-4 shrink-0">
-                        <div className="flex justify-between items-end">
+                      {/* ── Footer ── */}
+                      <div className="px-5 pb-5 space-y-3 border-t border-dashed pt-4 shrink-0">
+                        {/* Payment row */}
+                        <div className="flex justify-between items-center">
                           <div>
-                            <div className="text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Payment</div>
+                            <div className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Payment</div>
                             <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${getPayStatusStyle(payStatus)} px-2`}>
-                              {(order.paymentMethod || "Counter").substring(0, 3)} • {payStatus.replace("_", " ")}
+                              {(order.paymentMethod || "Counter").substring(0, 3)} · {payStatus === "pending_verification" ? "Pending" : payStatus === "paid" ? "PAID" : "UNPAID"}
                             </Badge>
                           </div>
                           <div className="text-right">
                             <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider block mb-0.5">Total</span>
-                            <span className="text-xl font-extrabold text-[#0f9d6a] block leading-none">₹{order.totalAmount}</span>
+                            <span className="text-xl font-extrabold text-[#0f9d6a] block leading-none">₹{order.totalAmount ?? 0}</span>
                           </div>
                         </div>
 
-                        {payStatus === "pending_verification" && (
-                          <Button className="w-full hover:" onClick={() => verifyPayment(order.id)}
+                        {/* Verify UPI */}
+                        {order.status === "served" && payStatus === "pending_verification" && (
+                          <Button className="w-full h-10 rounded-xl bg-amber-500 hover:bg-amber-600 text-white" onClick={() => verifyPayment(order.id)}
                             disabled={loadingId === order.id}
                           >
-                            {loadingId === order.id ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                            )}
+                            {loadingId === order.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
                             {loadingId === order.id ? "Verifying..." : "Verify UPI Payment"}
                           </Button>
                         )}
 
-                        {payStatus === "unpaid" && (order.paymentMethod === "counter" || !order.paymentMethod) && (
-                          <Button className="w-full h-11 rounded-xl bg-[#16a34a] [#15803d]" onClick={() => verifyPayment(order.id)}
+                        {/* Verify Counter */}
+                        {order.status === "served" && payStatus === "unpaid" && (order.paymentMethod === "counter" || !order.paymentMethod) && (
+                          <Button className="w-full h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => verifyPayment(order.id)}
                             disabled={loadingId === order.id}
                           >
-                            {loadingId === order.id ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                            )}
+                            {loadingId === order.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
                             {loadingId === order.id ? "Recording..." : "Verify Payment (Counter)"}
                           </Button>
                         )}
 
+                        {/* Action buttons */}
                         <div className="flex flex-col sm:flex-row gap-2">
-                          <Button variant="outline" className="w-full sm:flex-1 h-11 rounded-xl border-[#e5e7eb] text-[#64748b] [#0f9d6a] [#f1f5f9]" onClick={() => printBill(order)}
-                          >
+                          <Button variant="outline" className="w-full sm:flex-1 h-10 rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50" onClick={() => printBill(order)}>
                             <Printer className="w-4 h-4 mr-1.5" /> Print Bill
                           </Button>
                           {config.nextAction && config.nextStatus && (
-                            <Button className={`w-full sm:flex-1 h-11 rounded-xl text-white font-semibold ${config.nextStatus === "paid" ? "bg-[#16a34a] hover:bg-[#15803d]" : "bg-slate-900 hover:bg-slate-800"}`} onClick={() => updateOrderStatus(order.id, config.nextStatus!)}
-                              disabled={(config.nextStatus === "paid" && payStatus === "pending_verification") || loadingId === order.id}
+                            <Button
+                              className={`w-full sm:flex-1 h-10 rounded-xl text-white font-semibold ${
+                                config.nextStatus === "completed" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-900 hover:bg-slate-800"
+                              }`}
+                              onClick={() => updateOrderStatus(order.id, config.nextStatus!)}
+                              disabled={(config.nextStatus === "completed" && payStatus !== "paid") || loadingId === order.id}
                             >
-                              {loadingId === order.id ? (
-                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Updating...</>
-                              ) : (
-                                config.nextAction
-                              )}
+                              {loadingId === order.id ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Updating...</> : config.nextAction}
                             </Button>
                           )}
                         </div>
@@ -453,7 +453,7 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
                   <Button variant="outline" className="text-gray-600 w-full hover:" onClick={() => setSelectedOrder(null)}>
                     Close
                   </Button>
-                  <Button className="bg-[#16a34a] [#15803d] [#16a34a]/30 w-full" onClick={() => { printBill(selectedOrder); setSelectedOrder(null); }}
+                  <Button className="bg-[#16a34a] [#15803d] [#16a34a]/30 w-full text-white rounded-full" onClick={() => { printBill(selectedOrder); setSelectedOrder(null); }}
                   >
                     <Printer className="h-4 w-4 mr-2" /> Print Bill
                   </Button>

@@ -9,8 +9,13 @@ import {
   getDocs,
   doc,
   getDoc,
-  setDoc,
   updateDoc,
+  addDoc,
+  setDoc,
+  onSnapshot,
+  orderBy,
+  limit,
+  serverTimestamp,
 } from "firebase/firestore";
 import { Menu, Restaurant, OrderItem, Order as OrderType } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -103,12 +108,11 @@ export default function ClientMenu({
   const [submitting, setSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState<string | null>(null);
   const [placedOrderTotal, setPlacedOrderTotal] = useState<number>(0);
-  const [paymentOption, setPaymentOption] = useState<"counter" | "upi" | "split">(
-    "counter"
-  );
+  const [paymentOption, setPaymentOption] = useState<"counter" | "upi" | "split">("counter");
   const [splitCount, setSplitCount] = useState<number>(2);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [paymentVerified, setPaymentVerified] = useState(false);
+  const [tableOrders, setTableOrders] = useState<OrderType[]>([]);
   const [activeSessions, setActiveSessions] = useState<{
     orderId: string;
     tableNumber: string;
@@ -217,9 +221,30 @@ export default function ClientMenu({
       }
     } catch { clearOrderSession(); }
 
+      // Clean up saved name
     const savedName = localStorage.getItem("dineflow_customer_name");
     if (savedName) setCustomerName(savedName);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantId, table]);
+
+  // 📝 Real-time sync of all unpaid table orders for merged customer view
+  useEffect(() => {
+    if (!restaurantId || !table) return;
+    
+    const q = query(
+      collection(db, "orders"),
+      where("restaurantId", "==", restaurantId),
+      where("tableNumber", "==", table),
+      where("paymentStatus", "!=", "paid"), // effectively unpaid or pending_verification
+      where("isActive", "==", true)
+    );
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OrderType));
+      // Filter out completed ones just in case isActive=true is lagging
+      setTableOrders(orders.filter(o => o.status !== "completed"));
+    });
+    
+    return () => unsubscribe();
   }, [restaurantId, table]);
 
   /* ── Cart helpers ── */
@@ -266,8 +291,6 @@ export default function ClientMenu({
     try {
       const newItems = Object.values(cart);
       const newAmount = newItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
-      const orderId = `ord_${Date.now()}`;
       const finalTotal = newAmount;
 
       // Look up actual table object first
@@ -276,38 +299,30 @@ export default function ClientMenu({
       const tsnap = await getDocs(tq);
       if (!tsnap.empty) {
         resolvedTableId = tsnap.docs[0].id;
+        // Mark table as occupied natively
+        await updateDoc(doc(db, "tables", resolvedTableId), { status: "occupied" });
       }
 
-      const newOrderPayload = {
-        id: orderId,
+      // 💥 CREATE NEW SEPARATE ORDER (Backend stays separate)
+      const docRef = await addDoc(collection(db, "orders"), {
         restaurantId,
         tableNumber: table,
         tableId: resolvedTableId || undefined,
         items: newItems,
         totalAmount: finalTotal,
-        status: "pending",
+        status: "pending", 
         paymentMethod: "counter",
         paymentStatus: "unpaid",
         isActive: true,
         sessionId: `sess_${Date.now()}`,
         customerName: customerName.trim() || undefined,
         note: note.trim() || undefined,
-      };
-
-      const res = await fetch('/api/order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newOrderPayload)
+        createdAt: Date.now()
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to place order');
+      const orderId = docRef.id;
 
-      // Note: AdminDb /api/order handles updating the table state securely.
-
-      saveOrderSession({ ...newOrderPayload, createdAt: Date.now() } as OrderType);
+      saveOrderSession({ id: orderId, tableNumber: table, restaurantId, totalAmount: finalTotal, createdAt: Date.now() } as OrderType);
 
       if (customerName.trim()) {
         localStorage.setItem("dineflow_customer_name", customerName.trim());
@@ -440,12 +455,16 @@ export default function ClientMenu({
       const handleUpiPaid = async (orderId: string) => {
         setUpdatingPayment(true);
         try {
-          await updateDoc(doc(db, "orders", orderId), {
-            paymentStatus: "pending_verification",
-            paymentMethod: paymentOption,
-            updatedAt: Date.now(),
-          });
+          const batch = tableOrders.map(o => 
+            updateDoc(doc(db, "orders", o.id), {
+              paymentStatus: "pending_verification",
+              paymentMethod: paymentOption,
+              updatedAt: Date.now(),
+            })
+          );
+          await Promise.all(batch);
           setPaymentVerified(true);
+          toast.success("Payment submitted for all items!");
         } catch (err) {
           toast.error("Failed to update payment status");
         } finally {
@@ -533,11 +552,11 @@ export default function ClientMenu({
       return (
         <div className="menu-screen flex flex-col h-full w-full bg-slate-50 relative pb-[70px]">
           <OrderTrackingScreen
-            orderId={trackOrderId}
             table={table}
             onOrderAgain={() => setActiveNav("menu")}
             onViewMenu={() => setActiveNav("menu")}
             renderPaymentUI={renderPaymentUI}
+            orders={tableOrders}
           />
           {renderBottomNav()}
         </div>
@@ -652,11 +671,11 @@ export default function ClientMenu({
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href={`/book/${restaurant.plan === "premium" && !!restaurant.customSlug ? restaurant.customSlug : restaurantId}`}>
+            {/* <Link href={`/book/${restaurant.plan === "premium" && !!restaurant.customSlug ? restaurant.customSlug : restaurantId}`}>
               <Button className="h-8 text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors" variant="ghost">
                 <BookOpen className="w-3 h-3 mr-1" /> Book Table
               </Button>
-            </Link>
+            </Link> */}
             {restaurant.logo ? (
               <img
                 src={restaurant.logo}

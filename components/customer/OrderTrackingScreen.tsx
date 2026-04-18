@@ -86,33 +86,78 @@ export default function OrderTrackingScreen({
   onOrderAgain,
   onViewMenu,
   renderPaymentUI,
+  orders: manualOrders,
 }: {
-  orderId: string;
+  orderId?: string;
   table: string;
   onOrderAgain?: () => void;
   onViewMenu?: () => void;
   renderPaymentUI?: (order: OrderType) => React.ReactNode;
+  orders?: OrderType[];
 }) {
   const [order, setOrder] = useState<OrderType | null>(null);
+  const [syncedOrders, setSyncedOrders] = useState<OrderType[]>(manualOrders || []);
 
   useEffect(() => {
-    if (!orderId) return;
+    if (manualOrders) {
+      setSyncedOrders(manualOrders);
+    }
+  }, [manualOrders]);
+
+  useEffect(() => {
+    if (!orderId || manualOrders) return;
     const unsub = onSnapshot(doc(db, "orders", orderId), (snap) => {
       if (snap.exists()) {
         const data = snap.data() as OrderType;
-        setOrder((prev) => {
-          if (prev && prev.status !== data.status && navigator.vibrate) {
-            navigator.vibrate([100, 50, 100]);
-          }
-          return data;
-        });
+        setOrder(data);
+        setSyncedOrders([data]);
       }
     });
     return () => unsub();
-  }, [orderId]);
+  }, [orderId, manualOrders]);
+
+  const effectiveOrder = manualOrders || syncedOrders.length > 0 ? (() => {
+    if (syncedOrders.length === 0) return null;
+    if (syncedOrders.length === 1 && !manualOrders) return syncedOrders[0];
+
+    // Merged view logic
+    const mergedItems: Record<string, any> = {};
+    let total = 0;
+    
+    // Status precedence: lowest status wins for the "Timeline" view (to be safe)
+    const statusPriority = ["pending", "preparing", "served"];
+    let minStatusIdx = 2; // Default to served
+
+    syncedOrders.forEach(o => {
+      total += (o.totalAmount || 0);
+      const sIdx = statusPriority.indexOf(o.status);
+      if (sIdx !== -1 && sIdx < minStatusIdx) minStatusIdx = sIdx;
+
+      (o.items || []).forEach(item => {
+        if (!mergedItems[item.id]) {
+          mergedItems[item.id] = { ...item };
+        } else {
+          mergedItems[item.id].quantity += item.quantity;
+        }
+      });
+    });
+
+    return {
+      id: syncedOrders[0].id, // Arbitrary
+      restaurantId: syncedOrders[0].restaurantId,
+      tableNumber: table,
+      status: statusPriority[minStatusIdx],
+      items: Object.values(mergedItems),
+      totalAmount: total,
+      paymentStatus: syncedOrders.every(o => o.paymentStatus === "paid") ? "paid" : 
+                     syncedOrders.some(o => o.paymentStatus === "pending_verification") ? "pending_verification" : "unpaid",
+      paymentMethod: syncedOrders[0].paymentMethod || "counter",
+      isMerged: syncedOrders.length > 1
+    } as OrderType & { isMerged?: boolean };
+  })() : order;
 
   /* ── Loading skeleton ── */
-  if (!order) {
+  if (!effectiveOrder) {
     return (
       <div className="ots-loading">
         <div className="ots-loading__spinner" />
@@ -121,7 +166,7 @@ export default function OrderTrackingScreen({
     );
   }
 
-  const displayIndex = getStepIndex(order.status);
+  const displayIndex = getStepIndex(effectiveOrder.status);
   const currentStep = STEPS[displayIndex];
   const StatusIcon = currentStep.icon;
 
@@ -558,13 +603,13 @@ export default function OrderTrackingScreen({
               </button>
             )}
             <div>
-              <p className="ots-header__title">Your Order</p>
+              <p className="ots-header__title">{effectiveOrder.isMerged ? "Current Table Bill" : "Your Order"}</p>
               <p className="ots-header__sub">
-                {order.tableNumber === "Takeaway" ? "Pickup" : `Table ${order.tableNumber}`}
+                {effectiveOrder.tableNumber === "Takeaway" ? "Pickup" : `Table ${effectiveOrder.tableNumber}`}
               </p>
             </div>
           </div>
-          <span className="ots-order-id">#{order.id.slice(-6).toUpperCase()}</span>
+          <span className="ots-order-id">{effectiveOrder.isMerged ? `Combined (${syncedOrders.length})` : `#ORD-${effectiveOrder.id.slice(-6).toUpperCase()}`}</span>
         </header>
 
         {/* ── SCROLLABLE BODY ── */}
@@ -573,7 +618,7 @@ export default function OrderTrackingScreen({
           {/* ── STATUS HERO ── */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={order.status}
+              key={effectiveOrder.status}
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.98 }}
@@ -585,7 +630,7 @@ export default function OrderTrackingScreen({
               </div>
               <div>
                 <p className="ots-hero__label">{currentStep.label}</p>
-                <p className="ots-hero__msg">{currentStep.message}</p>
+                <p className="ots-hero__msg">{effectiveOrder.isMerged ? "Combined status for all items" : currentStep.message}</p>
               </div>
               <div className={`ots-hero__pulse${displayIndex === 1 ? " ots-hero__pulse--amber" : ""}`} />
             </motion.div>
@@ -642,10 +687,13 @@ export default function OrderTrackingScreen({
 
           {/* ── BILL ── */}
           <div className="ots-divider" />
-          <p className="ots-section-label">Bill Details</p>
-
           <div className="ots-bill">
-            {order.items.map((item, idx) => (
+            {effectiveOrder.isMerged && (
+              <div className="bg-emerald-50 text-emerald-700 text-[11px] font-bold px-3 py-2 rounded-lg mb-3 border border-emerald-100 flex items-center gap-2">
+                <Info size={12} /> Items added across multiple orders
+              </div>
+            )}
+            {effectiveOrder.items.map((item, idx) => (
               <div key={idx} className="ots-bill__row">
                 <span className="ots-bill__item-name">
                   <span className="ots-bill__qty">{item.quantity}×</span>
@@ -657,31 +705,31 @@ export default function OrderTrackingScreen({
 
             <div className="ots-bill__total-row">
               <span className="ots-bill__total-label">Total</span>
-              <span className="ots-bill__total-amount">₹{order.totalAmount}</span>
+              <span className="ots-bill__total-amount">₹{effectiveOrder.totalAmount}</span>
             </div>
           </div>
 
           {/* ── PAYMENT STATUS ── */}
           <div className="ots-payment-wrap">
             <PaymentBadge
-              paymentStatus={order.paymentStatus}
-              paymentMethod={order.paymentMethod}
+              paymentStatus={effectiveOrder.paymentStatus}
+              paymentMethod={effectiveOrder.paymentMethod}
             />
           </div>
 
           {/* ── NOTES ── */}
-          {order.note && (
+          {effectiveOrder.note && (
             <div className="ots-note">
               <Info size={14} className="ots-note__icon" />
               <div>
                 <span className="ots-note__label">Your Note</span>
-                <span className="ots-note__text">{order.note}</span>
+                <span className="ots-note__text">{effectiveOrder.note}</span>
               </div>
             </div>
           )}
 
           {/* ── PAYMENT UI (Injected from parent) ── */}
-          {renderPaymentUI && renderPaymentUI(order)}
+          {renderPaymentUI && renderPaymentUI(effectiveOrder)}
         </div>
 
         {/* ── BOTTOM ACTION BUTTONS ── */}

@@ -274,7 +274,7 @@ export function TakeawayOrders({ takeaways }: { takeaways: OrderType[] }) {
                       </div>
                     </div>
                     {currentSheetOrder.paymentStatus === "pending_verification" && currentSheetOrder.status !== "completed" && (
-                      <Button variant="default" className="w-full hover:" onClick={() => verifyUpiPayment(currentSheetOrder.id)}>
+                      <Button variant="default" className="w-full bg-emerald-500 text-white" onClick={() => verifyUpiPayment(currentSheetOrder.id)}>
                         {updatingId === currentSheetOrder.id ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />} Verify UPI Payment Now
                       </Button>
                     )}

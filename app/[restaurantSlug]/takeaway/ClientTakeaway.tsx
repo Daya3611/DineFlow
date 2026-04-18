@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { db } from "@/firebase";
+import { collection, addDoc, doc, setDoc } from "firebase/firestore";
 import { Menu, Restaurant } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -153,7 +155,8 @@ export default function ClientTakeaway({
     try {
       const totalAmount = items.reduce((s, i) => s + i.price * i.quantity, 0);
       const orderId = `ord_${Date.now()}`;
-      const payload = {
+      
+      const docRef = await addDoc(collection(db, "orders"), {
         id: orderId, type: "takeaway",
         restaurantId: initialRestaurant.id,
         restaurantSlug: initialRestaurant.customSlug || initialRestaurant.id,
@@ -163,16 +166,11 @@ export default function ClientTakeaway({
         otpVerified: true, items, totalAmount,
         status: "pending", paymentMethod: paymentOption,
         paymentStatus: paymentOption === "cod" ? "unpaid" : "pending_verification",
-        isActive: true, sessionId: `sess_${Date.now()}`, createdAt: Date.now(),
-      };
-      const res = await fetch("/api/order", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        isActive: true, sessionId: `sess_${Date.now()}`, createdAt: Date.now()
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to place order");
+
       setCart({}); setOpenCheckout(false);
-      router.push(`/@${initialRestaurant.customSlug || initialRestaurant.id}/orders/${orderId}`);
+      router.push(`/@${initialRestaurant.customSlug || initialRestaurant.id}/orders/${docRef.id}`);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     } finally { setIsPlacingOrder(false); }

@@ -137,6 +137,7 @@ export interface Order {
   pickupTime?: string;
   otpVerified?: boolean;
   note?: string;
+  isMerged?: boolean;
   createdAt: number;
 }
 
