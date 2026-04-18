@@ -93,7 +93,7 @@ export default async function RestaurantDetailsPage(props: { params: Promise<{ r
 
             {config.layout.showTakeaway && (
               <Link
-                href={`/@${slug}/menu`}
+                href={`/@${slug}/takeaway`}
                 className={`flex flex-col items-center p-6 transition-all group shadow-sm hover:shadow-md ${buttonRadiusClass}`}
                 style={getButtonStyles()}
               >
