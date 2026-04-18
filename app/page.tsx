@@ -371,7 +371,7 @@ export default function Home() {
                   transition={{ delay: 0.3, duration: 0.6 }}
                   className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row"
                 >
-                  <button className="rounded-xl bg-green-600 px-6 py-3 text-white font-medium shadow-lg hover:bg-green-700 transition">
+                  <button className="rounded-xl bg-green-600 px-6 py-3 text-white font-medium shadow-lg hover:bg-green-700 transition" onClick={() => window.location.href = '/register'}>
                     Start Free Trial →
                   </button>
 
