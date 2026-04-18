@@ -5,7 +5,7 @@ import ClientTakeaway from './ClientTakeaway';
 async function getRestaurantAndMenu(slug: string) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-  const resReq = await fetch(`${baseUrl}/api/restaurant/${slug}`, { cache: 'no-store' });
+  const resReq = await fetch(`/api/restaurant/${slug}`, { cache: 'no-store' });
   if (!resReq.ok) {
     if (resReq.status === 404 || resReq.status === 403) return null;
     throw new Error('Failed to fetch restaurant');
