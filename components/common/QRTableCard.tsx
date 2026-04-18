@@ -104,7 +104,7 @@ export function QRTableCard({
           >
             <span className="text-slate-800 text-sm font-bold flex">Table {tableNumber} QR</span>
             <div className="flex items-center gap-1">
-              <Button
+              {/* <Button
                 onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
                 title="Toggle theme"
                 variant="ghost"
@@ -113,7 +113,7 @@ export function QRTableCard({
               >
                 {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 {isDark ? "Light" : "Dark"}
-              </Button>
+              </Button> */}
 
               <div className="w-px h-4 bg-slate-200 mx-1" />
 

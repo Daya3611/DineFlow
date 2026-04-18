@@ -199,7 +199,7 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
         </div>
       ) : (
         <AnimatePresence mode="popLayout">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {activeOrders.map((order) => {
               const config = statusConfig[order.status] || statusConfig.pending;
               const payStatus = order.paymentStatus || "unpaid";
@@ -278,7 +278,7 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
                         )}
 
                         {payStatus === "unpaid" && (order.paymentMethod === "counter" || !order.paymentMethod) && (
-                          <Button className="w-full bg-[#16a34a] [#15803d]" onClick={() => verifyPayment(order.id)}
+                          <Button className="w-full h-11 rounded-xl bg-[#16a34a] [#15803d]" onClick={() => verifyPayment(order.id)}
                             disabled={loadingId === order.id}
                           >
                             {loadingId === order.id ? (
@@ -290,13 +290,13 @@ export function DineInOrders({ dineInOrders }: { dineInOrders: OrderType[] }) {
                           </Button>
                         )}
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button variant="outline" size="sm" className="border-[#e5e7eb] text-[#64748b] [#0f9d6a] [#f1f5f9] h-9" onClick={() => printBill(order)}
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Button variant="outline" className="w-full sm:flex-1 h-11 rounded-xl border-[#e5e7eb] text-[#64748b] [#0f9d6a] [#f1f5f9]" onClick={() => printBill(order)}
                           >
                             <Printer className="w-4 h-4 mr-1.5" /> Print Bill
                           </Button>
                           {config.nextAction && config.nextStatus && (
-                            <Button size="sm" className={`rounded-xl text-white font-semibold h-9 ${config.nextStatus === "paid" ? "bg-[#16a34a] hover:bg-[#15803d]" : "bg-slate-900 hover:bg-slate-800"}`} onClick={() => updateOrderStatus(order.id, config.nextStatus!)}
+                            <Button className={`w-full sm:flex-1 h-11 rounded-xl text-white font-semibold ${config.nextStatus === "paid" ? "bg-[#16a34a] hover:bg-[#15803d]" : "bg-slate-900 hover:bg-slate-800"}`} onClick={() => updateOrderStatus(order.id, config.nextStatus!)}
                               disabled={(config.nextStatus === "paid" && payStatus === "pending_verification") || loadingId === order.id}
                             >
                               {loadingId === order.id ? (

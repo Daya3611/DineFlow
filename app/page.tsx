@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useAuth, isTokenValid } from "@/hooks/useAuth";
 import HomeScroll from "@/components/HomeScroll";
+import { BackgroundRippleEffect } from "@/components/ui/background-ripple-effect";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -204,6 +205,7 @@ export default function Home() {
 
   return (
     <HomeScroll>
+      <BackgroundRippleEffect />
       <div className="flex flex-col min-h-screen bg-white font-sans antialiased">
 
         {/* ── Floating Navbar ── */}
@@ -248,7 +250,7 @@ export default function Home() {
                     Log in
                   </Link>
                   <Link href="/register" className="hidden md:block shrink-0">
-                    <Button className="h-9 text-[13px] rounded-full hover:bg-white hover:text-emerald-700">
+                    <Button className="h-9 text-[13px] text-slate-700 rounded-full hover:bg-white hover:text-emerald-700">
                       Start Free Trial
                     </Button>
                   </Link>
@@ -304,9 +306,9 @@ export default function Home() {
         <main className="flex-1">
 
           {/* ── Hero ── */}
-          <section className="relative overflow-hidden pt-20 pb-16 md:pt-32 md:pb-24">
+          <section className="relative overflow-hidden  pb-16 md:pb-24">
             {/* Background blobs */}
-            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-green-50/40 via-white to-white overflow-hidden">
+            {/* <div className="absolute inset-0 -z-10 bg-gradient-to-b from-green-50/40 via-white to-white overflow-hidden">
               <motion.div
                 animate={{ y: [0, -30, 0], x: [0, 20, 0] }}
                 transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
@@ -317,115 +319,78 @@ export default function Home() {
                 transition={{ repeat: Infinity, duration: 10, ease: "easeInOut" }}
                 className="absolute top-20 right-1/4 translate-x-1/2 w-[600px] h-[600px] bg-teal-100/30 rounded-full blur-[120px] -z-10"
               />
-            </div>
+            </div> */}
 
-            <div className="container mx-auto px-6 max-w-5xl text-center">
+            <section className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden px-6">
 
-              {/* Pill badge */}
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                className="inline-flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-4 py-1 rounded-full border border-slate-200 mb-3 shadow-sm"
-              >
-                <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
-                Trusted by 500+ restaurants across India
-              </motion.div>
+              {/* Floating subtle background glow */}
+              <div className="absolute inset-0 -z-10 bg-gradient-to-b from-green-50 via-white to-white" />
 
-              {/* Headline */}
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
-                className="text-3xl sm:text-4xl md:text-[4.5rem] font-extrabold tracking-tight text-gray-900 mb-6 leading-[1.08]"
-              >
-                The smarter way to{" "}
-                <br className="hidden sm:block" />
-                <span className="relative inline-block">
-                  <motion.span
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
-                    className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-[#0f9d6a]"
-                  >
+              {/* CONTENT */}
+              <div className="max-w-5xl text-center">
+
+                {/* TRUST BADGE */}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-1 text-sm text-gray-600 shadow-sm"
+                >
+                  <span className="h-2 w-2 rounded-full bg-green-500" />
+                  Trusted by 500+ restaurants across India
+                </motion.div>
+
+                {/* HEADLINE */}
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  className="text-3xl font-bold leading-tight text-gray-900 md:text-5xl lg:text-7xl"
+                >
+                  The smarter way to{" "}
+                  <span className="text-green-600 relative">
                     run your restaurant
-                  </motion.span>
-                  <motion.svg
-                    initial={{ pathLength: 0, opacity: 0 }}
-                    animate={{ pathLength: 1, opacity: 0.55 }}
-                    transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
-                    className="absolute -bottom-2 left-0 w-full"
-                    viewBox="0 0 300 10" fill="none"
-                  >
-                    <path d="M2 8 Q150 2 298 8" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-                  </motion.svg>
-                </span>
-              </motion.h1>
+                    <span className="absolute left-0 -bottom-2 h-2 w-full bg-green-200 rounded-full" />
+                  </span>
+                </motion.h1>
 
-              {/* Sub */}
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
-                className="text-lg md:text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed"
-              >
-                QR-based ordering, real-time kitchen tracking, smart billing, and powerful analytics — all in one platform built for modern Indian restaurants.
-              </motion.p>
+                {/* SUBTEXT */}
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="mx-auto mt-6 max-w-2xl text-base text-gray-600 md:text-lg"
+                >
+                  QR-based ordering, real-time kitchen tracking, smart billing, and powerful analytics — all in one platform built for modern restaurants.
+                </motion.p>
 
-              {/* CTAs */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
-                className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
-              >
-                <Link href={isLoggedIn ? dashboardLink : "/register"}>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300 }}>
-                    <Button size="lg" className="h-14 text-base bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 shadow-[0_4px_14px_rgba(15,157,106,0.25)]">
-                      {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </motion.div>
-                </Link>
-                <Link href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')}>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300 }}>
-                    <Button size="lg" variant="outline" className="h-14 text-base border border-[#e5e7eb] text-[#0f172a] [#f1f5f9]">
-                      See How It Works
-                    </Button>
-                  </motion.div>
-                </Link>
-              </motion.div>
+                {/* CTA BUTTONS */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                  className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row"
+                >
+                  <button className="rounded-xl bg-green-600 px-6 py-3 text-white font-medium shadow-lg hover:bg-green-700 transition">
+                    Start Free Trial →
+                  </button>
 
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.45 }}
-                className="text-sm text-gray-400 font-medium mb-16"
-              >
-                No credit card required &nbsp;·&nbsp; Setup in 2 minutes &nbsp;·&nbsp; Cancel anytime
-              </motion.p>
+                  <button className="rounded-xl border px-6 py-3 text-gray-700 hover:bg-gray-100 transition">
+                    See How It Works
+                  </button>
+                </motion.div>
 
-              {/* Dashboard preview */}
-              <motion.div
-                initial={{ opacity: 0, y: 48, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.7, delay: 0.35, ease: "easeOut" }}
-                className="relative mx-auto max-w-5xl"
-              >
-                {/* <div className="relative rounded-2xl overflow-hidden border border-gray-200/80 shadow-2xl shadow-gray-300/40 ring-1 ring-gray-100">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20 pointer-events-none z-10 rounded-2xl" />
-                <Image
-                  src="/hero.png"
-                  alt="Dineflow.pro dashboard preview"
-                  width={1280}
-                  height={720}
-                  className="w-full h-auto object-cover"
-                  priority
-                />
-              </div> */}
-                {/* Glow under image */}
-                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-emerald-400/20 blur-3xl rounded-full -z-10" />
-              </motion.div>
-            </div>
+                {/* TRUST TEXT */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-4 text-sm text-gray-500"
+                >
+                  No credit card required · Setup in 2 minutes · Cancel anytime
+                </motion.p>
+              </div>
+            </section>
           </section>
 
           {/* ── Social proof stats ── */}
@@ -644,31 +609,6 @@ export default function Home() {
           </section>
 
 
-          {/* ── Final CTA Banner ── */}
-          <section className="py-24 bg-gradient-to-br from-green-600 via-green-500 to-emerald-500  relative overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.08]">
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white rounded-full translate-x-1/3 -translate-y-1/3 blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-white rounded-full -translate-x-1/3 translate-y-1/3 blur-3xl" />
-            </div>
-            <div className="container mx-auto px-6 max-w-3xl text-center relative z-10">
-              <motion.h2 {...fadeUp(0)} className="text-4xl md:text-5xl font-extrabold text-white mb-5 tracking-tight">
-                Ready to modernize your restaurant?
-              </motion.h2>
-              <motion.p {...fadeUp(0.08)} className="text-emerald-100 text-lg mb-10 max-w-xl mx-auto">
-                Join 500+ restaurants using Dineflow.pro to serve customers faster, smarter, and without paper menus.
-              </motion.p>
-              <motion.div {...fadeUp(0.14)} className="flex flex-col sm:flex-row justify-center gap-4">
-                <Link href={isLoggedIn ? dashboardLink : "/register"}>
-                  <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 shadow-lg shadow-black/10 h-14 text-base font-semibold px-8 rounded-full">
-                    {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"} <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-              </motion.div>
-              <motion.p {...fadeUp(0.2)} className="text-emerald-200/70 text-sm mt-5">
-                No credit card required &nbsp;·&nbsp; 14-day free trial
-              </motion.p>
-            </div>
-          </section>
         </main>
 
         {/* ── Footer ─-----─ */}

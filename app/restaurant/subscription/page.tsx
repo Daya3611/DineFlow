@@ -127,14 +127,31 @@ export default function SubscriptionPage() {
             });
 
             const newSetupFeePaid = hasPaidSetupFee || setupFeeCharged > 0;
+            const isTrial = planData.id === "trial";
 
-            await updateDoc(doc(db, "users", user.uid), { subscriptionId, setupFeePaid: newSetupFeePaid });
+            await updateDoc(doc(db, "users", user.uid), { 
+              subscriptionId, 
+              setupFeePaid: newSetupFeePaid,
+              hasSubscribed: true,
+              ...(isTrial ? { hasUsedTrial: true } : {})
+            });
+            
             await updateDoc(doc(db, "restaurants", restaurant.id), {
               subscriptionStatus: "active",
               plan: planData.id,
-              setupFeePaid: newSetupFeePaid
+              setupFeePaid: newSetupFeePaid,
+              hasSubscribed: true,
+              ...(isTrial ? { hasUsedTrial: true } : {})
             });
-            setRestaurant({ ...restaurant, plan: planData.id, subscriptionStatus: "active", setupFeePaid: newSetupFeePaid });
+            
+            setRestaurant({ 
+              ...restaurant, 
+              plan: planData.id, 
+              subscriptionStatus: "active", 
+              setupFeePaid: newSetupFeePaid,
+              hasSubscribed: true,
+              ...(isTrial ? { hasUsedTrial: true } : {})
+            });
 
             toast.success("Subscription activated successfully!");
             window.location.href = "/restaurant/dashboard";
@@ -167,6 +184,9 @@ export default function SubscriptionPage() {
       setLoadingPlan(null);
     }
   };
+
+  const showTrialHardCheck = !["trial", "pro", "premium", "basic", "lifetime"].includes(restaurant?.plan as string);
+  const shouldShowTrial = !userData?.hasUsedTrial && !userData?.hasSubscribed && !restaurant?.hasUsedTrial && !restaurant?.hasSubscribed && showTrialHardCheck;
 
   return (
     <>
@@ -222,7 +242,7 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Trial Banner */}
-        {(restaurant?.plan as string) !== "trial" && (restaurant?.plan as string) !== "pro" && (restaurant?.plan as string) !== "premium" && (restaurant?.plan as string) !== "basic" && (restaurant?.plan as string) !== "lifetime" && (
+        {shouldShowTrial && (
           <div className="bg-gradient-to-r from-teal-500 to-[#0f9d6a] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between shadow-lg text-white mb-10 relative overflow-hidden">
             <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-lg z-10 shadow-sm">
               🔥 Best for New Users
@@ -305,7 +325,7 @@ export default function SubscriptionPage() {
         ) : (
           <>
             {/* ── Pricing Cards Grid ── */}
-            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-end pt-6">
+            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch pt-8 pb-8 max-w-5xl mx-auto">
               {dbPlans.filter(p => p.isActive).map((plan) => {
                 const isSamePlan = restaurant?.plan === plan.id;
                 const daysLeft = subscription?.expiryDate ? Math.ceil((subscription.expiryDate - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
@@ -330,115 +350,59 @@ export default function SubscriptionPage() {
                 const isPro = Boolean(plan.isPopular) || plan.id === "pro";
                 const displayPrice = billingCycle === "monthly" ? plan.priceMonthly : plan.priceYearly;
 
-                return isPro ? (
-                  /* ── Featured (Pro) Card ── dark emerald */
-                  <div key={plan.id} className="relative flex flex-col z-10 lg:-translate-y-3">
-                    {/* Badge floating above card */}
-                    <div className="flex justify-center mb-0">
-                      <span className="inline-flex items-center gap-1.5 bg-emerald-600 text-white text-[11px] font-bold px-4 py-1.5 rounded-t-2xl uppercase tracking-widest shadow-md">
-                        <Zap className="h-3 w-3 fill-current" /> Most Popular
-                      </span>
-                    </div>
-
-                    {/* Gradient border wrapper */}
-                    <div className="p-[2px] rounded-3xl bg-gradient-to-b from-emerald-400 to-emerald-800 shadow-2xl shadow-emerald-700/25">
-                      <div className="flex flex-col bg-emerald-900 rounded-3xl overflow-hidden text-white">
-                        <div className="text-center pb-4 pt-8 px-7">
-                          <p className="text-lg font-semibold text-white">{plan.name}</p>
-                          <p className="text-xs font-medium text-emerald-300 mt-1">Perfect for most restaurants</p>
-                          <div className="mt-5 flex flex-col items-center">
-                            <div className="flex items-baseline">
-                              <span className="text-5xl font-extrabold tracking-tight text-white">₹{displayPrice}</span>
-                              <span className="text-base text-emerald-400 font-medium ml-1.5">/{billingCycle === "yearly" ? "year" : "month"}</span>
-                            </div>
-                            {billingCycle === "yearly" || plan.setupFee === 0 ? (
-                              <span className="text-xs font-semibold text-emerald-300 mt-2 bg-emerald-800/60 border border-emerald-700/50 px-3 py-1 rounded-full">₹0 Setup Fee</span>
-                            ) : (
-                              <span className="text-xs font-medium text-emerald-400 mt-2">+ ₹{plan.setupFee} setup fee</span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 px-7 pb-2">
-                          <div className="h-px w-full bg-emerald-800/70 mb-5" />
-                          <ul className="space-y-3">
-                            {plan.features?.map((feature: string, i: number) => (
-                              <li key={i} className="flex items-start text-emerald-100">
-                                <span className="mt-0.5 mr-3 shrink-0 h-5 w-5 rounded-full bg-emerald-700/60 flex items-center justify-center">
-                                  <Check className="h-3 w-3 text-emerald-300" />
-                                </span>
-                                <span className="text-sm font-medium">{feature}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div className="pt-6 pb-8 px-7">
-                          <Button
-                            className={`w-full rounded-full font-bold text-base h-12 transition-all duration-200 ${
-                              isBtnDisabled
-                                ? "bg-emerald-700 border border-emerald-600 text-emerald-300 cursor-not-allowed"
-                                : "bg-white text-emerald-900 hover:bg-emerald-50 shadow-lg"
-                            }`}
-                            disabled={isBtnDisabled || loadingPlan !== null}
-                            onClick={() => handleSubscribe(plan, billingCycle)}
-                          >
-                            {loadingPlan === plan.id ? (
-                              <Loader2 className="h-5 w-5 animate-spin mx-auto" />
-                            ) : (
-                              label
-                            )}
-                          </Button>
-                          {disableSamePlan && (
-                            <p className="text-xs text-center text-emerald-200/80 mt-3">
-                              You can renew in last 3 days
-                            </p>
-                          )}
-                        </div>
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative flex flex-col bg-white rounded-2xl transition-all duration-300 w-full ${isPro
+                        ? "border-2 border-green-600 shadow-xl lg:scale-105 z-10"
+                        : "border border-gray-200 shadow-sm"
+                      }`}
+                  >
+                    {isPro && (
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        <span className="bg-green-600 text-white text-[11px] font-bold px-4 py-1.5 rounded-full uppercase tracking-wide shadow-sm whitespace-nowrap">
+                          Most Popular
+                        </span>
                       </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* ── Regular Card ── */
-                  <div key={plan.id} className="p-[1.5px] rounded-3xl bg-gradient-to-b from-slate-200 to-slate-100 hover:from-emerald-200 hover:to-slate-100 transition-all duration-300 shadow-sm hover:shadow-md">
-                    <div className="flex flex-col bg-white rounded-3xl overflow-hidden h-full">
-                      <div className="text-center pb-4 pt-8 px-7">
-                        <p className="text-lg font-semibold text-slate-900">{plan.name}</p>
-                        <p className="text-xs font-medium text-slate-400 mt-1">&nbsp;</p>
-                        <div className="mt-5 flex flex-col items-center">
-                          <div className="flex items-baseline">
-                            <span className="text-5xl font-extrabold tracking-tight text-slate-900">₹{displayPrice}</span>
-                            <span className="text-base text-slate-500 font-medium ml-1.5">/{billingCycle === "yearly" ? "year" : "month"}</span>
+                    )}
+
+                    <div className="p-8 flex flex-col flex-1 h-full">
+                      <div className="text-center mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
+                        <div className="mt-4 flex flex-col items-center">
+                          <div className="flex items-baseline justify-center">
+                            <span className="text-4xl font-bold text-gray-900">₹{displayPrice}</span>
+                            <span className="text-sm font-medium text-gray-500 ml-1">/{billingCycle === "yearly" ? "year" : "month"}</span>
                           </div>
                           {billingCycle === "yearly" || plan.setupFee === 0 ? (
-                            <span className="text-xs font-semibold text-emerald-600 mt-2 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">₹0 Setup Fee</span>
+                            <span className="text-xs text-gray-400 mt-2 font-medium">₹0 Setup Fee</span>
                           ) : (
-                            <span className="text-xs font-medium text-slate-400 mt-2">+ ₹{plan.setupFee} setup fee</span>
+                            <span className="text-xs text-gray-400 mt-2 font-medium">+ ₹{plan.setupFee} setup fee</span>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex-1 px-7 pb-2">
-                        <div className="h-px w-full bg-slate-100 mb-5" />
-                        <ul className="space-y-3">
-                          {plan.features?.map((feature: string, i: number) => (
-                            <li key={i} className="flex items-start text-slate-700">
-                              <span className="mt-0.5 mr-3 shrink-0 h-5 w-5 rounded-full bg-emerald-50 flex items-center justify-center">
-                                <Check className="h-3 w-3 text-emerald-500" />
-                              </span>
-                              <span className="text-sm font-medium">{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      <div className="h-px w-full bg-gray-100 mb-6" />
 
-                      <div className="pt-6 pb-8 px-7">
+                      <ul className="space-y-4 mb-8 flex-1">
+                        {plan.features?.map((feature: string, i: number) => (
+                          <li key={i} className="flex items-start text-gray-700">
+                            <span className="shrink-0 h-5 w-5 rounded-full bg-green-50 flex items-center justify-center mr-3 mt-0.5">
+                              <Check className="h-3 w-3 text-green-600" />
+                            </span>
+                            <span className="text-sm font-medium leading-tight">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-auto pt-2">
                         <Button
-                          className={`w-full rounded-full font-semibold text-base h-12 transition-all duration-200 ${
-                            isBtnDisabled
-                              ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                              : "bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg"
-                          }`}
+                          className={`w-full rounded-xl font-semibold text-sm h-12 transition-all duration-200 ${isBtnDisabled
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : isPro
+                                ? "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
+                                : "bg-gray-900 text-white hover:bg-gray-800 shadow-sm hover:shadow-md"
+                            }`}
                           disabled={isBtnDisabled || loadingPlan !== null}
                           onClick={() => handleSubscribe(plan, billingCycle)}
                         >
@@ -449,7 +413,7 @@ export default function SubscriptionPage() {
                           )}
                         </Button>
                         {disableSamePlan && (
-                          <p className="text-xs text-center text-slate-500 mt-3">
+                          <p className="text-xs text-center text-gray-500 mt-3 font-medium">
                             You can renew in last 3 days
                           </p>
                         )}

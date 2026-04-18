@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect, useRef } from "react";
 import { db } from "@/firebase";
-import { collection, query, where, getDocs, doc, setDoc, deleteDoc, updateDoc, onSnapshot } from "firebase/firestore";
+import { collection, query, where, getDocs, getDoc, doc, setDoc, deleteDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { Table as TableType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -37,6 +37,7 @@ export default function TablesPage() {
   // Premium QR card modal state
   const [qrCardTable, setQrCardTable] = useState<TableType | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [maxTableLimit, setMaxTableLimit] = useState<number>(10);
 
   useEffect(() => {
     if (!restaurant) return;
@@ -61,7 +62,27 @@ export default function TablesPage() {
       }
     };
 
+    const fetchLimit = async () => {
+      try {
+        const planId = restaurant.plan || "basic";
+        const staticLimit = getPlanLimits(planId).tableLimit || 10;
+        if (planId === "trial" || planId === "lifetime") {
+          setMaxTableLimit(staticLimit);
+          return;
+        }
+        const snap = await getDoc(doc(db, "plans", planId));
+        if (snap.exists()) {
+          setMaxTableLimit(snap.data().tableLimit ?? staticLimit);
+        } else {
+          setMaxTableLimit(staticLimit);
+        }
+      } catch (err) {
+        console.error("Failed to fetch custom plan limit:", err);
+      }
+    };
+
     fetchTables();
+    fetchLimit();
     const interval = setInterval(fetchTables, 10000); // Polling every 10s
     return () => clearInterval(interval);
   }, [restaurant]);
@@ -176,9 +197,8 @@ export default function TablesPage() {
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">QR Tables</h1>
           <p className="text-gray-500 mt-1 text-sm">Manage seating, status, and generate QR codes for each table.</p>
         </div>
-        <Button className="hover: [0.97]" onClick={() => {
-          const limit = getPlanLimits(restaurant?.plan || "basic").tableLimit;
-          if (tables.length >= limit) {
+        <Button className="hover: [0.97] hover:bg-green-200 text-green-700 rounded-full" onClick={() => {
+          if (tables.length >= maxTableLimit) {
             setShowUpgradeModal(true);
           } else {
             setOpen(true);
@@ -369,7 +389,7 @@ export default function TablesPage() {
         open={showUpgradeModal}
         onOpenChange={setShowUpgradeModal}
         featureName="tables"
-        limit={restaurant ? getPlanLimits(restaurant.plan || "basic").tableLimit : 10}
+        limit={maxTableLimit}
       />
     </div>
   );

@@ -97,10 +97,10 @@ export function UpgradeModal({ open, onOpenChange, featureName, limit }: Upgrade
 
         {/* CTA Footer */}
         <div className="px-6 pb-8 pt-4 border-t border-slate-100 space-y-2">
-          <Button className="w-full h-12 text-[15px] [0.98]" onClick={() => {
-              onOpenChange(false);
-              router.push("/restaurant/subscription");
-            }}
+          <Button className="w-full h-12 text-[15px] [0.98] rounded-full bg-emerald-500 hover:bg-emerald-300 text-white" onClick={() => {
+            onOpenChange(false);
+            router.push("/restaurant/subscription");
+          }}
           >
             View Pricing Plans
             <ArrowRight className="ml-2 h-4 w-4" />

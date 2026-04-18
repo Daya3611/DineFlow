@@ -45,6 +45,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { LoaderFive } from "@/components/ui/loader-five";
 
 const restaurantSchema = z.object({
   name: z.string().min(2, "Restaurant name is required"),
@@ -157,8 +158,8 @@ export default function SettingsPage() {
   }, [userData, user]);
 
   const watchedSlug = restaurantForm.watch("customSlug");
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "https://dineflow.pro";
+  const canEditSlug = ["pro", "premium"].some((p) => restaurant?.plan?.toLowerCase().includes(p));
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://dineflow.pro");
 
   useEffect(() => {
     if (!watchedSlug || !restaurant) {
@@ -217,14 +218,14 @@ export default function SettingsPage() {
       setSlugStatus("idle");
     }
   };
-  const bookingUrl = `${origin}/@${restaurant?.plan === "premium" && restaurant.customSlug
-      ? restaurant.customSlug
-      : restaurant?.id || ""
+  const bookingUrl = `${baseUrl}/@${canEditSlug && restaurant?.customSlug
+    ? restaurant?.customSlug
+    : restaurant?.id || ""
     }/booking`;
 
-  const takeawayUrl = `${origin}/@${restaurant?.plan === "premium" && restaurant.customSlug
-      ? restaurant.customSlug
-      : restaurant?.id || ""
+  const takeawayUrl = `${baseUrl}/@${canEditSlug && restaurant?.customSlug
+    ? restaurant?.customSlug
+    : restaurant?.id || ""
     }/takeaway`;
 
   const onRestaurantSubmit = async (
@@ -236,7 +237,12 @@ export default function SettingsPage() {
     try {
       const restaurantId = restaurant?.id || `rest_${user.uid}`;
 
-      const customSlugToSave = restaurant?.plan === "premium" ? values.customSlug || "" : restaurant?.customSlug || "";
+      const customSlugToSave = canEditSlug ? values.customSlug || "" : restaurant?.customSlug || "";
+
+      console.log("[Slug Update] User Plan:", restaurant?.plan);
+      console.log("[Slug Update] Old Slug:", restaurant?.customSlug || "None");
+      console.log("[Slug Update] New Slug:", customSlugToSave || "None");
+
       const updateData = {
         id: restaurantId,
         ownerId: user.uid,
@@ -250,6 +256,7 @@ export default function SettingsPage() {
         subscriptionStatus: restaurant?.subscriptionStatus || "inactive",
         plan: restaurant?.plan || "none",
         customSlug: customSlugToSave,
+        slug: customSlugToSave,
       };
 
       await runTransaction(db, async (transaction) => {
@@ -284,7 +291,7 @@ export default function SettingsPage() {
         setUserData({ ...userData, restaurantId });
       }
 
-      setRestaurant({ ...(restaurant as any), ...values, customSlug: restaurant?.plan === "premium" ? values.customSlug || "" : restaurant?.customSlug || "", logo: logoUrl });
+      setRestaurant({ ...(restaurant as any), ...values, customSlug: canEditSlug ? values.customSlug || "" : restaurant?.customSlug || "", slug: canEditSlug ? values.customSlug || "" : restaurant?.customSlug || "", logo: logoUrl });
       restaurantForm.reset(values);
       toast.success("Settings updated successfully!");
     } catch (error: any) {
@@ -363,10 +370,10 @@ export default function SettingsPage() {
 
         {/* Plan Badge */}
         <div>
-          {restaurant?.plan === "premium" ? (
+          {canEditSlug ? (
             <Badge className="bg-gradient-to-r from-amber-400 to-orange-400 text-white border-0 px-3 py-1.5 text-xs font-bold shadow-md shadow-amber-200 gap-1">
               <Sparkles className="h-3 w-3" />
-              Premium Plan
+              {restaurant?.plan?.toLowerCase().includes("premium") ? "Premium Plan" : "Pro Plan"}
             </Badge>
           ) : (
             <Badge
@@ -374,7 +381,7 @@ export default function SettingsPage() {
               className="border-gray-200 text-gray-500 px-3 py-1.5 text-xs font-semibold gap-1"
             >
               <Store className="h-3 w-3" />
-              Basic Plan
+              {restaurant?.plan === "basic" ? "Basic Plan" : "Free Plan"}
             </Badge>
           )}
         </div>
@@ -637,8 +644,8 @@ export default function SettingsPage() {
                         >
                           <div
                             className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 transition-all ${item.done
-                                ? "bg-emerald-500"
-                                : "bg-gray-200"
+                              ? "bg-emerald-500"
+                              : "bg-gray-200"
                               }`}
                           >
                             <CheckCircle2
@@ -648,8 +655,8 @@ export default function SettingsPage() {
                           </div>
                           <span
                             className={`text-sm font-medium ${item.done
-                                ? "line-through text-gray-400"
-                                : "text-gray-700"
+                              ? "line-through text-gray-400"
+                              : "text-gray-700"
                               }`}
                           >
                             {item.label}
@@ -679,12 +686,12 @@ export default function SettingsPage() {
                         {bookingUrl}
                       </div>
                       <div className="flex gap-2">
-                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs ga.5" onClick={() => copyToClipboard(bookingUrl)}
+                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs gap-1.5" onClick={() => copyToClipboard(bookingUrl)}
                         >
                           <Copy className="h-3.5 w-3.5" />
                           Copy Link
                         </Button>
-                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs ga.5" onClick={() => window.open(bookingUrl, "_blank")}
+                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs gap-1.5" onClick={() => window.open(bookingUrl, "_blank")}
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                           Preview
@@ -713,12 +720,12 @@ export default function SettingsPage() {
                         {takeawayUrl}
                       </div>
                       <div className="flex gap-2">
-                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs ga.5" onClick={() => copyToClipboard(takeawayUrl)}
+                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs gap-1.5" onClick={() => copyToClipboard(takeawayUrl)}
                         >
                           <Copy className="h-3.5 w-3.5" />
                           Copy Link
                         </Button>
-                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs ga.5" onClick={() => window.open(takeawayUrl, "_blank")}
+                        <Button type="button" variant="outline" size="sm" className="flex-1 h-9 text-xs gap-1.5" onClick={() => window.open(takeawayUrl, "_blank")}
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                           Preview
@@ -732,11 +739,10 @@ export default function SettingsPage() {
 
             {/* Sticky Save — General */}
             <div className="mt-8 flex justify-end">
-              <Button type="submit" size="lg" className="h-12 bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 /20 [0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled: disabled: ga" disabled={restaurantLoading || !isRestaurantDirty}>
+              <Button type="submit" size="lg" className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed disabled: disabled: gap-2" disabled={restaurantLoading || !isRestaurantDirty}>
                 {restaurantLoading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving…
+                    <LoaderFive text="Generating chat..." />
                   </>
                 ) : (
                   <>
@@ -903,7 +909,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <Button type="submit" size="lg" className="h-12 bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 /20 [0.98] disabled:opacity-50 disabled:cursor-not-allowed ga" disabled={restaurantLoading || !isRestaurantDirty}>
+              <Button type="submit" size="lg" className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed disabled: disabled: gap-2" disabled={restaurantLoading || !isRestaurantDirty}>
                 {restaurantLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -956,12 +962,12 @@ export default function SettingsPage() {
                         {bookingUrl}
                       </div>
                       <div className="flex gap-2">
-                        <Button type="button" variant="outline" className="flex-1 h-11 ga" onClick={() => copyToClipboard(bookingUrl)}
+                        <Button type="button" variant="outline" className="flex-1 h-11 gap-2" onClick={() => copyToClipboard(bookingUrl)}
                         >
                           <Copy className="h-4 w-4" />
                           Copy Link
                         </Button>
-                        <Button type="button" variant="outline" className="flex-1 h-11 ga" onClick={() => window.open(bookingUrl, "_blank")}
+                        <Button type="button" variant="outline" className="flex-1 h-11 gap-2" onClick={() => window.open(bookingUrl, "_blank")}
                         >
                           <ExternalLink className="h-4 w-4" />
                           Open Page
@@ -979,29 +985,29 @@ export default function SettingsPage() {
                   animate="visible"
                 >
                   <Card
-                    className={`rounded-2xl shadow-sm overflow-hidden ${restaurant?.plan === "premium"
-                        ? "border-emerald-100"
-                        : "border-gray-100 opacity-80"
+                    className={`rounded-2xl shadow-sm overflow-hidden ${canEditSlug
+                      ? "border-emerald-100"
+                      : "border-gray-100 opacity-80"
                       }`}
                   >
                     <CardHeader
-                      className={`border-b px-6 py-4 ${restaurant?.plan === "premium"
-                          ? "bg-gradient-to-r from-emerald-50 to-white border-emerald-100"
-                          : "bg-gray-50/50 border-gray-100"
+                      className={`border-b px-6 py-4 ${canEditSlug
+                        ? "bg-gradient-to-r from-emerald-50 to-white border-emerald-100"
+                        : "bg-gray-50/50 border-gray-100"
                         }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div
-                            className={`h-8 w-8 rounded-xl flex items-center justify-center ${restaurant?.plan === "premium"
-                                ? "bg-amber-50"
-                                : "bg-gray-100"
+                            className={`h-8 w-8 rounded-xl flex items-center justify-center ${canEditSlug
+                              ? "bg-amber-50"
+                              : "bg-gray-100"
                               }`}
                           >
                             <LinkIcon
-                              className={`h-4 w-4 ${restaurant?.plan === "premium"
-                                  ? "text-amber-500"
-                                  : "text-gray-400"
+                              className={`h-4 w-4 ${canEditSlug
+                                ? "text-amber-500"
+                                : "text-gray-400"
                                 }`}
                             />
                           </div>
@@ -1014,10 +1020,10 @@ export default function SettingsPage() {
                             </CardDescription>
                           </div>
                         </div>
-                        {restaurant?.plan === "premium" ? (
+                        {canEditSlug ? (
                           <Badge className="bg-amber-100 text-amber-700 border-0 text-xs font-semibold">
                             <Sparkles className="h-3 w-3 mr-1" />
-                            Premium
+                            {restaurant?.plan?.toLowerCase().includes("premium") ? "Premium" : "Pro"}
                           </Badge>
                         ) : (
                           <Badge
@@ -1030,7 +1036,7 @@ export default function SettingsPage() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-6">
-                      {restaurant?.plan === "premium" ? (
+                      {canEditSlug ? (
                         <div className="space-y-4">
                           <div className="space-y-1.5">
                             <Label
@@ -1040,8 +1046,8 @@ export default function SettingsPage() {
                               Custom Slug
                             </Label>
                             <div className={`flex items-center gap-0 rounded-xl border focus-within:ring-2 overflow-hidden transition-all h-12 relative ${slugStatus === "available" ? "border-emerald-400 focus-within:ring-emerald-500/20" :
-                                slugStatus === "taken" ? "border-red-400 focus-within:ring-red-500/20" :
-                                  "border-gray-200 focus-within:border-emerald-400 focus-within:ring-emerald-500/20"
+                              slugStatus === "taken" ? "border-red-400 focus-within:ring-red-500/20" :
+                                "border-gray-200 focus-within:border-emerald-400 focus-within:ring-emerald-500/20"
                               }`}>
                               <span className="pl-4 pr-2 text-sm text-gray-400 whitespace-nowrap shrink-0 bg-gray-50 h-full flex items-center border-r border-gray-200">
                                 dineflow.pro/@
@@ -1060,7 +1066,7 @@ export default function SettingsPage() {
                                   },
                                 })}
                               />
-                              <Button type="button" variant="outline" onClick={checkSlug} disabled={slugStatus === "checking" || !watchedSlug || watchedSlug === restaurant?.customSlug} className="absolute right-1 to bottom-1 h-10 hover: text-xs ga.5">
+                              <Button type="button" variant="outline" onClick={checkSlug} disabled={slugStatus === "checking" || !watchedSlug || watchedSlug === restaurant?.customSlug} className="absolute right-1 to bottom-1 h-10 hover: text-xs gap-1.5">
                                 {slugStatus === "checking" ? (
                                   <><Loader2 className="h-3 w-3 animate-spin" /> Checking</>
                                 ) : (
@@ -1103,8 +1109,8 @@ export default function SettingsPage() {
                             {watchedSlug && slugStatus !== "idle" && (
                               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                                 <div className={`text-xs font-semibold p-2.5 rounded-lg border mt-2 flex flex-col gap-1.5 ${slugStatus === "checking" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                                    slugStatus === "available" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                                      "bg-red-50 text-red-700 border-red-200"
+                                  slugStatus === "available" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                    "bg-red-50 text-red-700 border-red-200"
                                   }`}>
                                   <div className="flex items-center gap-1.5">
                                     {slugStatus === "checking" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
@@ -1154,20 +1160,20 @@ export default function SettingsPage() {
                               Unlock Custom Booking URLs
                             </p>
                             <p className="text-xs text-gray-500 leading-relaxed max-w-xs">
-                              Upgrade to Premium to create a branded booking link
+                              Upgrade to Pro or Premium to create a branded booking link
                               like{" "}
                               <span className="font-medium text-emerald-600">
                                 dineflow.pro/@spice-garden
                               </span>
                             </p>
                           </div>
-                          <Button type="button" size="sm" className="mt-1 ga.5" onClick={() =>
+                          <Button type="button" size="sm" className="mt-1 gap-1.5" onClick={() =>
                           (window.location.href =
                             "/restaurant/subscription")
                           }
                           >
                             <Sparkles className="h-3.5 w-3.5" />
-                            Upgrade to Premium
+                            Upgrade Plan
                           </Button>
                         </div>
                       )}
@@ -1214,7 +1220,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <Button type="submit" size="lg" className="h-12 bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 /20 [0.98] disabled:opacity-50 disabled:cursor-not-allowed ga" disabled={restaurantLoading || !isRestaurantDirty || slugStatus === "checking" || slugStatus === "taken"}>
+              <Button type="submit" size="lg" className="h-12 bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 /20 [0.98] text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed gap-2" disabled={restaurantLoading || !isRestaurantDirty || slugStatus === "checking" || slugStatus === "taken"}>
                 {restaurantLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1357,12 +1363,12 @@ export default function SettingsPage() {
                         <span className="text-sm text-gray-500">Plan</span>
                         <Badge
                           className={
-                            restaurant?.plan === "premium"
+                            canEditSlug
                               ? "bg-amber-100 text-amber-700 border-0"
                               : "bg-gray-100 text-gray-600 border-0"
                           }
                         >
-                          {restaurant?.plan === "premium" ? "Premium" : "Basic"}
+                          {restaurant?.plan?.toLowerCase().includes("premium") ? "Premium" : restaurant?.plan?.toLowerCase().includes("pro") ? "Pro" : restaurant?.plan?.toLowerCase().includes("basic") ? "Basic" : "Free"}
                         </Badge>
                       </div>
                       <div className="flex items-start justify-between py-2.5">
@@ -1378,7 +1384,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <Button type="submit" size="lg" className="h-12 bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 /20 [0.98] disabled:opacity-50 disabled:cursor-not-allowed ga" disabled={profileLoading || !isProfileDirty}>
+              <Button type="submit" size="lg" className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed disabled: disabled: gap-2" disabled={profileLoading || !isProfileDirty}>
                 {profileLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />

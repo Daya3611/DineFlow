@@ -193,7 +193,7 @@ export default function MenuPage() {
           <p className="text-sm sm:text-base text-slate-500 mt-1">Manage your digital menu catalog.</p>
         </div>
 
-        <Button className="bg-[#0f9d6a] [#0c7f56] [#0f9d6a]/30 h-11" onClick={() => {
+        <Button className="w-full sm:w-auto bg-[#0f9d6a] [#0c7f56] hover:[#0c7f56] h-11 rounded-xl" onClick={() => {
           const limit = getPlanLimits(restaurant?.plan || "basic").menuLimit;
           if (menus.length >= limit) {
             setShowUpgradeModal(true);

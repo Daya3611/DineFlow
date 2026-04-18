@@ -85,9 +85,9 @@ function StatCard({
   return (
     <motion.div variants={fadeUp}>
       <Card className="rounded-2xl border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group overflow-hidden">
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-4">
-            <p className="text-sm font-medium text-gray-500">{title}</p>
+        <CardContent className="p-4 sm:p-5 flex flex-col gap-2">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-sm text-gray-500 font-medium">{title}</p>
             <div
               className={`h-9 w-9 rounded-xl ${iconBg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
             >
@@ -95,13 +95,13 @@ function StatCard({
             </div>
           </div>
           {loading ? (
-            <Skeleton className="h-8 w-28 mb-2" />
+            <Skeleton className="h-8 w-28 mb-1" />
           ) : (
-            <div className="text-2xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
               {value}
-            </div>
+            </h2>
           )}
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-1 flex items-center gap-2">
             {trend && !loading && (
               <span
                 className={`flex items-center gap-0.5 text-xs font-bold ${trend.pct >= 0 ? "text-emerald-600" : "text-red-500"
@@ -130,8 +130,8 @@ function StatCard({
 function StatCardSkeleton() {
   return (
     <Card className="rounded-2xl border-gray-100 shadow-sm">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex justify-between">
+      <CardContent className="p-4 sm:p-5 space-y-3">
+        <div className="flex justify-between items-center mb-1">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-9 w-9 rounded-xl" />
         </div>
@@ -250,7 +250,7 @@ export default function RestaurantDashboard() {
 
   /* ─────────────────────────────────────────────────────────── */
   return (
-    <div className="space-y-7 pb-6">
+    <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 py-4 space-y-6">
       {/* ══ HEADER ════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
@@ -259,10 +259,10 @@ export default function RestaurantDashboard() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-gray-900">
             Dashboard
           </h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
             Here's what's happening today,&nbsp;
             <span className="font-semibold text-gray-700">{userData?.name}</span>
           </p>
@@ -295,7 +295,7 @@ export default function RestaurantDashboard() {
                 </p>
               </div>
               <Link href="/restaurant/settings">
-                <Button className="bg-[#0f9d6a] [#0c7f56] ga shrink-0">
+                <Button className="bg-emerald-400 hover:bg-emerald-500 border border-emerald-400 text-white">
                   Complete Setup <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -311,7 +311,7 @@ export default function RestaurantDashboard() {
             variants={stagger}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
           >
             {loadingStats ? (
               <>
@@ -369,93 +369,68 @@ export default function RestaurantDashboard() {
           >
             {/* Restaurant Profile Summary */}
             <motion.div variants={fadeUp} className="lg:col-span-2">
-              <Card className="rounded-2xl border-gray-100 shadow-sm h-full overflow-hidden">
-                <div className="h-1.5 w-full " />
-                <CardContent className="p-5 space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shrink-0 shadow-md shadow-emerald-200">
-                      <Store className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">
-                        Restaurant
-                      </p>
-                      <h2 className="text-xl font-extrabold text-gray-900 truncate">
-                        {restaurant.name}
-                      </h2>
-                      <Badge
-                        className={`mt-1 border-0 font-semibold text-xs px-2 py-0.5 ${restaurant.subscriptionStatus === "active"
+              <Card className="rounded-2xl border-gray-100 shadow-sm h-full overflow-hidden p-4 sm:p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-500 p-2 rounded-lg shrink-0">
+                    <Store className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{restaurant.name}</h3>
+                    <span 
+                      className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium ${
+                        restaurant.subscriptionStatus === "active"
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-red-100 text-red-700"
-                          }`}
-                      >
-                        {restaurant.subscriptionStatus === "active" ? "● Active" : "● Inactive"}
-                      </Badge>
-                    </div>
+                      }`}
+                    >
+                      {restaurant.subscriptionStatus === "active" ? "Active" : "Inactive"}
+                    </span>
                   </div>
+                </div>
 
-                  <div className="border-t border-gray-100 pt-4 space-y-2.5">
-                    {/* Plan */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <CreditCard className="h-3.5 w-3.5 text-gray-400" />
-                        Current Plan
-                      </div>
-                      <Badge
-                        className={`border-0 text-xs font-bold px-2 capitalize ${currentPlan.includes("premium")
-                          ? "bg-amber-100 text-amber-700"
-                          : currentPlan.includes("pro")
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-gray-100 text-gray-600"
-                          }`}
-                      >
-                        {(currentPlan.includes("premium") || currentPlan.includes("pro")) && (
-                          <Sparkles className="h-3 w-3 mr-1" />
-                        )}
-                        {currentPlan} Plan
-                      </Badge>
-                    </div>
+                <div className="text-sm flex justify-between items-center border-t border-gray-50 pt-4">
+                  <span className="text-gray-500">Current Plan</span>
+                  <span 
+                    className={`text-xs px-2 py-1 rounded-md font-medium capitalize ${
+                      currentPlan.includes("premium")
+                        ? "bg-amber-100 text-amber-700"
+                        : currentPlan.includes("pro")
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {currentPlan} Plan
+                  </span>
+                </div>
 
-                    {/* Expiry */}
-                    {subscription?.expiryDate && (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
-                          Expires
-                        </div>
-                        <span className={`text-sm font-bold ${expiryColor}`}>
-                          {remainingDays !== null && remainingDays <= 0
-                            ? "Expired"
-                            : remainingDays !== null
-                              ? `in ${remainingDays} days`
-                              : "—"}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Lifetime badge */}
-                    {currentPlan !== "none" && !subscription?.expiryDate && (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                          Lifetime Access
-                        </div>
-                        <Badge className="bg-emerald-100 text-emerald-700 border-0 text-xs font-bold">
-                          ✓ Active
-                        </Badge>
-                      </div>
-                    )}
+                {subscription?.expiryDate && (
+                  <div className="text-sm flex justify-between items-center">
+                    <span className="text-gray-500">Expires</span>
+                    <span className={`font-medium ${expiryColor}`}>
+                      {remainingDays !== null && remainingDays <= 0
+                        ? "Expired"
+                        : remainingDays !== null
+                          ? `in ${remainingDays} days`
+                          : "—"}
+                    </span>
                   </div>
+                )}
 
-                  {currentPlan === "none" && (
-                    <Link href="/restaurant/subscription" className="block">
-                      <Button size="sm" className="w-full gap-1.5">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        Upgrade Plan
-                      </Button>
-                    </Link>
-                  )}
-                </CardContent>
+                {currentPlan !== "none" && !subscription?.expiryDate && (
+                  <div className="text-sm flex justify-between items-center">
+                    <span className="text-gray-500">Lifetime Access</span>
+                    <span className="font-medium text-emerald-600">Active</span>
+                  </div>
+                )}
+
+                {currentPlan === "none" && (
+                  <Link href="/restaurant/subscription" className="block mt-2">
+                    <Button size="sm" className="w-full gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Upgrade Plan
+                    </Button>
+                  </Link>
+                )}
               </Card>
             </motion.div>
 
@@ -475,7 +450,7 @@ export default function RestaurantDashboard() {
                     </Link>
                   </div>
                 </CardHeader>
-                <CardContent className="px-5 pb-5">
+                <CardContent className="p-4 sm:p-5">
                   {loadingStats ? (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {[...Array(4)].map((_, i) => (
@@ -597,7 +572,7 @@ export default function RestaurantDashboard() {
                 </div>
               </CardHeader>
 
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 {/* KPI row */}
                 <div className="grid grid-cols-3 gap-6 mb-6 pb-6 border-b border-gray-100">
                   <div>
@@ -750,7 +725,7 @@ export default function RestaurantDashboard() {
             transition={{ delay: 0.35, duration: 0.38 }}
           >
             <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
-              <CardHeader className="px-6 py-5 border-b border-gray-100">
+              <CardHeader className="p-4 sm:px-6 sm:py-5 border-b border-gray-100">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <ChefHat className="h-4.5 w-4.5 text-[#0f9d6a]" size={18} />
@@ -782,7 +757,7 @@ export default function RestaurantDashboard() {
                 {loadingStats ? (
                   <div className="divide-y divide-gray-50">
                     {[...Array(3)].map((_, i) => (
-                      <div key={i} className="flex items-center gap-4 px-6 py-4">
+                      <div key={i} className="flex items-center gap-4 p-4 sm:px-6">
                         <Skeleton className="h-9 w-9 rounded-xl shrink-0" />
                         <Skeleton className="h-4 flex-1 max-w-[160px]" />
                         <Skeleton className="h-4 w-12 ml-auto" />
@@ -803,7 +778,7 @@ export default function RestaurantDashboard() {
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.38 + idx * 0.05 }}
-                        className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/60 transition-colors group"
+                        className="flex items-center gap-3 sm:gap-4 p-4 sm:px-6 hover:bg-gray-50/60 transition-colors group"
                       >
                         {/* Rank badge */}
                         <div

@@ -211,17 +211,17 @@ export default function ReservationsPage() {
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">Bookings & Waitlist</h1>
-          <p className="text-gray-500 mt-1 text-sm">Manage table reservations and walk-in queue.</p>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-gray-900">Bookings & Waitlist</h1>
+          <p className="text-gray-500 mt-1 text-xs sm:text-sm">Manage table reservations and walk-in queue.</p>
         </div>
-        <div className="flex gap-3">
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-center min-w-[60px]">
-            <div className="text-xl font-extrabold text-green-700">{activeResCount}</div>
-            <div className="text-xs text-green-600 font-semibold">Active</div>
+        <div className="flex gap-3 w-full sm:w-auto">
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2 flex-1 sm:flex-none text-center min-w-[70px]">
+            <div className="text-xl sm:text-2xl font-extrabold text-green-700">{activeResCount}</div>
+            <div className="text-[11px] sm:text-xs text-green-600 font-semibold uppercase tracking-wider">Active</div>
           </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-center min-w-[60px]">
-            <div className="text-xl font-extrabold text-amber-700">{activeWaitCount}</div>
-            <div className="text-xs text-amber-600 font-semibold">Waiting</div>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 flex-1 sm:flex-none text-center min-w-[70px]">
+            <div className="text-xl sm:text-2xl font-extrabold text-amber-700">{activeWaitCount}</div>
+            <div className="text-[11px] sm:text-xs text-amber-600 font-semibold uppercase tracking-wider">Waiting</div>
           </div>
         </div>
       </div>

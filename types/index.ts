@@ -9,6 +9,8 @@ export interface User {
   restaurantId?: string;
   setupFeePaid?: boolean;
   photoUrl?: string;
+  hasSubscribed?: boolean;
+  hasUsedTrial?: boolean;
   createdAt: number;
 }
 
@@ -42,10 +44,12 @@ export interface Restaurant {
   upiId?: string;
   logo: string; // Cloudinary URL
   subscriptionStatus: "active" | "inactive" | "expired";
-  plan: "basic" | "pro" | "premium" | "trial" | "none";
+  plan: string;
   customSlug?: string;
   landingPageConfig?: LandingPageConfig;
   setupFeePaid?: boolean;
+  hasSubscribed?: boolean;
+  hasUsedTrial?: boolean;
   lastSubscriptionEndDate?: number;
   createdAt: number;
 }
@@ -53,7 +57,7 @@ export interface Restaurant {
 export interface Subscription {
   id: string;
   userId: string;
-  plan: "basic" | "pro" | "premium" | "trial";
+  plan: string;
   status: "active" | "inactive" | "cancelled" | "expired";
   razorpayPaymentId?: string;
   startDate: number;

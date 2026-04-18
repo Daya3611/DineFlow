@@ -81,12 +81,12 @@ export default function UnifiedOrdersPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Orders Dashboard</h1>
-          <p className="text-gray-500 mt-1 text-sm">Real-time live operations control center.</p>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Orders Dashboard</h1>
+          <p className="text-gray-500 mt-1 text-xs sm:text-sm">Real-time live operations control center.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
             onClick={() => {
               if (!isSoundEnabled) {
@@ -95,7 +95,7 @@ export default function UnifiedOrdersPage() {
               }
               setIsSoundEnabled(!isSoundEnabled);
             }}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${isSoundEnabled ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}
+            className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-3 sm:py-2 rounded-xl text-sm font-semibold transition-colors ${isSoundEnabled ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}
           >
             <Bell className="h-4 w-4" />
             {isSoundEnabled ? "Sound On" : "Sound Off"}

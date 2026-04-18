@@ -29,27 +29,11 @@ export async function POST(req: Request) {
     // OTP matched, delete it so it can't be reused
     await docRef.delete();
 
-    // Save or update user in DB
-    const userRef = adminDb.collection("users").doc(email);
-    const userSnap = await userRef.get();
-    
-    // In a full SaaS, we'd potentially look up their role here (e.g. restaurant_owner vs customer)
-    if (!userSnap.exists) {
-      await userRef.set({
-        email,
-        role: "customer", // default role
-        createdAt: Date.now(),
-        lastLogin: Date.now(),
-      });
-    } else {
-      await userRef.update({
-        lastLogin: Date.now(),
-      });
-    }
-
-    return NextResponse.json({ success: true, user: { email, role: userSnap.exists ? userSnap.data()?.role : "customer" } });
+    // Do NOT create user here! Return success so the client can proceed to Step 4.
+    return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("Verify OTP error:", err);
     return NextResponse.json({ error: "Failed to verify OTP" }, { status: 500 });
   }
 }
+

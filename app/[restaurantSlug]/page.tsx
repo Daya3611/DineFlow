@@ -6,7 +6,7 @@ export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
 async function getRestaurant(slug: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dineflow.pro';
   const res = await fetch(`${baseUrl}/api/restaurant/${slug}`, { cache: 'no-store' });
   if (!res.ok) {
     if (res.status === 404 || res.status === 403) return null;
@@ -18,7 +18,7 @@ async function getRestaurant(slug: string) {
 export default async function RestaurantDetailsPage(props: { params: Promise<{ restaurantSlug: string }> }) {
   const params = await props.params;
   let slug = params.restaurantSlug;
-  
+
   if (slug.startsWith('%40')) slug = slug.substring(3);
   else if (slug.startsWith('@')) slug = slug.substring(1);
   else return notFound();
@@ -83,17 +83,17 @@ export default async function RestaurantDetailsPage(props: { params: Promise<{ r
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-2 truncate">
             {restaurant.name}
           </h1>
-          
+
           <div className="flex items-center justify-center text-slate-500 mb-8 gap-1.5 text-sm font-medium opacity-80">
             <MapPin className="w-4 h-4 shrink-0" />
             <span>{restaurant.address || 'Location unavailable'}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
-            
+
             {config.layout.showTakeaway && (
-              <Link 
-                href={`/@${slug}/menu`} 
+              <Link
+                href={`/@${slug}/menu`}
                 className={`flex flex-col items-center p-6 transition-all group shadow-sm hover:shadow-md ${buttonRadiusClass}`}
                 style={getButtonStyles()}
               >
@@ -103,8 +103,8 @@ export default async function RestaurantDetailsPage(props: { params: Promise<{ r
             )}
 
             {config.layout.showBookTable && (
-              <Link 
-                href={`/@${slug}/booking`} 
+              <Link
+                href={`/@${slug}/booking`}
                 className={`flex flex-col items-center p-6 transition-all group shadow-sm hover:shadow-md ${buttonRadiusClass}`}
                 style={getButtonStyles()}
               >
@@ -114,8 +114,8 @@ export default async function RestaurantDetailsPage(props: { params: Promise<{ r
             )}
 
             {config.layout.showTrackOrder && (
-              <Link 
-                href={`/@${slug}/track`} 
+              <Link
+                href={`/@${slug}/track`}
                 className={`flex flex-col items-center p-6 transition-all group shadow-sm hover:shadow-md ${buttonRadiusClass}`}
                 style={getButtonStyles()}
               >

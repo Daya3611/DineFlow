@@ -31,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`open-sans-a h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-[#F9FAFB] text-gray-900 overflow-x-hidden pb-16 md:pb-0" suppressHydrationWarning>
         <AuthProvider>
           {children}

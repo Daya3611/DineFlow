@@ -73,7 +73,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
   );
 
   const planSlug = (subscription?.plan || restaurant?.plan || "none").toLowerCase();
-  
+
   const getPlanBadge = () => {
     if (planSlug.includes("premium")) return { text: "PREMIUM PLAN", colorClass: "text-purple-600 bg-purple-100" };
     if (planSlug.includes("pro")) return { text: "PRO PLAN", colorClass: "text-emerald-600 bg-emerald-100" };
@@ -153,9 +153,9 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
                   {restaurant.name}
                 </p>
                 <div className="mt-1 flex items-center">
-                   <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-md ${planBadge.colorClass}`}>
-                     {planBadge.text}
-                   </span>
+                  <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-md ${planBadge.colorClass}`}>
+                    {planBadge.text}
+                  </span>
                 </div>
               </div>
             </div>
@@ -202,7 +202,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
           {/* Upgrade Plan Card / Updates Card */}
           <div className="bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-2xl p-4 border border-emerald-100 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-2 opacity-10 scale-150 -translate-y-4 translate-x-4">
-               <Zap className="h-16 w-16 text-emerald-600" />
+              <Zap className="h-16 w-16 text-emerald-600" />
             </div>
             <p className="text-sm font-bold text-slate-900 mb-1">{upgradeCard.title}</p>
             <p className="text-xs text-slate-500 mb-3 relative z-10">{upgradeCard.desc}</p>
@@ -213,9 +213,17 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
 
           {/* User Footer */}
           <div className="flex items-center gap-3 px-1">
-            <div className="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm shrink-0">
-              {userData.name.charAt(0).toUpperCase()}
-            </div>
+            {(userData.photoUrl || user?.photoURL) ? (
+              <img
+                src={(userData.photoUrl || user?.photoURL) as string}
+                alt={userData.name}
+                className="h-9 w-9 rounded-full border border-slate-200 object-cover shrink-0"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm shrink-0">
+                {userData.name.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div className="overflow-hidden flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-800 truncate">{userData.name}</p>
               <p className="text-[11px] font-medium text-slate-400 truncate">{userData.email}</p>
@@ -252,7 +260,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         </header>
 
         {/* Single-scroll main */}
-        <main className="flex-1 overflow-y-auto w-full md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto w-full p-4 sm:p-5 md:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">
             {children}
           </div>
