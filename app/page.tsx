@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, Variants, AnimatePresence } from "framer-motion";
+import { auth, db } from "@/firebase";
+import { signOut } from "firebase/auth";
+import { collection, getDocs } from "firebase/firestore";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -120,39 +123,7 @@ const testimonials = [
   },
 ];
 
-const plans = [
-  {
-    name: "Starter",
-    price: "₹199",
-    period: "/month",
-    desc: "Perfect for small restaurants and cafés just getting started.",
-    features: [
-      "Up to 20 menu items",
-      "QR code for 5 tables",
-      "Live order management",
-      "Basic analytics",
-      "Email support",
-    ],
-    cta: "Start Free Trial",
-    highlighted: false,
-  },
-  {
-    name: "Pro",
-    price: "₹499",
-    period: "/month",
-    desc: "For growing restaurants that need the full Dineflow.pro experience.",
-    features: [
-      "Unlimited menu items",
-      "QR codes for unlimited tables",
-      "Advanced analytics & reports",
-      "UPI & Razorpay payments",
-      "Priority support",
-      "Custom restaurant branding",
-    ],
-    cta: "Get Pro — Most Popular",
-    highlighted: true,
-  },
-];
+// Plans are now fetched from Firestore
 
 // ─── Animation helpers ────────────────────────────────────────────────────────
 
@@ -181,10 +152,59 @@ const staggerItem: Variants = {
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
   const { userData } = useAuth();
 
   useEffect(() => {
     setIsLoggedIn(isTokenValid());
+  }, []);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "plans"));
+
+        console.log("PLANS FROM DB:", querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+
+        const plansData = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          const pId = doc.id.toLowerCase();
+
+          let desc = "";
+          let highlighted = false;
+
+          if (pId === "basic") {
+            desc = "Best for small restaurants";
+          } else if (pId === "pro") {
+            desc = "Perfect for most restaurants";
+            highlighted = true;
+          } else if (pId === "premium") {
+            desc = "For growing businesses";
+          }
+
+          return {
+            id: pId,
+            name: data.name || pId,
+            price: `₹${data.monthlyPrice || data.price || 0}`,
+            period: "/month",
+            desc: desc,
+            features: data.features || [],
+            highlighted: highlighted,
+            cta: "Get Started"
+          };
+        });
+
+        // Ensure some logical sorting order
+        plansData.sort((a, b) => parseInt(a.price.replace('₹', '') || '0') - parseInt(b.price.replace('₹', '') || '0'));
+        setPlans(plansData);
+      } catch (error) {
+        console.error("Error fetching plans:", error);
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+    fetchPlans();
   }, []);
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
@@ -246,11 +266,11 @@ export default function Home() {
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" className="hidden md:block text-[14px] font-semibold text-gray-500 hover:text-gray-900 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-100">
+                  <Link href="/login" className="hidden md:block text-[14px] text-gray-500 hover:text-gray-900 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-100">
                     Log in
                   </Link>
                   <Link href="/register" className="hidden md:block shrink-0">
-                    <Button className="h-9 text-[13px] text-slate-700 rounded-full hover:bg-white hover:text-emerald-700">
+                    <Button className="h-9 text-[13px] text-slate-700 rounded-full hover:bg-white hover:text-emerald-700 hover:bg-slate-50">
                       Start Free Trial
                     </Button>
                   </Link>
@@ -330,7 +350,7 @@ export default function Home() {
               <div className="max-w-5xl text-center">
 
                 {/* TRUST BADGE */}
-                <motion.div
+                {/* <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
@@ -338,7 +358,7 @@ export default function Home() {
                 >
                   <span className="h-2 w-2 rounded-full bg-green-500" />
                   Trusted by 500+ restaurants across India
-                </motion.div>
+                </motion.div> */}
 
                 {/* HEADLINE */}
                 <motion.h1
@@ -462,8 +482,8 @@ export default function Home() {
                 <motion.div {...fadeUp(0)} className="inline-flex items-center text-emerald-700 font-semibold text-sm bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200 mb-4">
                   Simple setup
                 </motion.div>
-                <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
-                  Up and running in 3 steps
+                <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4 flex items-center justify-center">
+                  Up and running in <div className="text-emerald-600 caveat-regular text-7xl">3 Steps</div>
                 </motion.h2>
                 <motion.p {...fadeUp(0.13)} className="text-gray-500 text-lg max-w-lg mx-auto">
                   No technical skills needed. No engineers required. Just sign up and serve.
@@ -523,7 +543,9 @@ export default function Home() {
                 viewport={{ once: true, margin: "-50px" }}
                 className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto"
               >
-                {plans.map((plan, i) => (
+                {loadingPlans ? (
+                  <div className="col-span-1 md:col-span-2 text-center text-gray-500 py-10">Loading plans...</div>
+                ) : plans.map((plan, i) => (
                   <motion.div
                     key={i}
                     variants={staggerItem}
@@ -548,7 +570,7 @@ export default function Home() {
                     </div>
 
                     <ul className="space-y-3 mb-8 flex-1">
-                      {plan.features.map((feat, j) => (
+                      {plan.features.map((feat: string, j: number) => (
                         <li key={j} className="flex items-center gap-2.5 text-sm font-medium">
                           <CheckCircle2 className={`h-4 w-4 shrink-0 ${plan.highlighted ? "text-emerald-300" : "text-emerald-500"}`} />
                           <span className={plan.highlighted ? "text-emerald-50" : "text-gray-700"}>{feat}</span>
