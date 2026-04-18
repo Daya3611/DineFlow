@@ -349,7 +349,7 @@ export default function Home() {
                 >
                   The smarter way to{" "}
                   <span className="text-green-600 relative">
-                    run your restaurant
+                    run your <span className="pacifico-regular">Restaurant</span>
                     <span className="absolute left-0 -bottom-2 h-2 w-full bg-green-200 rounded-full" />
                   </span>
                 </motion.h1>
@@ -421,7 +421,7 @@ export default function Home() {
                   Powerful features
                 </motion.div>
                 <motion.h2 {...fadeUp(0.08)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-5">
-                  Everything you need to<br />run your restaurant
+                  Everything you need to<br />run your <span className="caveat-regular text-green-600">Restaurant</span>
                 </motion.h2>
                 <motion.p {...fadeUp(0.14)} className="text-gray-500 text-lg max-w-xl mx-auto">
                   Every feature is crafted to save time, reduce errors, and delight your customers.
