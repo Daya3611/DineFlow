@@ -219,6 +219,15 @@ export default function Home() {
         console.error("Error fetching plans:", error);
       } finally {
         setLoadingPlans(false);
+        // Force scroll recalculation since DOM height changes dynamically
+        setTimeout(() => {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("resize"));
+            if ((window as any).lenis) {
+              (window as any).lenis.resize();
+            }
+          }
+        }, 300);
       }
     };
     fetchPlans();
@@ -277,7 +286,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               {isLoggedIn ? (
                 <Link href={dashboardLink} className="hidden md:block shrink-0">
-                  <Button className="h-9 text-[13px] bg-[#0f9d6a] [#0c7f56] [1.03] [0.98] rounded-full hover:bg-white hover:text-emerald-700">
+                  <Button className="h-9 text-[13px] bg-white rounded-full hover:bg-emerald-100 text-green-700 font-bold">
                     Dashboard →
                   </Button>
                 </Link>
@@ -317,7 +326,7 @@ export default function Home() {
                   <div className="h-px bg-gray-100 my-1" />
                   {isLoggedIn ? (
                     <Link href={dashboardLink} onClick={() => setMobileMenuOpen(false)} className="mt-1">
-                      <Button className="w-full h-11 bg-[#0f9d6a] [#0c7f56]">
+                      <Button className="w-full h-11 bg-[#0f9d6a] [#0c7f56] text-white">
                         Go to Dashboard
                       </Button>
                     </Link>
@@ -398,7 +407,7 @@ export default function Home() {
                   transition={{ delay: 0.2, duration: 0.6 }}
                   className="mx-auto mt-6 max-w-2xl text-base text-gray-600 md:text-lg"
                 >
-                  QR-based ordering, real-time kitchen tracking, smart billing, and powerful analytics — all in one platform built for modern restaurants.
+                  QR-based ordering, real-time kitchen tracking, smart billing, and powerful analytics all in one platform built for modern restaurants.
                 </motion.p>
 
                 {/* CTA BUTTONS */}
@@ -546,7 +555,8 @@ export default function Home() {
                   Simple pricing
                 </motion.div>
                 <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
-                  Pay only for what you need
+                  Pay only for what you
+                  <span className="text-emerald-600 caveat-regular ml-2">Need</span>
                 </motion.h2>
                 <motion.p {...fadeUp(0.13)} className="text-gray-500 text-lg max-w-md mx-auto">
                   No hidden fees. Cancel anytime. Start free for 14 days.
@@ -617,7 +627,7 @@ export default function Home() {
                   Real reviews
                 </motion.div>
                 <motion.h2 {...fadeUp(0.07)} className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">
-                  Loved by restaurant owners
+                  Loved by <span className="text-emerald-600 caveat-regular mx-1">Restaurant</span> owners
                 </motion.h2>
               </div>
 
