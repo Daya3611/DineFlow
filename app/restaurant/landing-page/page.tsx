@@ -161,9 +161,11 @@ export default function LandingPageCustomizer() {
 
   const slug = restaurant?.customSlug ?? "";
 
-  // ── Field sections ───────────────────────────────────────────────────────
+  // ── Section Renderers ──────────────────────────────────────────────────
+  // Note: We define these as local functions, NOT components (PascalCase), 
+  // to avoid React remounting the entire branch and losing focus during typing.
 
-  const SectionBranding = () => (
+  const renderBranding = () => (
     <div className="space-y-5">
       <SectionHeader title="Core Branding" subtitle="These details appear on your public landing page." />
 
@@ -188,7 +190,7 @@ export default function LandingPageCustomizer() {
     </div>
   );
 
-  const SectionTheme = () => (
+  const renderTheme = () => (
     <div className="space-y-6">
       <SectionHeader title="Theme" subtitle="Colors and visual style for your page." />
 
@@ -240,7 +242,7 @@ export default function LandingPageCustomizer() {
     </div>
   );
 
-  const SectionLayout = () => (
+  const renderLayout = () => (
     <div className="space-y-5">
       <SectionHeader title="Page Layout" subtitle="Control which sections appear for your customers." />
       <ToggleRow
@@ -267,7 +269,7 @@ export default function LandingPageCustomizer() {
     </div>
   );
 
-  const SectionCta = () => (
+  const renderCta = () => (
     <div className="space-y-5">
       <SectionHeader title="Button Text" subtitle="Customise the call-to-action labels customers see." />
       {config.layout.showTakeaway && (
@@ -293,7 +295,7 @@ export default function LandingPageCustomizer() {
     </div>
   );
 
-  const SectionAdvanced = () => (
+  const renderAdvanced = () => (
     <div className="space-y-5">
       <SectionHeader title="Advanced" subtitle="Danger zone and power-user options." />
       <div className="p-4 rounded-xl border border-red-100 bg-red-50 space-y-3">
@@ -324,11 +326,11 @@ export default function LandingPageCustomizer() {
   );
 
   const activeContent: Record<SectionId, React.ReactNode> = {
-    branding: <SectionBranding />,
-    theme: <SectionTheme />,
-    layout: <SectionLayout />,
-    cta: <SectionCta />,
-    advanced: <SectionAdvanced />,
+    branding: renderBranding(),
+    theme: renderTheme(),
+    layout: renderLayout(),
+    cta: renderCta(),
+    advanced: renderAdvanced(),
   };
 
   return (
@@ -381,7 +383,6 @@ export default function LandingPageCustomizer() {
             key={activeSection}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
             className="max-w-lg space-y-6"
           >
