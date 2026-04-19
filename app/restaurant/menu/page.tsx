@@ -12,19 +12,37 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, Plus, UtensilsCrossed, ImageIcon, Search, Edit2, Trash2 } from "lucide-react";
+import { Loader2, Plus, UtensilsCrossed, ImageIcon, Search, Edit2, Trash2, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { AppDropdown } from "@/components/common/AppDropdown";
 import { AppSheet } from "@/components/common/AppSheet";
 import { getPlanLimits } from "@/lib/plans";
 import { UpgradeModal } from "@/components/common/UpgradeModal";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+
+const highlightOptions = [
+  { label: "None", value: "none" },
+  { label: "Popular", value: "popular" },
+  { label: "Chef Special", value: "chef special" },
+];
+const tags = ["veg", "non-veg", "vegan", "spicy"];
 
 const menuItemSchema = z.object({
   name: z.string().min(2, "Item name required"),
   price: z.coerce.number().min(1, "Price must be at least 1"),
   category: z.string().min(2, "Category required"),
-  dietaryTags: z.array(z.string()).optional(),
+  dietaryTags: z.string().optional(),
   highlight: z.string().optional(),
 });
 
@@ -39,9 +57,20 @@ export default function MenuPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof menuItemSchema>>({
+
+
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<z.infer<typeof menuItemSchema>>({
     resolver: zodResolver(menuItemSchema) as any,
+    defaultValues: {
+      name: "",
+      category: "",
+      dietaryTags: "veg",
+      highlight: "none"
+    }
   });
+  const selected = watch("dietaryTags") || "veg";
+  const selectedHighlight = watch("highlight") || "none";
+  const currentLabel = highlightOptions.find(opt => opt.value === selectedHighlight)?.label || "None";
 
   useEffect(() => {
     if (restaurant) {
@@ -96,7 +125,7 @@ export default function MenuPage() {
       name: item.name,
       price: item.price,
       category: item.category,
-      dietaryTags: item.dietaryTags || [],
+      dietaryTags: (item.dietaryTags && Array.isArray(item.dietaryTags)) ? item.dietaryTags[0] : (item.dietaryTags as any || "veg"),
       highlight: item.highlight || "none",
     });
     setOpen(true);
@@ -137,7 +166,7 @@ export default function MenuPage() {
         price: values.price,
         category: values.category || "",
         image: imageUrl || "",
-        dietaryTags: values.dietaryTags || [],
+        dietaryTags: values.dietaryTags ? [values.dietaryTags] : [],
         highlight: (values.highlight as any) || "none"
       };
 
@@ -193,7 +222,7 @@ export default function MenuPage() {
           <p className="text-sm sm:text-base text-slate-500 mt-1">Manage your digital menu catalog.</p>
         </div>
 
-        <Button className="w-full sm:w-auto bg-[#0f9d6a] [#0c7f56] hover:[#0c7f56] h-11 rounded-xl" onClick={() => {
+        <Button className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 h-9 rounded-full text-white" onClick={() => {
           const limit = getPlanLimits(restaurant?.plan || "basic").menuLimit;
           if (menus.length >= limit) {
             setShowUpgradeModal(true);
@@ -217,6 +246,7 @@ export default function MenuPage() {
           onSubmit={handleSubmit(onSubmit)}
           loading={submitting}
           submitLabel={editingItem ? "Save Changes" : "Add Item"}
+          className="rounded-l-3xl"
         >
           <div className="flex flex-col gap-2">
             <Label className="font-semibold text-gray-700">Item Image</Label>
@@ -259,24 +289,72 @@ export default function MenuPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="font-semibold text-gray-700">Dietary Tags</Label>
-            <div className="flex flex-wrap gap-2">
-              {["veg", "non-veg", "vegan", "spicy"].map(tag => (
-                <label key={tag} className="flex items-center gap-1.5 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-                  <input type="checkbox" value={tag} {...register("dietaryTags")} className="accent-emerald-500 rounded-sm" />
-                  <span className="text-sm font-medium capitalize text-slate-700">{tag}</span>
-                </label>
+            <Label className="font-semibold text-gray-700">
+              Dietary Tags
+            </Label>
+
+            <RadioGroup
+              value={selected} // ✅ controlled
+              onValueChange={(value) => setValue("dietaryTags", value)}
+              className="flex flex-col "
+            >
+              {tags.map((tag) => (
+                <Label
+                  key={tag}
+                  className="flex items-center cursor-pointer select-none"
+                >
+                  <RadioGroupItem value={tag} className="peer" />
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1 rounded-full border transition-all duration-200",
+                      "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100",
+                      "peer-data-checked:bg-green-500 peer-data-checked:text-white peer-data-checked:border-green-500 peer-data-checked:hover:bg-green-600"
+                    )}
+                  >
+                    <span className="text-sm font-semibold capitalize tracking-tight">{tag}</span>
+                    {/* <AnimatePresence>
+                      {watch("dietaryTags") === tag && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                        >
+                          <Check className="w-3.5 h-3.5 text-white" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence> */}
+                  </div>
+                </Label>
               ))}
-            </div>
+            </RadioGroup>
           </div>
 
           <div className="space-y-1.5">
             <Label className="font-semibold text-gray-700">Highlight</Label>
-            <select {...register("highlight")} className="h-11 w-full rounded-xl border-gray-200 outline-none border px-3 bg-white text-sm">
-              <option value="none">None</option>
-              <option value="popular">Popular</option>
-              <option value="chef special">Chef Special</option>
-            </select>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={(props: any) => (
+                  <Button
+                    {...props}
+                    variant="outline"
+                    className="w-full h-11 justify-between rounded-xl border-gray-200"
+                  >
+                    {currentLabel}
+                  </Button>
+                )}
+              />
+
+              <DropdownMenuContent className="w-full">
+                {highlightOptions.map((item) => (
+                  <DropdownMenuItem
+                    key={item.value}
+                    onClick={() => setValue("highlight", item.value)}
+                  >
+                    {item.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </AppSheet>
       </div>

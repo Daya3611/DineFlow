@@ -264,7 +264,7 @@ export default function RestaurantDashboard() {
           </h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
             Here's what's happening today,&nbsp;
-            <span className="font-semibold text-gray-700">{userData?.name}</span>
+            <span className="font-bold text-gray-700 capitalize text-md text-green-600">{userData?.name}</span>
           </p>
         </div>
 
@@ -376,12 +376,11 @@ export default function RestaurantDashboard() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{restaurant.name}</h3>
-                    <span 
-                      className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium ${
-                        restaurant.subscriptionStatus === "active"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                    <span
+                      className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium ${restaurant.subscriptionStatus === "active"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-red-100 text-red-700"
+                        }`}
                     >
                       {restaurant.subscriptionStatus === "active" ? "Active" : "Inactive"}
                     </span>
@@ -390,14 +389,13 @@ export default function RestaurantDashboard() {
 
                 <div className="text-sm flex justify-between items-center border-t border-gray-50 pt-4">
                   <span className="text-gray-500">Current Plan</span>
-                  <span 
-                    className={`text-xs px-2 py-1 rounded-md font-medium capitalize ${
-                      currentPlan.includes("premium")
-                        ? "bg-amber-100 text-amber-700"
-                        : currentPlan.includes("pro")
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-gray-100 text-gray-600"
-                    }`}
+                  <span
+                    className={`text-xs px-2 py-1 rounded-md font-medium capitalize ${currentPlan.includes("premium")
+                      ? "bg-amber-100 text-amber-700"
+                      : currentPlan.includes("pro")
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-gray-100 text-gray-600"
+                      }`}
                   >
                     {currentPlan} Plan
                   </span>

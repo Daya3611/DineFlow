@@ -126,7 +126,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
       {/* Sidebar */}
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-[260px] flex flex-col
-        bg-white border-r border-slate-200
+        bg-white
         transition-transform duration-300 ease-in-out
         md:translate-x-0 md:static shadow-[4px_0_24px_rgba(0,0,0,0.02)]
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
@@ -144,16 +144,16 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
           </div>
 
           {restaurant && (
-            <div className="mt-3 flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-100 bg-slate-50/50">
-              <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+            <div className="mt-3 flex items-center gap-2.5 py-1 px-2  rounded-full border border-slate-100 bg-slate-50/50">
+              <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                 <Utensils className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-bold text-slate-900 truncate">
+                <p className="text-sm font-bold text-slate-900 truncate">
                   {restaurant.name}
                 </p>
                 <div className="mt-1 flex items-center">
-                  <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-md ${planBadge.colorClass}`}>
+                  <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded-md ${planBadge.colorClass}`}>
                     {planBadge.text}
                   </span>
                 </div>
@@ -249,7 +249,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
       </aside>
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
         {/* Mobile Header */}
         <header className="md:hidden h-16 flex items-center px-4 bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
           <Button className="mr-3 text-slate-500 hover:" onClick={() => setSidebarOpen(true)}
@@ -260,7 +260,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         </header>
 
         {/* Single-scroll main */}
-        <main className="flex-1 overflow-y-auto w-full p-4 sm:p-5 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto w-full p-4 sm:p-5 md:p-6 lg:p-8 bg-neutral-50/50 m-1 rounded-2xl border">
           <div className="mx-auto max-w-7xl">
             {children}
           </div>
