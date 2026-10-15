@@ -21,4 +21,11 @@ if (getApps().length === 0) {
 }
 
 export const adminDb = (app ? getFirestore(app) : null) as any;
+if (adminDb) {
+  try {
+    adminDb.settings({ ignoreUndefinedProperties: true });
+  } catch (e) {
+    // Ignore if settings already initialized
+  }
+}
 export const db = adminDb;

@@ -1,38 +1,37 @@
-import { headers } from "next/headers";
 import { notFound } from 'next/navigation';
-import ClientTakeaway from './ClientTakeaway';
+import { OrderFoodClient } from '@/components/customer/OrderFoodClient';
+
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 async function getRestaurantAndMenu(slug: string) {
-  const headersList = await headers();
-  const host = headersList.get("host");
+  try {
+    const { collection, query, where, getDocs, doc, getDoc } = await import('firebase/firestore');
+    const { db } = await import('@/firebase');
+    
+    const q = query(collection(db, 'restaurants'), where('customSlug', '==', slug));
+    const snap = await getDocs(q);
+    let restaurant: any = null;
+    if (!snap.empty) {
+      restaurant = { id: snap.docs[0].id, ...snap.docs[0].data() };
+    } else {
+      const fallbackSnap = await getDoc(doc(db, 'restaurants', slug));
+      if (fallbackSnap.exists()) {
+        restaurant = { id: fallbackSnap.id, ...fallbackSnap.data() };
+      }
+    }
 
-  const protocol =
-    process.env.NODE_ENV === "development" ? "http" : "https";
+    if (!restaurant) return null;
 
-  const baseUrl = `${protocol}://${host}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const menuReq = await fetch(`${baseUrl}/api/menu/${slug}`, { cache: 'no-store' });
+    const menuItems = menuReq.ok ? await menuReq.json() : [];
 
-  // ✅ Restaurant fetch
-  const resReq = await fetch(`${baseUrl}/api/restaurant/${slug}`, {
-    cache: "no-store",
-  });
-
-  if (!resReq.ok) {
-    if (resReq.status === 404 || resReq.status === 403) return null;
-    throw new Error("Failed to fetch restaurant");
+    return { restaurant, menuItems };
+  } catch (e) {
+    console.error("Error fetching restaurant and menu for takeaway:", e);
+    return null;
   }
-
-  const restaurant = await resReq.json();
-
-  // ✅ Menu fetch (FIXED)
-  const menuReq = await fetch(`${baseUrl}/api/menu/${slug}`, {
-    cache: "no-store",
-  });
-
-  if (!menuReq.ok) return null;
-
-  const menuItems = await menuReq.json();
-
-  return { restaurant, menuItems };
 }
 
 export default async function TakeawayServerPage(props: { params: Promise<{ restaurantSlug: string }> }) {
@@ -46,5 +45,6 @@ export default async function TakeawayServerPage(props: { params: Promise<{ rest
   const data = await getRestaurantAndMenu(slug);
   if (!data) return notFound();
 
-  return <ClientTakeaway initialRestaurant={data.restaurant} initialMenus={data.menuItems} />;
+  const plainData = JSON.parse(JSON.stringify(data));
+  return <OrderFoodClient restaurant={plainData.restaurant} menuItems={plainData.menuItems} slug={slug} />;
 }

@@ -33,17 +33,22 @@ export async function GET(request: Request, props: { params: Promise<{ slug: str
     const q = query(collection(db, 'menus'), where('restaurantId', '==', restaurantId));
     const menusSnap = await getDocs(q);
     
-    // Return minimal required data
+    // Return complete menu data including half portion pricing, description & availability
     const menus = menusSnap.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
+        restaurantId: data.restaurantId,
         name: data.name,
         price: data.price,
+        hasHalfPortion: Boolean(data.hasHalfPortion),
+        halfPrice: data.halfPrice ? Number(data.halfPrice) : null,
         category: data.category,
         image: data.image,
-        dietaryTags: data.dietaryTags,
-        highlight: data.highlight,
+        description: data.description || "",
+        dietaryTags: data.dietaryTags || [],
+        highlight: data.highlight || "none",
+        isAvailable: data.isAvailable !== false,
       };
     });
 

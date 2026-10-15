@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AppDropdown } from "@/components/common/AppDropdown";
 import { Button } from "@/components/ui/button";
 import WaiterNotificationSystem from "@/components/restaurant/WaiterNotificationSystem";
+import { Sidebar } from "@/components/dashboard/Sidebar";
 
 const navItems = [
   { href: "/restaurant/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -123,144 +124,24 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-[260px] flex flex-col
-        bg-white
-        transition-transform duration-300 ease-in-out
-        md:translate-x-0 md:static shadow-[4px_0_24px_rgba(0,0,0,0.02)]
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-      `}>
-        {/* Logo & Restaurant Name */}
-        <div className="flex flex-col gap-2 px-5 py-5 border-b border-slate-100 shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <Image src="/logo.png" alt="Dineflow Icon" width={32} height={32} className="h-8 w-8 object-contain" priority />
-              <span className="text-[17px] font-extrabold tracking-tight text-slate-900">DineFlow</span>
-            </div>
-            <Button className="md:hidden text-slate-400" onClick={() => setSidebarOpen(false)}>
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {restaurant && (
-            <div className="mt-3 flex items-center gap-2.5 py-1 px-2  rounded-full border border-slate-100 bg-slate-50/50">
-              <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                <Utensils className="h-4 w-4 text-emerald-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-slate-900 truncate">
-                  {restaurant.name}
-                </p>
-                <div className="mt-1 flex items-center">
-                  <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded-md ${planBadge.colorClass}`}>
-                    {planBadge.text}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 py-4 px-4 space-y-1.5 overflow-y-auto">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-3 mt-1">Menu</div>
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group relative overflow-hidden ${isActive
-                  ? "bg-[#0f9d6a] text-white shadow-md shadow-emerald-200"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                  }`}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="activeNavIndicator"
-                    className="absolute inset-0 bg-gradient-to-r from-[#0f9d6a] to-[#12b97c] opacity-100 -z-10"
-                  />
-                )}
-                <Icon className={`h-4.5 w-4.5 shrink-0 transition-colors ${isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"
-                  }`} size={18} />
-                {item.label}
-                {item.label === "Orders" && (
-                  <span className={`ml-auto flex h-2 w-2 rounded-full ${isActive ? "bg-white" : "bg-emerald-500 animate-pulse"}`} />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Bottom Area (Upgrade Card + User Profile) */}
-        <div className="p-4 border-t border-slate-100 shrink-0 bg-white space-y-4">
-
-          {/* Upgrade Plan Card / Updates Card */}
-          <div className="bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-2xl p-4 border border-emerald-100 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-2 opacity-10 scale-150 -translate-y-4 translate-x-4">
-              <Zap className="h-16 w-16 text-emerald-600" />
-            </div>
-            <p className="text-sm font-bold text-slate-900 mb-1">{upgradeCard.title}</p>
-            <p className="text-xs text-slate-500 mb-3 relative z-10">{upgradeCard.desc}</p>
-            <Button onClick={() => { setSidebarOpen(false); upgradeCard.action(); }} className="w-full h-8 text-[12px] text-emerald-700 hover: bg-white border border-emerald-200">
-              {upgradeCard.btn}
-            </Button>
-          </div>
-
-          {/* User Footer */}
-          <div className="flex items-center gap-3 px-1">
-            {(userData.photoUrl || user?.photoURL) ? (
-              <img
-                src={(userData.photoUrl || user?.photoURL) as string}
-                alt={userData.name}
-                className="h-9 w-9 rounded-full border border-slate-200 object-cover shrink-0"
-              />
-            ) : (
-              <div className="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm shrink-0">
-                {userData.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className="overflow-hidden flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-800 truncate">{userData.name}</p>
-              <p className="text-[11px] font-medium text-slate-400 truncate">{userData.email}</p>
-            </div>
-            <AppDropdown
-              items={[
-                {
-                  label: "Subscription",
-                  icon: Zap,
-                  onClick: () => router.push("/restaurant/subscription"),
-                },
-                {
-                  label: "Sign out",
-                  icon: LogOut,
-                  danger: true,
-                  separator: true,
-                  onClick: handleLogout,
-                },
-              ]}
-            />
-          </div>
-        </div>
-      </aside>
+      {/* Redesigned Sidebar */}
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
-        {/* Mobile Header */}
-        <header className="md:hidden h-16 flex items-center px-4 bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
-          <Button className="mr-3 text-slate-500 hover:" onClick={() => setSidebarOpen(true)}
-          >
+        {/* Mobile Header (Shown only on small screens if needed, otherwise DashboardHeader handles page header) */}
+        <header className="md:hidden h-14 flex items-center justify-between px-4 bg-white border-b border-slate-200/80 sticky top-0 z-30 shrink-0">
+          <div className="flex items-center gap-2">
+            <Image src="/logo.png" alt="DineFlow" width={24} height={24} className="h-6 w-6 object-contain" />
+            <span className="font-extrabold text-slate-900 capitalize text-base">DineFlow</span>
+          </div>
+          <Button variant="ghost" size="icon" className="text-slate-600" onClick={() => setSidebarOpen(true)}>
             <MenuIcon className="h-5 w-5" />
           </Button>
-          <div className="font-bold text-slate-900 capitalize text-lg">{pageLabel}</div>
         </header>
 
         {/* Single-scroll main */}
-        <main className="flex-1 overflow-y-auto w-full p-4 sm:p-5 md:p-6 lg:p-8 bg-neutral-50/50 m-1 rounded-2xl border">
+        <main className="flex-1 overflow-y-auto w-full p-4 sm:p-6 lg:p-7 bg-[#F8FAFC]">
           <div className="mx-auto max-w-7xl">
             {children}
           </div>

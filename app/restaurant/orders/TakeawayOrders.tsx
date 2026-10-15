@@ -270,16 +270,16 @@ export function TakeawayOrders({ takeaways }: { takeaways: OrderType[] }) {
                       <Separator className="bg-emerald-200/50" />
                       <div className="flex justify-between items-center text-lg">
                         <span className="font-bold text-slate-900">Total</span>
-                        <span className="font-black text-[#0f9d6a]">₹{currentSheetOrder.totalAmount}</span>
+                        <span className="font-black text-[#16A34A]">₹{currentSheetOrder.totalAmount}</span>
                       </div>
                     </div>
                     {currentSheetOrder.paymentStatus === "pending_verification" && currentSheetOrder.status !== "completed" && (
-                      <Button variant="default" className="w-full bg-emerald-500 text-white" onClick={() => verifyUpiPayment(currentSheetOrder.id)}>
+                      <Button variant="default" className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white" onClick={() => verifyUpiPayment(currentSheetOrder.id)}>
                         {updatingId === currentSheetOrder.id ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />} Verify UPI Payment Now
                       </Button>
                     )}
                     {currentSheetOrder.paymentStatus === "unpaid" && currentSheetOrder.paymentMethod === "cod" && currentSheetOrder.status !== "completed" && (
-                      <Button variant="outline" className="w-full text-emerald-700" onClick={() => verifyUpiPayment(currentSheetOrder.id)}>
+                      <Button variant="outline" className="w-full text-[#16A34A] border-emerald-200" onClick={() => verifyUpiPayment(currentSheetOrder.id)}>
                         {updatingId === currentSheetOrder.id ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />} Payment received at counter
                       </Button>
                     )}
@@ -291,17 +291,17 @@ export function TakeawayOrders({ takeaways }: { takeaways: OrderType[] }) {
                   <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">Take Action</h4>
                   <div className="grid grid-cols-1 gap-2">
                     {currentSheetOrder.status === 'pending' && (
-                      <Button onClick={() => updateOrderStatus(currentSheetOrder.id, "preparing")} disabled={updatingId === currentSheetOrder.id} className="w-full h-12 text-[15px] font-bold rounded-xl bg-sky-500 hover:bg-sky-600 shadow-md">
+                      <Button onClick={() => updateOrderStatus(currentSheetOrder.id, "preparing")} disabled={updatingId === currentSheetOrder.id} className="w-full h-12 text-[15px] font-bold rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white shadow-xs">
                         Start Preparing Order
                       </Button>
                     )}
                     {currentSheetOrder.status === 'preparing' && (
-                      <Button onClick={() => updateOrderStatus(currentSheetOrder.id, "ready")} disabled={updatingId === currentSheetOrder.id} className="w-full h-12 text-[15px] font-bold rounded-xl bg-emerald-500 hover:bg-emerald-600 shadow-md">
+                      <Button onClick={() => updateOrderStatus(currentSheetOrder.id, "ready")} disabled={updatingId === currentSheetOrder.id} className="w-full h-12 text-[15px] font-bold rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white shadow-xs">
                         Mark as Ready For Pickup
                       </Button>
                     )}
                     {currentSheetOrder.status === 'ready' && (
-                      <Button onClick={() => updateOrderStatus(currentSheetOrder.id, "completed")} disabled={updatingId === currentSheetOrder.id} className="w-full h-12 text-[15px] font-bold rounded-xl bg-slate-900 hover:bg-slate-800 shadow-xl">
+                      <Button onClick={() => updateOrderStatus(currentSheetOrder.id, "completed")} disabled={updatingId === currentSheetOrder.id} className="w-full h-12 text-[15px] font-bold rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white shadow-xs">
                         Complete & Dismiss
                       </Button>
                     )}

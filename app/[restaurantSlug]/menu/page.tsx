@@ -1,39 +1,35 @@
 import { notFound } from 'next/navigation';
 import ClientMenu from './ClientMenu';
-import { headers } from 'next/headers';
+import { CustomerHeaderNav } from '@/components/customer/CustomerHeaderNav';
 
 async function getRestaurantAndMenu(slug: string) {
-  // ✅ Build absolute URL on server
-  const headersList = headers();
-  const host = (await headersList).get('host');
+  try {
+    const { collection, query, where, getDocs, doc, getDoc } = await import('firebase/firestore');
+    const { db } = await import('@/firebase');
+    
+    const q = query(collection(db, 'restaurants'), where('customSlug', '==', slug));
+    const snap = await getDocs(q);
+    let restaurant: any = null;
+    if (!snap.empty) {
+      restaurant = { id: snap.docs[0].id, ...snap.docs[0].data() };
+    } else {
+      const fallbackSnap = await getDoc(doc(db, 'restaurants', slug));
+      if (fallbackSnap.exists()) {
+        restaurant = { id: fallbackSnap.id, ...fallbackSnap.data() };
+      }
+    }
 
-  const protocol =
-    process.env.NODE_ENV === 'development' ? 'http' : 'https';
+    if (!restaurant) return null;
 
-  const baseUrl = `${protocol}://${host}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const menuReq = await fetch(`${baseUrl}/api/menu/${slug}`, { cache: 'no-store' });
+    const menuItems = menuReq.ok ? await menuReq.json() : [];
 
-  // ✅ Fetch restaurant
-  const resReq = await fetch(`${baseUrl}/api/restaurant/${slug}`, {
-    cache: 'no-store',
-  });
-
-  if (!resReq.ok) {
-    if (resReq.status === 404 || resReq.status === 403) return null;
-    throw new Error('Failed to fetch restaurant');
+    return { restaurant, menuItems };
+  } catch (e) {
+    console.error("Error in getRestaurantAndMenu:", e);
+    return null;
   }
-
-  const restaurant = await resReq.json();
-
-  // ✅ Fetch menu
-  const menuReq = await fetch(`${baseUrl}/api/menu/${slug}`, {
-    cache: 'no-store',
-  });
-
-  if (!menuReq.ok) return null;
-
-  const menuItems = await menuReq.json();
-
-  return { restaurant, menuItems };
 }
 
 export default async function MenuServerPage(props: {
@@ -45,7 +41,6 @@ export default async function MenuServerPage(props: {
 
   let slug = params.restaurantSlug;
 
-  // ✅ Clean slug
   if (slug.startsWith('%40')) slug = slug.substring(3);
   else if (slug.startsWith('@')) slug = slug.substring(1);
   else return notFound();
@@ -53,13 +48,17 @@ export default async function MenuServerPage(props: {
   const data = await getRestaurantAndMenu(slug);
   if (!data) return notFound();
 
+  const plainData = JSON.parse(JSON.stringify(data));
   const table = searchParams.table || null;
 
   return (
-    <ClientMenu
-      initialRestaurant={data.restaurant}
-      initialMenus={data.menuItems}
-      table={table}
-    />
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <CustomerHeaderNav restaurant={plainData.restaurant} slug={slug} activeTab="menu" />
+      <ClientMenu
+        initialRestaurant={plainData.restaurant}
+        initialMenus={plainData.menuItems}
+        table={table}
+      />
+    </div>
   );
 }

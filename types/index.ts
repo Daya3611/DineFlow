@@ -83,15 +83,18 @@ export interface PlanDocument {
   createdAt: number;
 }
 
+export type TableStatus = "free" | "occupied" | "reserved" | "cleaning";
+
 export interface Table {
   id: string;
   restaurantId: string;
   tableNumber: string;
-  capacity: number; // Add capacity
+  capacity: number;
+  location?: "Indoor AC" | "Outdoor Patio" | "Private Dining" | string;
   posX?: number;
   posY?: number;
   qrCodeUrl: string;
-  status?: "free" | "occupied" | "reserved";
+  status?: TableStatus;
   guests?: number;
   createdAt: number;
 }
@@ -101,11 +104,27 @@ export interface Menu {
   restaurantId: string;
   name: string;
   price: number;
+  hasHalfPortion?: boolean;
+  halfPrice?: number;
   category: string;
   image: string; // Cloudinary URL
   description?: string; // Short description of the dish
   dietaryTags?: string[]; // "veg", "non-veg", "vegan", "spicy"
   highlight?: "popular" | "bestseller" | "chef special" | "none";
+  isAvailable?: boolean;
+}
+
+export interface DiningSession {
+  id: string;
+  restaurantId: string;
+  tableId?: string;
+  tableNumber: string;
+  status: "active" | "bill_requested" | "payment_pending" | "paid" | "closed" | "cancelled";
+  guestCount?: number;
+  totalAmount: number;
+  createdAt: number;
+  closedAt?: number | null;
+  updatedAt: number;
 }
 
 export interface OrderItem {
@@ -125,11 +144,12 @@ export interface Order {
   tableId?: string;
   items: OrderItem[];
   totalAmount: number;
-  status: "pending" | "preparing" | "served" | "paid" | "ready" | "completed";
+  status: "pending" | "confirmed" | "preparing" | "served" | "paid" | "ready" | "completed";
   paymentMethod: "counter" | "upi" | "razorpay" | "cod";
   paymentStatus: "unpaid" | "partial" | "pending_verification" | "paid";
   isActive: boolean;
   sessionId: string;
+  roundNumber?: number;
   splitBill?: "equal" | "custom";
   customerName?: string;
   customerPhone?: string;
@@ -148,15 +168,24 @@ export interface Reservation {
   phone: string;
   email?: string;
   date: string; // YYYY-MM-DD
-  time: string; // HH:MM (Legacy or maps to preferred)
+  time: string; // HH:MM
   slotStartTime?: string;
   slotEndTime?: string;
   preferredTime?: string;
-  durationMinutes: number; // Duration length
-  tableId?: string; // Assigned table
+  durationMinutes?: number;
+  tableId?: string;
+  tableName?: string;
+  seatingPreference?: string;
   guestCount: number;
-  status: "pending" | "confirmed" | "arrived" | "no-show" | "completed" | "cancelled";
+  status: "pending" | "confirmed" | "arrived" | "seated" | "seated_now" | "completed" | "cancelled" | "no-show";
   notes?: string;
+  specialRequest?: string;
+  occasion?: string;
+  isVipRegular?: boolean;
+  countdown?: string;
+  billingText?: string;
+  cancellationReason?: string;
+  systemAction?: string;
   otpVerified?: boolean;
   createdAt: number;
 }
@@ -167,8 +196,15 @@ export interface Waitlist {
   name: string;
   phone: string;
   guests: number;
-  date: string; // Target date
-  timeSlot: string; // Target time string
-  time: number; // timestamp
-  status: "waiting" | "notified" | "seated" | "cancelled";
+  date?: string;
+  timeSlot?: string;
+  time: number;
+  status: "waiting" | "table_ready" | "notified" | "seated" | "cancelled" | "removed";
+  waitedTime?: string;
+  estimatedWait?: string;
+  tableAvailability?: string;
+  preference?: string;
+  partyTag?: string;
+  specialRequest?: string;
+  notifiedAt?: number;
 }
